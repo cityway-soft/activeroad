@@ -1,0 +1,3 @@
+default:
+  adapter: postgresql
+  database: 'roads'
