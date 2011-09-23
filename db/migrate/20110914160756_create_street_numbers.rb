@@ -4,7 +4,7 @@ class CreateStreetNumbers < ActiveRecord::Migration
       t.string :number
       t.float :location_on_road
       t.belongs_to :road
-      t.point :geometry, :srid => 900913
+      t.point :geometry, :srid => ActiveRoad.srid
       t.timestamps
     end
 

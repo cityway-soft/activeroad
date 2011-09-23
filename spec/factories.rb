@@ -13,15 +13,15 @@ end
 
 FactoryGirl.define do
   sequence :point do |n|
-    GeoRuby::SimpleFeatures::Point.from_x_y rand(20037508.342789244), rand(20037508.342789244), 900913 # n, n, 900913 # 
+    GeoRuby::SimpleFeatures::Point.from_x_y rand(20037508.342789244), rand(20037508.342789244), ActiveRoad.srid
   end
 
   sequence :line do |n|
-    GeoRuby::SimpleFeatures::LineString.from_points FactoryGirl.generate_list(:point, 3), 900913
+    GeoRuby::SimpleFeatures::LineString.from_points FactoryGirl.generate_list(:point, 3), ActiveRoad.srid
   end
 
   sequence :multi_line do |n|
-    GeoRuby::SimpleFeatures::MultiLineString.from_line_strings FactoryGirl.generate_list(:line, 2), 900913
+    GeoRuby::SimpleFeatures::MultiLineString.from_line_strings FactoryGirl.generate_list(:line, 2), ActiveRoad.srid
   end
 end
 

@@ -1,3 +1,10 @@
 default:
   adapter: postgresql
   database: 'roads'
+
+  # adapter: postgresql
+  # database: roads
+  # username: roads
+  # password: roads0
+  # host: osm.dryade.priv
+

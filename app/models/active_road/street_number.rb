@@ -1,7 +1,7 @@
 class ActiveRoad::StreetNumber < ActiveRoad::ActiveRecord
   validates_presence_of :number, :stored_geometry
 
-  belongs_to :road, :class_name => "ActiveRoad::Base"
+  belongs_to :road, :class_name => "ActiveRoad::Base", :foreign_key => "road_id"
 
   def stored_geometry
     read_attribute :geometry

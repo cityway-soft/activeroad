@@ -31,7 +31,7 @@ RSpec.configure do |config|
     DatabaseCleaner[:active_road, {:connection => :default}]
 
     DatabaseCleaner.strategy = :transaction
-    DatabaseCleaner.clean_with(:truncation)
+    DatabaseCleaner.clean_with(:truncation, :except => %w[spatial_ref_sys geometry_columns])
   end
 
   config.before(:each) do

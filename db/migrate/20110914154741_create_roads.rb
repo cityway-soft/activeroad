@@ -3,7 +3,7 @@ class CreateRoads < ActiveRecord::Migration
     create_table :roads do |t|
       t.string :name
       t.string :objectid
-      t.multi_line_string :geometry, :srid => 900913
+      t.multi_line_string :geometry, :srid => ActiveRoad.srid
       t.timestamps
     end
 

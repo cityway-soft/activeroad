@@ -21,4 +21,10 @@ class ActiveRoad::Base < ActiveRoad::ActiveRecord
     geometry.interpolate_point(location) if geometry
   end
 
+  def self.find_all_by_bounds(bounds)
+    ne_corner, sw_corner = bounds.upper_corner, bounds.lower_corner
+    sql_box = "SetSRID('BOX3D(#{ne_corner.lng} #{ne_corner.lat}, #{sw_corner.lng} #{sw_corner.lat})'::box3d, #{ActiveRoad.srid})"
+    find :all, :conditions => "geometry && #{sql_box}"
+  end
+
 end
