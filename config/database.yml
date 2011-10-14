@@ -8,3 +8,9 @@ default:
   # password: roads0
   # host: osm.dryade.priv
 
+osm:
+  adapter: postgresql
+  database: osm
+  username: osm
+  password: osm
+  host: osm.dryade.priv

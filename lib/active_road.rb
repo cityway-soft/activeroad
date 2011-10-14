@@ -1,8 +1,6 @@
 require "active_road/version"
 require 'erb'
 
-require 'active_road/geo_ruby_ext'
-
 module ActiveRoad
 
   def self.srid

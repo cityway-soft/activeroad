@@ -4,5 +4,7 @@ source "http://rubygems.org"
 gemspec
 
 group :development do
-  gem 'activeosm', :git => 'git://sim.dryade.priv/activeosm', :require => 'active_osm', :path => "/home/alban/Projects/ActiveOSM"
+  gem 'activeosm', :git => 'git://sim.dryade.priv/activeosm', :require => 'active_osm'
+  gem 'georuby-ext', :git => 'git://github.com/dryade/georuby-ext.git'
+  gem 'progressbar'
 end
