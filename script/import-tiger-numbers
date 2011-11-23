@@ -1,0 +1,147 @@
+#!/usr/bin/env ruby
+
+require File.expand_path('../../config/boot', __FILE__)
+
+require 'georuby-ext'
+
+require 'progressbar'
+require 'geo_ruby/shp4r/shp'
+
+require 'nokogiri'
+require 'bzip2'
+
+# ActiveRecord::Base.logger = Logger.new("log/development.log")
+
+class XMLHandler < Nokogiri::XML::SAX::Document
+
+  def initialize(progress)
+    @progress = progress
+    @osm_id_by_tiger_id = []
+  end
+
+  def start_element(name, attrs = [])
+    case name
+      when "way"
+      @way_osm_id=attrs.assoc("id")[1].to_i
+      when "tag"
+      if attrs.assoc("k")[1] == "tiger:tlid"
+        attrs.assoc("v")[1].scan(/\d+/).each do |tgid_id|
+          if existing_association = @osm_id_by_tiger_id.assoc(tgid_id.to_i)
+            existing_association << @way_osm_id
+          else
+            @osm_id_by_tiger_id << [tgid_id.to_i, @way_osm_id]
+          end
+        end
+      end
+    end
+    @progress.inc
+  end
+  
+  def end_element(name)
+  end
+
+  def index
+    Hash[@osm_id_by_tiger_id]
+  end
+
+end
+
+progress = ProgressBar.new("OSM indexation", 10730465 + 469978 + 6144)
+
+parser = Nokogiri::XML::SAX::Parser.new(handler = XMLHandler.new(progress))
+
+# Bzip2::Reader.open('louisiana.osm.bz2') do |f|
+#   parser.parse_io(f)
+# end
+osm_file = ARGV.shift
+parser.parse_file(osm_file)
+
+class TigerRecord
+
+  attr_reader :shape_record
+
+  @@osm_index = {}
+  cattr_accessor :osm_index
+
+  def initialize(shape_record)
+    @shape_record = shape_record
+  end
+
+  def tiger_id
+    shape_record.data["tlid"]
+  end
+
+  def osm_id
+    osm_index[tiger_id]
+  end
+
+  def from_point
+    @from_point ||= shape_record.geometry.first.first 
+  end
+
+  def to_point
+    @to_point ||= shape.geometry.last.last
+  end
+
+  def right_from_address
+    shape_record.data["rfromadd"]
+  end
+
+  def left_from_address
+    shape_record.data["lfromadd"]
+  end
+
+  def right_to_address
+    shape_record.data["rtoadd"]
+  end
+
+  def left_to_address
+    shape_record.data["ltoadd"]
+  end
+
+  def road
+    @road ||= 
+      (osm_id and ActiveRoad::Base.find_by_objectid "osm:#{osm_id}")
+  end
+
+  def attributes
+    [ { :number => right_from_address, :geometry => from_point },
+      { :number => left_from_address, :geometry => from_point },
+      { :number => right_to_address, :geometry => to_point },
+      { :number => left_from_address, :geometry => to_point } ]
+  end
+
+  def create_numbers
+    attributes.each do |number_attributes|
+      road.number.create! number_attributes
+    end if road
+  end
+
+end
+
+TigerRecord.osm_index = handler.index
+puts ""
+puts "Index size: #{TigerRecord.osm_index.size}"
+
+until ARGV.empty?
+  file = ARGV.shift
+  GeoRuby::Shp4r::ShpFile.open(file) do |shape_file|
+    progress = ProgressBar.new(file, shape_file.record_count)
+
+    shape_file.each_record do |shape|
+      TigerRecord.new(shape).create_numbers
+      progress.inc
+    end
+  end
+end
+
+    # osm_id = OSM::ActiveTODO.find_by_sql "select osm_id from france_osm_line where tlid && array[#{shape.tiger_id}]";
+    # road = ActiveRoad::Base.find_by_objectid "osm:#{osm_id}"
+
+    # road.numbers.create :number => shape.rfromadd, :geometry => shape.the_geom.first.to_wgs84
+    # road.numbers.create :number => shape.rtoadd, :geometry => shape.the_geom.last.to_wgs84
+    # road.numbers.create :number => shape.lfromadd, :geometry => shape.the_geo.first.to_wgs84
+    # road.numbers.create :number => shape.ltoadd, :geometry => shape.the_geom.last.to_wgs84
+
+    # puts shape_file[0].data.inspect
+    # puts shape_file[0].geometry.inspect
