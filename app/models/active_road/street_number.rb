@@ -3,6 +3,8 @@ class ActiveRoad::StreetNumber < ActiveRoad::ActiveRecord
 
   belongs_to :road, :class_name => "ActiveRoad::Base", :foreign_key => "road_id"
 
+  before_validation :compute_locate_on_road, :on => :create
+
   def stored_geometry
     read_attribute :geometry
   end
@@ -23,6 +25,13 @@ class ActiveRoad::StreetNumber < ActiveRoad::ActiveRecord
     read_attribute :location_on_road
   end
 
+  def compute_locate_on_road
+    if stored_location_on_road.nil? and stored_geometry 
+      self.location_on_road = road.geometry.locate_point(stored_geometry) 
+    end
+  end
+
+  # TODO rename into estimated_location_on_road
   def computed_location_on_road
     if previous and self.next
       number_ratio = (number.to_i - previous.number.to_i) / (self.next.number.to_i - previous.number.to_i).to_f

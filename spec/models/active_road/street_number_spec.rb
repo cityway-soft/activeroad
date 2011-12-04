@@ -33,6 +33,10 @@ describe ActiveRoad::StreetNumber do
       subject.location_on_road.should == 0.3
     end
 
+    it "should be comptured when not specified at creation" do
+      Factory(:street_number, :location_on_road => nil).location_on_road.should_not be_nil
+    end
+
     context "when no location is stored" do
 
       before(:each) do
