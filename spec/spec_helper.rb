@@ -9,6 +9,7 @@ $:.unshift(File.dirname(__FILE__) + '/../lib')
 require 'active_road'
 
 require 'active_record'
+require 'georuby-ext'
 
 Dir[File.dirname(__FILE__) + '/../app/**/*.rb'].sort.each {|f| require f}
 
