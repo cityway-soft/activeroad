@@ -6,7 +6,7 @@ gemspec
 group :development do
   gem 'activeosm', :git => 'git://sim.dryade.priv/activeosm', :require => 'active_osm'
   gem 'georuby-ext', :git => 'git://github.com/dryade/georuby-ext.git'
-  gem 'dbf'
+  gem 'dbf', "~> 1.2.9"
   gem 'progressbar'
   gem 'nokogiri'
   gem 'bzip2-ruby'
