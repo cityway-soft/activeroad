@@ -8,7 +8,8 @@ namespace :activeroad do
       require 'active_road'
       require 'postgis_adapter'
 
-      ActiveRecord::Base.establish_connection ActiveRoad.database_configuration["default"]
+      env = (ENV['RAILS_ENV'] or "default")
+      ActiveRecord::Base.establish_connection ActiveRoad.database_configuration[env]
 
       ActiveRecord::Migration.verbose = (ENV["VERBOSE"] == "true")
       ActiveRecord::Migrator.migrate(%w{db/migrate}, ENV["VERSION"] ? ENV["VERSION"].to_i : nil)
