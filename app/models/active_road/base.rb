@@ -14,7 +14,7 @@ class ActiveRoad::Base < ActiveRoad::ActiveRecord
   end
 
   def geometry_at_number(number)
-    numbers.find_or_initialize_by_number(number.to_s).geometry
+    numbers.find_or_initialize_by_number(number.to_s).geometry if number.present?
   end
 
   def geometry_at_location(location)
