@@ -36,8 +36,6 @@ class ActiveRoad::StreetNumber < ActiveRoad::ActiveRecord
     if previous and self.next
       number_ratio = (number.to_i - previous.number.to_i) / (self.next.number.to_i - previous.number.to_i).to_f
       previous.location_on_road + number_ratio * (self.next.location_on_road - previous.location_on_road)
-    else
-      0.5
     end
   end
 

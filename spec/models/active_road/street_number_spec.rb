@@ -43,8 +43,8 @@ describe ActiveRoad::StreetNumber do
         subject.location_on_road = nil
       end
 
-      it "should return 0.5 by default" do
-        subject.location_on_road.should == 0.5
+      it "should return nil" do
+        subject.location_on_road.should be_nil
       end
 
       it "should use previous and next numbers to compute location" do
