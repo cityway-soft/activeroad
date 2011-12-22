@@ -1,16 +1,14 @@
 default:
   adapter: postgresql
-  database: 'roads'
+  database: 'roads_test'
 
-  # adapter: postgresql
-  # database: roads
   # username: roads
   # password: roads0
-  # host: osm.dryade.priv
+  # host: osm.dbx1.dryade.priv
 
 osm:
   adapter: postgresql
   database: osm
-  username: osm
-  password: osm
-  host: osm.dryade.priv
+  #username: osm
+  #password: osm
+  # host: osm.dryade.priv
