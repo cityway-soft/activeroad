@@ -1,9 +1,11 @@
 class ActiveRoad::Base < ActiveRoad::ActiveRecord
+  extend ActiveSupport::Memoizable
+
   set_table_name "roads"
 
   validates_uniqueness_of :objectid
 
-  has_many :numbers, :class_name => "ActiveRoad::StreetNumber", :foreign_key => "road_id"
+  has_many :numbers, :class_name => "ActiveRoad::StreetNumber", :foreign_key => "road_id", :inverse_of => :road
 
   def at(value)
     if Float === value
@@ -14,8 +16,11 @@ class ActiveRoad::Base < ActiveRoad::ActiveRecord
   end
 
   def geometry_at_number(number)
-    numbers.find_or_initialize_by_number(number.to_s).geometry if number.present?
+    numbers.find_or_initialize_by_number(number.to_s).tap do |number|
+      number.road = self
+    end.geometry if number.present?
   end
+  memoize :geometry_at_number
 
   def geometry_at_location(location)
     geometry.interpolate_point(location) if geometry

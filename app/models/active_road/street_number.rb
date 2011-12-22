@@ -1,3 +1,4 @@
+# -*- coding: undecided -*-
 class ActiveRoad::StreetNumber < ActiveRoad::ActiveRecord
   validates_presence_of :number, :stored_geometry
 
@@ -40,11 +41,11 @@ class ActiveRoad::StreetNumber < ActiveRoad::ActiveRecord
   end
 
   def previous
-    road.numbers.find :first, :conditions => ["number < ?", number], :limit => 1, :order => "number desc"
+    @previous ||= road.numbers.find :first, :conditions => ["number < ?", number], :limit => 1, :order => "number desc"
   end
 
   def next
-    road.numbers.find :first, :conditions => ["number > ?", number], :limit => 1, :order => "number"
+    @next ||= road.numbers.find :first, :conditions => ["number > ?", number], :limit => 1, :order => "number"
   end
 
   def number
