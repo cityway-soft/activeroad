@@ -4,7 +4,8 @@ source "http://rubygems.org"
 gemspec
 
 group :development do
-  gem 'activeosm', :git => 'git://sim.dryade.priv/activeosm', :require => 'active_osm'
+  gem 'activeosm', :git => 'git://sim.dryade.priv/activeosm', :require => 'active_osm', :path => '~/Projects/ActiveOSM'
+  gem 'postgis_adapter', :git => 'git://github.com/dryade/postgis_adapter.git', :path => "~/Projects/PostgisAdapter"
   gem 'georuby-ext', :git => 'git://github.com/dryade/georuby-ext.git'
   gem 'dbf', "~> 1.2.9"
   gem 'progressbar'

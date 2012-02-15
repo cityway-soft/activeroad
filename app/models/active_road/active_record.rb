@@ -1,5 +1,3 @@
-require 'postgis_adapter'
-
 class ActiveRoad::ActiveRecord < ActiveRecord::Base
   self.abstract_class = true
 

@@ -1,4 +1,12 @@
-default:
+roads:
+  adapter: postgresql
+  database: 'roads'
+
+development:
+  adapter: postgresql
+  database: 'roads'
+
+test:
   adapter: postgresql
   database: 'roads_test'
 

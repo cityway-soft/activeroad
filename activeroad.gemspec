@@ -22,13 +22,14 @@ Gem::Specification.new do |s|
   # s.add_development_dependency "rspec"
   # s.add_runtime_dependency "rest-client"
 
-  s.add_development_dependency "rspec"
   s.add_development_dependency "guard"
   s.add_development_dependency "guard-rspec"
   s.add_development_dependency "database_cleaner"
   s.add_development_dependency "factory_girl"
   s.add_development_dependency "rcov"
   s.add_development_dependency "pg"
+  s.add_development_dependency "rspec-rails"
+  s.add_development_dependency "capybara"
 
   s.add_runtime_dependency 'rails'
   s.add_runtime_dependency 'postgis_adapter', '~> 0.8.1'
