@@ -10,4 +10,5 @@ group :development do
   gem 'progressbar'
   gem 'nokogiri'
   gem 'bzip2-ruby'
+  gem 'shortest_path', :git => 'git://github.com/dryade/shortest_path.git'
 end

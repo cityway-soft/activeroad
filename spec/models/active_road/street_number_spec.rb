@@ -11,7 +11,7 @@ describe ActiveRoad::StreetNumber do
   describe "#previous" do
 
     it "should find previous StreetNumber in the same road" do
-      other_number = Factory(:street_number, :road => subject.road, :number => subject.number - 50)
+      other_number = Factory(:street_number, :physical_road => subject.road, :number => subject.number - 50)
       subject.previous.should == other_number
     end
     
@@ -20,7 +20,7 @@ describe ActiveRoad::StreetNumber do
   describe "#next" do
 
     it "should find next StreetNumber in the same road" do
-      other_number = Factory(:street_number, :road => subject.road, :number => subject.number + 50)
+      other_number = Factory(:street_number, :physical_road => subject.road, :number => subject.number + 50)
       subject.next.should == other_number
     end
     

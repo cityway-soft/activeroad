@@ -30,6 +30,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rcov"
   s.add_development_dependency "pg"
 
-  s.add_runtime_dependency('rails', '~> 3.0.7')
-  s.add_runtime_dependency('postgis_adapter', '~> 0.8.1')
+  s.add_runtime_dependency 'rails'
+  s.add_runtime_dependency 'postgis_adapter', '~> 0.8.1'
+  s.add_runtime_dependency 'shortest_path'
 end

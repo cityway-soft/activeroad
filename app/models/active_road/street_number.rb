@@ -1,8 +1,14 @@
 # -*- coding: undecided -*-
-class ActiveRoad::StreetNumber < ActiveRoad::ActiveRecord
+class ActiveRoad::StreetNumber < ActiveRoad::Base
   validates_presence_of :number, :stored_geometry
 
-  belongs_to :road, :class_name => "ActiveRoad::Base", :foreign_key => "road_id"
+  belongs_to :physical_road, :class_name => "ActiveRoad::PhysicalRoad"
+  def road
+    @road or physical_road
+  end
+  def road=(road)
+    @road ||= road
+  end
 
   before_validation :compute_locate_on_road, :on => :create
 

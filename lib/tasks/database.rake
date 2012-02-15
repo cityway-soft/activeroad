@@ -6,6 +6,7 @@ namespace :activeroad do
       require 'active_record'
 
       require 'active_road'
+      require "active_road/migration"
       require 'postgis_adapter'
 
       env = (ENV['RAILS_ENV'] or "default")
