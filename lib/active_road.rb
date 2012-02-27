@@ -20,4 +20,7 @@ module ActiveRoad
   
 end
 
+require "active_road/shortest_path"
+require "active_road/shortest_path/finder"
+
 

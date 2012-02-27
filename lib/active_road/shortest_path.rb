@@ -1,0 +1,2 @@
+module ActiveRoad::ShortestPath
+end

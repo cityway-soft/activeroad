@@ -9,6 +9,23 @@ Factory.define :physical_road, :class => ActiveRoad::PhysicalRoad do |f|
   f.geometry { FactoryGirl.generate :line }
 end
 
+FactoryGirl.define do
+  factory :junction, :class => ActiveRoad::Junction do |f|
+    sequence(:objectid) { |n| "test::#{n}" }
+    geometry { FactoryGirl.generate :point }
+
+    # ignore do
+    #   physical_road_count 2
+    # end
+
+    # after_create do |junction, evaluator|
+    #   while junction.physical_roads.size < evaluator.physical_road_count
+    #     junction.physical_roads << FactoryGirl.create(:physical_road)
+    #   end
+    # end
+  end
+end
+
 module FactoryGirl
 
   def self.generate_list(name, amount)
@@ -19,8 +36,8 @@ end
 
 FactoryGirl.define do
   sequence :point do |n|
-    # TODO use random lat/lng ...
-    GeoRuby::SimpleFeatures::Point.from_x_y rand(20037508.342789244), rand(20037508.342789244), ActiveRoad.srid
+    tour_eiffel = GeoRuby::SimpleFeatures::Point.from_x_y(2.2946, 48.8580)
+    GeoRuby::SimpleFeatures::Point.from_x_y tour_eiffel.x + (2*rand-1), tour_eiffel.y + (2*rand-1), ActiveRoad.srid
   end
 
   sequence :line do |n|

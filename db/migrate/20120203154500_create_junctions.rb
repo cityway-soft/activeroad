@@ -15,6 +15,7 @@ class CreateJunctions < ActiveRoad::Migration
 
     # Generated name is too long for PostgreSQL
     add_index :junctions_physical_roads, [:physical_road_id, :junction_id], :name => 'junctions_physical_roads_ids', :uniq => true
+    add_index :junctions_physical_roads, [:junction_id]
   end
 
   def self.down
