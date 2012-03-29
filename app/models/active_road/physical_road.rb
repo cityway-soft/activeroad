@@ -18,5 +18,22 @@ module ActiveRoad
 
     alias_method :to_s, :name
 
+    def self.nearest_to(location, distance = 100)
+      with_in(location, distance).closest_to(location).first
+    end
+
+    def self.closest_to(location)
+      location_as_text = location.to_ewkt(false)
+      order("ST_Distance(geometry, GeomFromText('#{location_as_text}', 4326))").limit(1)
+    end
+
+    def self.with_in(location, distance)
+      # FIXME why ST_DWithin doesn't use meters ??
+      distance = distance / 1000.0
+
+      location_as_text = location.to_ewkt(false)
+      where "ST_DWithin(ST_GeomFromText(?, 4326), geometry, ?)", location_as_text, distance
+    end
+
   end
 end

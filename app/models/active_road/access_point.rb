@@ -11,7 +11,7 @@ class ActiveRoad::AccessPoint
 
   def self.from(location)
     # TODO find really several roads
-    physical_roads = [ ActiveRoad::PhysicalRoad.closest_to location ]
+    physical_roads = [ ActiveRoad::PhysicalRoad.nearest_to(location, 100) ]
 
     physical_roads.collect do |physical_road|
       new :location => location, :physical_road => physical_road
@@ -20,7 +20,7 @@ class ActiveRoad::AccessPoint
 
   def self.to(location)
     # TODO find really several roads
-    physical_roads = [ ActiveRoad::PhysicalRoad.closest_to location ]
+    physical_roads = [ ActiveRoad::PhysicalRoad.nearest_to(location) ]
 
     physical_roads.collect do |physical_road|
       new :location => location, :physical_road => physical_road, :exit => true
