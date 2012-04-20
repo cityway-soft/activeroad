@@ -9,18 +9,18 @@ class ActiveRoad::AccessPoint
     end
   end
 
-  def self.from(location)
+  def self.from(location, kind = "road")
     # TODO find really several roads
-    physical_roads = [ ActiveRoad::PhysicalRoad.nearest_to(location, 100) ]
+    physical_roads = [ ActiveRoad::PhysicalRoad.where(:kind => kind).nearest_to(location, 100) ]
 
     physical_roads.collect do |physical_road|
       new :location => location, :physical_road => physical_road
     end
   end
 
-  def self.to(location)
+  def self.to(location, kind = "road")
     # TODO find really several roads
-    physical_roads = [ ActiveRoad::PhysicalRoad.nearest_to(location) ]
+    physical_roads = [ ActiveRoad::PhysicalRoad.where(:kind => kind).nearest_to(location) ]
 
     physical_roads.collect do |physical_road|
       new :location => location, :physical_road => physical_road, :exit => true
@@ -53,7 +53,7 @@ class ActiveRoad::AccessPoint
     name
   end
 
-  def paths
+  def paths(kind = "road")
     unless exit?
       ActiveRoad::Path.all self, physical_road.junctions, physical_road
     else

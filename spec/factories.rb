@@ -5,6 +5,7 @@ end
 
 Factory.define :physical_road, :class => ActiveRoad::PhysicalRoad do |f|
   f.logical_road
+  f.kind "road"
   f.sequence(:objectid) { |n| "test::#{n}" }
   f.geometry { FactoryGirl.generate :line }
 end

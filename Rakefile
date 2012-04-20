@@ -35,3 +35,4 @@ RSpec::Core::RakeTask.new(:rcov) do |t|
   t.rcov_opts = %w{--exclude osx\/objc,gems\/,spec\/,lib\/database_cleaner\/}
 end
 
+task :spec => "app:db:test:prepare"

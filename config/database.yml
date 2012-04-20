@@ -1,14 +1,12 @@
-roads:
-  adapter: postgresql
-  database: 'roads'
-
 development:
   adapter: postgresql
   database: 'roads'
+  template: template_postgis
 
 test:
   adapter: postgresql
   database: 'roads_test'
+  template: template_postgis
 
   # username: roads
   # password: roads0

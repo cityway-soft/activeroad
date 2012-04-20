@@ -42,8 +42,8 @@ class ActiveRoad::Path
 
   delegate :access_to_road?, :to => :arrival
 
-  def paths
-    arrival.paths - [reverse]
+  def paths(kind = "road")
+    arrival.paths(kind) - [reverse]
   end
 
   def reverse

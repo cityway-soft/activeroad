@@ -2,6 +2,13 @@ require 'shortest_path/finder'
 
 class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
 
+  attr_accessor :road_kind
+
+  def initialize(departure, arrival, road_kind = "road")
+    super departure, arrival
+    @road_kind = road_kind
+  end
+
   def visited?(node)
     super(respond_to?(:arrival) ? node.arrival : node)
   end
@@ -11,7 +18,7 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
   end
 
   def destination_accesses
-    @destination_accesses ||= ActiveRoad::AccessPoint.to(destination)
+    @destination_accesses ||= ActiveRoad::AccessPoint.to(destination, road_kind)
   end
 
   def search_heuristic(node)
@@ -35,9 +42,9 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
 
     paths = 
       if GeoRuby::SimpleFeatures::Point === node
-        ActiveRoad::AccessLink.from(node)
+        ActiveRoad::AccessLink.from(node, road_kind)
       else
-        node.paths
+        node.paths(road_kind)
       end
 
     unless GeoRuby::SimpleFeatures::Point === node
@@ -63,8 +70,9 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
   def self.example
     from = (ENV['FROM'] or "30.030238,-90.061541")
     to = (ENV['TO'] or "29.991739,-90.06918")
+    kind = (ENV['KIND'] or "road")
 
-    ActiveRoad::ShortestPath::Finder.new GeoRuby::SimpleFeatures::Point.from_lat_lng(from), GeoRuby::SimpleFeatures::Point.from_lat_lng(to)
+    ActiveRoad::ShortestPath::Finder.new GeoRuby::SimpleFeatures::Point.from_lat_lng(from), GeoRuby::SimpleFeatures::Point.from_lat_lng(to), kind
   end
 
 end

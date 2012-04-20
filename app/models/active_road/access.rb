@@ -8,9 +8,9 @@ class ActiveRoad::Access
     end
   end
 
-  def self.to(location)
+  def self.to(location, kind = "road")
     # TODO find really several roads
-    physical_roads = [ ActiveRoad::PhysicalRoad.closest_to location ]
+    physical_roads = [ ActiveRoad::PhysicalRoad.where(:kind => kind).closest_to location ]
 
     physical_roads.collect do |physical_road|
       new :location => location, :physical_road => physical_road
@@ -29,7 +29,7 @@ class ActiveRoad::Access
     @point_on_road ||= physical_road.interpolate_point(location_on_road)
   end
 
-  def paths
+  def paths(kind = "road")
     ActiveRoad::Path.all arrival, physical_road.junctions, physical_road
   end
 
