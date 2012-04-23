@@ -1,11 +1,11 @@
 development:
   adapter: postgresql
-  database: 'roads'
+  database: 'activeroads'
   template: template_postgis
 
 test:
   adapter: postgresql
-  database: 'roads_test'
+  database: 'activeroads_test'
   template: template_postgis
 
   # username: roads
