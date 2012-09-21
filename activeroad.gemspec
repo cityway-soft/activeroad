@@ -25,7 +25,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "guard"
   s.add_development_dependency "guard-rspec"
   s.add_development_dependency "database_cleaner"
-  s.add_development_dependency "factory_girl"
+  s.add_development_dependency "factory_girl", '2.6.4'
   s.add_development_dependency "rcov"
   s.add_development_dependency "pg"
   s.add_development_dependency "rspec-rails"
