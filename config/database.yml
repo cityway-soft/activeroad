@@ -1,20 +1,20 @@
-development:
+development: 
   adapter: postgresql
-  database: 'activeroads'
+  database: roads
+  username: roads
+  password: roads0
   template: template_postgis
 
-test:
+test: 
   adapter: postgresql
-  database: 'activeroads_test'
+  database: roads_test
+  username: roads
+  password: roads0
   template: template_postgis
-
-  # username: roads
-  # password: roads0
-  # host: osm.dbx1.dryade.priv
 
 osm:
   adapter: postgresql
   database: osm
-  #username: osm
-  #password: osm
-  # host: osm.dryade.priv
+  username: osm
+  password: osm
+  host: osm.dbx2.dryade.priv
