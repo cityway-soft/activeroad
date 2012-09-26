@@ -22,13 +22,13 @@ Gem::Specification.new do |s|
   # s.add_development_dependency "rspec"
   # s.add_runtime_dependency "rest-client"
 
-  s.add_development_dependency "guard"
+  s.add_development_dependency "guard", "1.3.3"
   s.add_development_dependency "guard-rspec"
   s.add_development_dependency "database_cleaner"
   s.add_development_dependency "factory_girl", '2.6.4'
   s.add_development_dependency "rcov"
   s.add_development_dependency "pg"
-  s.add_development_dependency "rspec-rails"
+  s.add_development_dependency "rspec-rails", "2.11.0"
   s.add_development_dependency "capybara"
 
   s.add_runtime_dependency 'rails'
