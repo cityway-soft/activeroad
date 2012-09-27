@@ -11,4 +11,10 @@ group :development do
   gem 'nokogiri'
   gem 'bzip2-ruby'
   gem 'shortest_path', :git => 'git://github.com/dryade/shortest_path.git' #, :path => "~/Projects/ShortestPath"
+  gem "ffi-proj4", :git => 'git://github.com/dryade/ffi-proj4.git'
+
+  group :linux do
+    gem 'rb-inotify'
+    gem 'libnotify'
+  end
 end
