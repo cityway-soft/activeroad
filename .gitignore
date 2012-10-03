@@ -6,3 +6,4 @@ pkg/*
 coverage/*
 log/*
 spec/dummy/log/*.log
+*.swp

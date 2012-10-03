@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 require "active_road/version"
 
 Gem::Specification.new do |s|
-  s.name        = "activeroad"
+  s.name        = "active_road"
   s.version     = ActiveRoad::VERSION
   s.authors     = ["Alban Peignier"]
   s.email       = ["alban.peignier@dryade.net"]
@@ -31,8 +31,13 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rspec-rails", "2.11.0"
   s.add_development_dependency "capybara"
 
-  s.add_runtime_dependency 'rails'
+  s.add_runtime_dependency 'rails', '~> 3.2.8'
   s.add_runtime_dependency 'postgis_adapter', '~> 0.8.1'
   s.add_runtime_dependency 'shortest_path'
   s.add_runtime_dependency 'activerecord-postgres-array'
+
+  s.add_runtime_dependency 'nokogiri'
+#  TODO: remove those gem if useless
+#  s.add_runtime_dependency 'bzip2-ruby'
+#  s.add_runtime_dependency 'progressbar'
 end
