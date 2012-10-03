@@ -1,12 +1,12 @@
 development: 
   adapter: postgresql
-  database: active_road
+  database: activeroad
   username: roads
   password: roads0
 
 test: 
   adapter: postgresql
-  database: active_road_test
+  database: activeroad_test
   username: roads
   password: roads0
 
