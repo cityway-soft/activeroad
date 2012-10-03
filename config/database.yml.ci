@@ -1,0 +1,6 @@
+test: 
+  adapter: postgresql
+  database: active_road_test
+  username: roads
+  password: roads0
+

@@ -4,6 +4,14 @@ begin
 rescue LoadError
   puts 'You must `gem install bundler` and `bundle install` to run rake tasks'
 end
+
+namespace :ci do
+  task :prepare do
+    cp "config/database.yml.ci", "config/database.yml"
+  end
+  task :build => ["db:migrate", "spec"]
+end
+
 begin
   require 'rdoc/task'
 rescue LoadError
