@@ -1,3 +1,9 @@
+development: 
+  adapter: postgresql
+  database: active_road
+  username: roads
+  password: roads0
+
 test: 
   adapter: postgresql
   database: active_road_test
