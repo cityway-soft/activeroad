@@ -3,6 +3,7 @@ module ActiveRoad
     validates_uniqueness_of :objectid
 
     has_and_belongs_to_many :physical_roads, :uniq => true
+    has_many :junction_conditionnal_costs
 
     def location_on_road(road)
       (@location_on_road ||= {})[road.id] ||= road.locate_point(geometry)

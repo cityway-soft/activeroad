@@ -18,26 +18,18 @@ Gem::Specification.new do |s|
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
 
-  # specify any dependencies here; for example:
-  # s.add_development_dependency "rspec"
-  # s.add_runtime_dependency "rest-client"
-
   s.add_development_dependency "guard", "1.3.3"
   s.add_development_dependency "guard-rspec"
   s.add_development_dependency "database_cleaner"
   s.add_development_dependency "factory_girl", '2.6.4'
   s.add_development_dependency "rcov"
-  s.add_development_dependency "pg"
   s.add_development_dependency "rspec-rails", "2.11.0"
   s.add_development_dependency "capybara"
 
-  s.add_runtime_dependency 'rails', '~> 3.2.8'
-  s.add_runtime_dependency 'postgis_adapter', '~> 0.8.1'
-  s.add_runtime_dependency 'shortest_path'
-  s.add_runtime_dependency 'activerecord-postgres-array'
+  s.add_dependency 'rails', '~> 3.2.8'
+  s.add_dependency 'shortest_path'
+  s.add_dependency 'ar_pg_array'
+  s.add_dependency "pg"
+  s.add_dependency 'nokogiri'
 
-  s.add_runtime_dependency 'nokogiri'
-#  TODO: remove those gem if useless
-#  s.add_runtime_dependency 'bzip2-ruby'
-#  s.add_runtime_dependency 'progressbar'
 end
