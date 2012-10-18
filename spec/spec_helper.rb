@@ -55,24 +55,15 @@ end
 # require 'database_cleaner'
 # require 'logger'
 
-# RSpec.configure do |config|
-
-#   config.before(:suite) do
-#     ActiveRoad::ActiveRecord.logger = Logger.new("log/test.log")
-
-#     # Use DatabaseCleaner::ActiveRoad
-#     DatabaseCleaner[:active_road, {:connection => :default}]
-
-#     DatabaseCleaner.strategy = :transaction
-#     DatabaseCleaner.clean_with(:truncation, :except => %w[spatial_ref_sys geometry_columns])
-#   end
-
-#   config.before(:each) do
-#     DatabaseCleaner.start
-#   end
-
-#   config.after(:each) do
-#     DatabaseCleaner.clean
-#   end
-
-# end
+RSpec.configure do |config|
+  config.around(:each) do |example|
+    ActiveRecord::Base.transaction do
+    begin
+      example.run
+      ensure
+        puts "appel du rollback"
+    raise ActiveRecord::Rollback
+     end
+    end
+  end
+end
