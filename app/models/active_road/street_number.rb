@@ -1,5 +1,8 @@
 # -*- coding: undecided -*-
 class ActiveRoad::StreetNumber < ActiveRoad::Base
+  attr_accessible :objectid, :number, :geometry, :physical_road_id, :location_on_road
+
+  validates_uniqueness_of :objectid
   validates_presence_of :number, :stored_geometry
 
   belongs_to :physical_road, :class_name => "ActiveRoad::PhysicalRoad"

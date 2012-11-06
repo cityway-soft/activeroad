@@ -1,6 +1,7 @@
 module ActiveRoad
   class LogicalRoad < ActiveRoad::Base
     extend ActiveSupport::Memoizable
+    attr_accessible :objectid, :name
 
     validates_uniqueness_of :objectid
 

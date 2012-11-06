@@ -1,4 +1,4 @@
-require "active_road/version"
+require "active_road/engine"
 require 'erb'
 
 module ActiveRoad
@@ -9,13 +9,6 @@ module ActiveRoad
 
   def self.database_configuration
     YAML::load(ERB.new(IO.read( File.expand_path('../../config/database.yml', __FILE__))).result)
-  end
-
-  if defined?(Rails)
-    require "active_road/migration"
-
-    class Engine < Rails::Engine
-    end
   end
   
 end

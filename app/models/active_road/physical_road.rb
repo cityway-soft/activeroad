@@ -1,5 +1,7 @@
 module ActiveRoad
   class PhysicalRoad < ActiveRoad::Base
+    attr_accessible :objectid, :kind, :tags, :geometry, :logical_road_id
+
     validates_uniqueness_of :objectid
     validates_presence_of :kind
 
