@@ -1,6 +1,7 @@
 module ActiveRoad
   class PhysicalRoadConditionnalCost < ActiveRoad::Base
-     belongs_to :physical_road
+    attr_accessible :tags, :cost, :objectid, :physical_road_id
+    belongs_to :physical_road
 
     validates_presence_of :physical_road_id
     validates_presence_of :tags

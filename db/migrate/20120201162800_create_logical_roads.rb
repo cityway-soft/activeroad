@@ -11,6 +11,8 @@ class CreateLogicalRoads < ActiveRoad::Migration
   end
 
   def self.down
-    drop_table :logical_roads
+    if table_exists?(:logical_roads)
+      drop_table :logical_roads
+    end
   end
 end

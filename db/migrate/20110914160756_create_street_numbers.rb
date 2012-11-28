@@ -13,6 +13,8 @@ class CreateStreetNumbers < ActiveRoad::Migration
   end
 
   def self.down
-    drop_table :street_numbers
+    if table_exists?(:street_numbers)
+      drop_table :street_numbers
+    end
   end
 end
