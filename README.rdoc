@@ -1,3 +1,9 @@
-= ActiveRoad
+= ActiveRoad {<img src="https://travis-ci.org/dryade/activeroad.png?branch=master" alt="Build Status" />}[https://travis-ci.org/dryade/activeroad] {<img src="https://codeclimate.com/badge.png" />}[https://codeclimate.com/github/dryade/activeroad]
 
-This project rocks !!!
+=== Summary
+
+Provuides osm and xml import to make an itinerary research
+
+=== License
+
+This project uses MIT-LICENSE.
