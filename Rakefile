@@ -7,7 +7,7 @@ end
 
 namespace :travis do
   task :prepare do
-    cp "config/database.yml.ci", "config/database.yml"
+    cp "config/database.yml.travis", "config/database.yml"
   end
 end
 
