@@ -3,8 +3,8 @@ source "http://rubygems.org"
 # Specify your gem's dependencies in activeroad.gemspec
 gemspec
 
-# gem 'activeosm', :git => 'git://roads.dryade.priv/activeosm', :ref => '71f4cc9c6477ec5fbc090576f4dd3b20666b6722' #, :path => '~/Projects/ActiveOSM' 
-gem 'georuby-ext', :path => "~/projects/georuby-ext"# :git => 'git://github.com/dryade/georuby-ext.git' #, :path => "~/projects/georuby-ext"
+gem 'activeosm', :git => 'git://github.com/dryade/activeosm', :ref => '71f4cc9c6477ec5fbc090576f4dd3b20666b6722' #, :path => '~/Projects/ActiveOSM' 
+gem 'georuby-ext', :git => 'git://github.com/dryade/georuby-ext.git' #, :path => "~/projects/georuby-ext"
 gem 'shortest_path', :git => 'git://github.com/dryade/shortest_path.git' #, :path => "~/Projects/ShortestPath"
 
 
