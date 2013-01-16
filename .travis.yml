@@ -1,10 +1,11 @@
 language: ruby
 rvm:
-  - 1.8.7
+  - 1.9.3
 before_install:
+  - sudo apt-get update
   - sudo apt-get install libproj-dev libgeos-dev libffi-dev libsparsehash-dev
 before_script: 
-  - "rake ci:db_travis_config"
+  - "rake travis:prepare"
   - "rake db:create"
   - "rake db:migrate"
 script: "rake spec"
