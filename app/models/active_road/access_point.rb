@@ -40,7 +40,7 @@ class ActiveRoad::AccessPoint
   end
 
   def name
-    "Access on #{physical_road} @#{point_on_road.to_lat_lng} (for @#{location.to_lat_lng})"
+    "Access on #{physical_road} @#{point_on_road.to_s} (for @#{location.to_s})"
   end
 
   def to_geometry

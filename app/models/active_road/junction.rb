@@ -12,7 +12,7 @@ module ActiveRoad
     end
 
     def paths(kind = "road")
-      physical_roads.where(:kind => kind).includes(:junctions).collect do |physical_road|
+      physical_roads.where(:kind => kind).includes(:junctions).collect do |physical_road| 
         ActiveRoad::Path.all self, (physical_road.junctions - [self]), physical_road
       end.flatten
     end
@@ -26,7 +26,7 @@ module ActiveRoad
     end
 
     def to_s
-      "#{name} (#{objectid}@#{geometry.to_lat_lng})"
+      "#{name} (#{objectid}@#{geometry.to_s})"
     end
 
     def name

@@ -4,14 +4,12 @@ source "http://rubygems.org"
 gemspec
 
 # gem 'activeosm', :git => 'git://roads.dryade.priv/activeosm', :ref => '71f4cc9c6477ec5fbc090576f4dd3b20666b6722' #, :path => '~/Projects/ActiveOSM' 
-gem 'postgis_adapter', :git => 'git://github.com/dryade/postgis_adapter.git' #, :path => "~/Projects/PostgisAdapter"
-gem 'georuby-ext', :git => 'git://github.com/dryade/georuby-ext.git', :ref => 'c1c55b8' #, :path => "~/Projects/GeoRubyExt"
+gem 'georuby-ext', :path => "~/projects/georuby-ext"# :git => 'git://github.com/dryade/georuby-ext.git' #, :path => "~/projects/georuby-ext"
 gem 'shortest_path', :git => 'git://github.com/dryade/shortest_path.git' #, :path => "~/Projects/ShortestPath"
-gem "ffi-proj4", :git => 'git://github.com/dryade/ffi-proj4.git'
+
 
 group :development do
-  group :linux do
-    gem 'rb-inotify'
-    gem 'libnotify'
-  end
+  gem 'rb-inotify', ">= 0.8.8", :require => RUBY_PLATFORM.include?('linux') && 'rb-inotify'
+  gem 'libnotify', ">= 0.8.0", :require => RUBY_PLATFORM.include?('linux') && 'libnotify'
+  gem 'rb-fsevent', ">= 0.9.3", :require => RUBY_PLATFORM.include?('darwin') && 'rb-fsevent'
 end

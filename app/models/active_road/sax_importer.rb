@@ -50,7 +50,7 @@ class ActiveRoad::SaxImporter
     end
 
     def geometry
-      GeoRuby::SimpleFeatures::Geometry.from_ewkt( xml['Geometry'] ) 
+      rgeo_factory.parse_wkt(xml['Geometry'])      
     end
     
   end

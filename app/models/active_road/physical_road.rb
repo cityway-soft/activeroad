@@ -10,7 +10,6 @@ module ActiveRoad
     has_and_belongs_to_many :junctions, :uniq => true
     has_many :physical_road_conditionnal_costs
 
-    acts_as_geom :geometry => :line_string
     delegate :locate_point, :interpolate_point, :length, :to => :geometry
 
     def name
@@ -24,15 +23,15 @@ module ActiveRoad
     end
 
     def self.closest_to(location)
-      location_as_text = location.to_ewkt(false)
+      location_as_text = rgeo_factory._generate_wkt(location)
       order("ST_Distance(geometry, GeomFromText('#{location_as_text}', 4326))").limit(1)
     end
 
     def self.with_in(location, distance)
-      # FIXME why ST_DWithin doesn't use meters ??
+      # ST_DWithin use radian for EPSG4326 and meters for others
       distance = distance / 1000.0
 
-      location_as_text = location.to_ewkt(false)
+      location_as_text = rgeo_factory._generate_wkt(location)
       where "ST_DWithin(ST_GeomFromText(?, 4326), geometry, ?)", location_as_text, distance
     end
 

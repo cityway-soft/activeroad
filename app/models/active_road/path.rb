@@ -16,7 +16,7 @@ class ActiveRoad::Path
   def locations_on_road
     [departure, arrival].collect do |endpoint|
       location =
-        if GeoRuby::SimpleFeatures::Point === endpoint
+        if RGeo::Geos::FFIPointImpl === endpoint
           road.locate_point endpoint
         else
           endpoint.location_on_road road
@@ -35,7 +35,7 @@ class ActiveRoad::Path
   end
 
   def self.all(departure, arrivals, physical_road)
-    Array(arrivals).collect do |arrival|
+    Array(arrivals).collect do |arrival|      
       new :departure => departure, :arrival => arrival, :physical_road => physical_road
     end
   end
@@ -53,7 +53,7 @@ class ActiveRoad::Path
   def geometry_without_cache
     sorted_locations_on_road = locations_on_road.sort
     reverse = (sorted_locations_on_road != locations_on_road)
-    geometry = road.line_substring *sorted_locations_on_road
+    geometry = road.line_substring * sorted_locations_on_road
     geometry = geometry.reverse if reverse
     geometry
   end

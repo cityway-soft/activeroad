@@ -21,11 +21,11 @@ class ActiveRoad::AccessLink
   end
 
   def length
-    @length ||= departure.to_geometry.spherical_distance arrival.to_geometry
+    @length ||= departure.to_geometry.distance arrival.to_geometry # TODO spherical_distance
   end
 
   def geometry
-    @geometry ||= GeoRuby::SimpleFeatures::LineString.from_points [departure.to_geometry, arrival.to_geometry]
+    @geometry ||= rgeo_factory.line_string [departure.to_geometry, arrival.to_geometry]
   end
   alias_method :to_geometry, :geometry
 
