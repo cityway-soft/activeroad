@@ -34,5 +34,4 @@ Gem::Specification.new do |s|
   s.add_dependency 'ar_pg_array'
   s.add_dependency 'nokogiri'
   s.add_dependency 'saxerator'
-  s.add_dependency 'apartment'
 end

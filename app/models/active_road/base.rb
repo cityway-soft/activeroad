@@ -1,7 +1,4 @@
 class ActiveRoad::Base < ActiveRecord::Base
-  # In order to make ActiveRecord models play nice with DJ and Apartment, include Apartment::Delayed::Requirements in any model that is being serialized by DJ
-  include Apartment::Delayed::Requirements
-
   self.abstract_class = true
 
   # By default, use the GEOS implementation for spatial columns.
