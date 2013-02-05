@@ -2,7 +2,7 @@
 
 === Summary
 
-Provides osm and xml import in a simplified OSM model and methods to make an itinerary research
+Provuides osm and xml import to make an itinerary research
 
 === License
 
