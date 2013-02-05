@@ -5,6 +5,7 @@ development:
   username: postgres
   schema_search_path: public, postgis   
   script_dir: /usr/share/postgresql/9.1/contrib/postgis-1.5/
+  port: 5433
 
 test:
   adapter: postgis
@@ -13,3 +14,4 @@ test:
   username: postgres
   schema_search_path: public, postgis   
   script_dir: /usr/share/postgresql/9.1/contrib/postgis-1.5/
+  port: 5433
