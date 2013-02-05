@@ -1,20 +1,16 @@
 development: 
-  adapter: postgis
-  database: activeroad
+  adapter: postgresql
+  database: roads
   username: roads
   password: roads0
-  schema_search_path: public, postgis
-  script_dir: /usr/share/postgresql/9.1/contrib/postgis-1.5/
-  port: 5433
+  template: template_postgis
 
 test: 
-  adapter: postgis
-  database: activeroad_test
+  adapter: postgresql
+  database: roads_test
   username: roads
   password: roads0
-  schema_search_path: public, postgis   
-  script_dir: /usr/share/postgresql/9.1/contrib/postgis-1.5/
-  port: 5433
+  template: template_postgis
 
 osm:
   adapter: postgresql

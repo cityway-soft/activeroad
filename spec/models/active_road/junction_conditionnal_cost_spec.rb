@@ -12,7 +12,8 @@ describe ActiveRoad::JunctionConditionnalCost do
     subject.should respond_to(:cost)
   end
 
-  it "should have a junction" do   
+  it "should have a junction" do
+    puts "spec log: #{ActiveRecord::ConnectionAdapters::PostgreSQLAdapter.instance_methods.include? :disable_referential_integrity}"
     subject.should respond_to(:junction_id)
   end
 

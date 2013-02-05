@@ -5,8 +5,8 @@ require "active_road/version"
 Gem::Specification.new do |s|
   s.name        = "active_road"
   s.version     = ActiveRoad::VERSION
-  s.authors     = ["Alban Peignier", "Luc Donnet"]
-  s.email       = ["apeignier@free.fr", "luc.donnet@free.fr"]
+  s.authors     = ["Alban Peignier"]
+  s.email       = ["alban.peignier@dryade.net"]
   s.homepage    = ""
   s.summary     = %q{Manage roads for Rails}
   s.description = %q{Find street numbers and road ways}
@@ -29,9 +29,9 @@ Gem::Specification.new do |s|
   s.add_dependency 'rails', '~> 3.2.8'
   s.add_dependency 'activerecord'
   s.add_dependency 'pg', '>= 0.11.0'
-  s.add_dependency 'activerecord-postgis-adapter', '>= 0.5'
   s.add_dependency 'shortest_path'
   s.add_dependency 'ar_pg_array'
+  s.add_dependency "pg"
   s.add_dependency 'nokogiri'
   s.add_dependency 'saxerator'
 end

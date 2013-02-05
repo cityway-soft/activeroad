@@ -10,7 +10,7 @@ module ActiveRoad
     has_many :numbers, :through => :physical_roads, :class_name => "ActiveRoad::StreetNumber"
 
     def geometry
-      rgeo_factory.multi_line_string physical_roads.map(&:geometry)
+      GeoRuby::SimpleFeatures::MultiLineString.from_line_strings physical_roads.map(&:geometry)
     end
 
     def at(value)

@@ -4,11 +4,6 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
 
   attr_accessor :road_kind
 
-  # By default, use the GEOS implementation for spatial columns.
-  def self.rgeo_factory
-    ::RGeo::Geos.factory(:srid => ActiveRoad.srid, :native_interface => :ffi, :wkt_parser => {:support_ewkt => true})   
-  end
-
   def initialize(departure, arrival, road_kind = "road")
     super departure, arrival
     @road_kind = road_kind
@@ -36,25 +31,23 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
 
   def distance_heuristic(node)
     if node.respond_to?(:arrival)
-      node.arrival.to_geometry.distance(destination) # TODO spherical_distance
+      node.arrival.to_geometry.spherical_distance(destination)
     else
-      node.to_geometry.distance(destination)  # TODO spherical_distance
-    end
-  end
-
-  def paths(node)
-    if RGeo::Geos::FFIPointImpl === node
-      ActiveRoad::AccessLink.from(node, road_kind)
-    else
-      node.paths(road_kind)
+      node.to_geometry.spherical_distance(destination)
     end
   end
 
   def ways(node)
     # $stderr.puts node
-    paths = paths(node)
 
-    unless RGeo::Geos::FFIPointImpl === node
+    paths = 
+      if GeoRuby::SimpleFeatures::Point === node
+        ActiveRoad::AccessLink.from(node, road_kind)
+      else
+        node.paths(road_kind)
+      end
+
+    unless GeoRuby::SimpleFeatures::Point === node
       destination_accesses.select do |destination_access|
         if node.access_to_road?(destination_access.physical_road)
           paths << ActiveRoad::Path.new(:departure => node.arrival, :arrival => destination_access, :physical_road => destination_access.physical_road)
@@ -70,7 +63,7 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
   end
 
   def geometry
-    @geometry ||= rgeo_factory.line_string path.collect { |n| n.to_geometry }.select { |g| RGeo::Geos::FFILineStringImpl === g }.collect(&:points).flatten
+    @geometry ||= GeoRuby::SimpleFeatures::LineString.merge path.collect { |n| n.to_geometry }.select { |g| GeoRuby::SimpleFeatures::LineString === g }
   end
 
   # Use to profile code
@@ -79,7 +72,7 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
     to = (ENV['TO'] or "29.991739,-90.06918")
     kind = (ENV['KIND'] or "road")
 
-    ActiveRoad::ShortestPath::Finder.new rgeo_factory.point(from), rgeo_factory.point(to), kind
+    ActiveRoad::ShortestPath::Finder.new GeoRuby::SimpleFeatures::Point.from_lat_lng(from), GeoRuby::SimpleFeatures::Point.from_lat_lng(to), kind
   end
 
 end
