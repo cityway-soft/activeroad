@@ -5,12 +5,6 @@ rescue LoadError
   puts 'You must `gem install bundler` and `bundle install` to run rake tasks'
 end
 
-namespace :travis do
-  task :prepare do
-    cp "config/database.yml.ci", "config/database.yml"
-  end
-end
-
 namespace :ci do
   task :prepare do
     cp "config/database.yml.ci", "config/database.yml"
