@@ -57,7 +57,7 @@ class ActiveRoad::AccessPoint
     unless exit?
       ActiveRoad::Path.all self, physical_road.junctions, physical_road
     else
-      [ ActiveRoad::AccessLink.new(:departure => self, :arrival => location) ]
+      [ActiveRoad::AccessLink.new :departure => self, :arrival => location]
     end
   end
 
