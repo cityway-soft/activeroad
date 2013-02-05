@@ -1,6 +1,6 @@
 class CreateJunctionConditionnalCosts < ActiveRoad::Migration
   def up
-    create_table :junction_conditionnal_costs, :force => true do |t|
+    create_table :junction_conditionnal_costs do |t|
       t.belongs_to :junction
       t.float :cost
       t.string :tags
@@ -8,8 +8,6 @@ class CreateJunctionConditionnalCosts < ActiveRoad::Migration
   end
 
   def down
-    if table_exists?(:junction_conditionnal_costs)
-      drop_table :junction_conditionnal_costs 
-    end
+    drop_table :junction_conditionnal_costs
   end
 end

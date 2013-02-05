@@ -19,11 +19,7 @@ class CreateJunctions < ActiveRoad::Migration
   end
 
   def self.down
-    if table_exists?(:junctions)
-      drop_table :junctions
-    end
-    if table_exists?(:junctions_physical_roads)
-      drop_table :junctions_physical_roads
-    end
+    drop_table :junctions
+    drop_table :junctions_physical_roads
   end
 end

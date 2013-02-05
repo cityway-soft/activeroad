@@ -12,8 +12,6 @@ class CreatePhysicalRoads < ActiveRoad::Migration
   end
 
   def self.down
-    if table_exists?(:physical_roads)
-      drop_table :physical_roads
-    end
+    drop_table :physical_roads
   end
 end

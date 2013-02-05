@@ -10,16 +10,14 @@ describe ActiveRoad::SaxImporter do
     ActiveRoad::LogicalRoad.all.size.should == 3
   end
 
-  it "should have import all physical roads and conditionnal cost associated" do
+  it "should have import all physical roads" do
     subject.import
     ActiveRoad::PhysicalRoad.all.size.should == 3
-    ActiveRoad::PhysicalRoadConditionnalCost.all.size.should == 4
   end
 
   it "should have import all junctions" do
     subject.import
     ActiveRoad::Junction.all.size.should == 1
-    #ActiveRoad::JunctionConditionnalCost.all.size.should == 2
   end
 
   it "should have import all street number" do

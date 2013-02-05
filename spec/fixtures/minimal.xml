@@ -12,21 +12,9 @@
     </LogicalRoad>
     <PhysicalRoad objectid="osm:10" logicalRoadRef="osm:2" tags="road" >
       <Geometry>SRID=4326;LINESTRING(2.33382661157212 48.8512277853463,2.33378789418338 48.8512855955042)</Geometry>
-      <ConditionnalCost>
-        <objectid>"terra:123456"</objectid> 
-        <cost>0.20357</cost> 
-        <tags>"skate"</tags>
-      </ConditionnalCost>  
-      <ConditionnalCost>
-        <objectid>"terra:12345345"</objectid> 
-        <cost>0.003</cost> 
-        <tags>"bicycle"</tags>
-      </ConditionnalCost>
-      <ConditionnalCost>
-        <objectid>"terra:1234576"</objectid> 
-        <cost>0.2567</cost> 
-        <tags>"walk,wheelchair"</tags>
-      </ConditionnalCost>
+      <ConditionnalCost objectid="terra:123456" cost="*0.20357" tags="skate" />
+      <ConditionnalCost objectid="terra:12345345" cost="*0.003" tags="bicycle" />
+      <ConditionnalCost objectid="terra:1234576" cost="*0.2567" tags="walk,wheelchair" />
     </PhysicalRoad>
     <Junction objectid="osm:20" tags="skate,bicycle,walk">
         <Geometry>SRID=4326;POINT(2.33276309610726 48.8487009788122)></Geometry>
@@ -47,11 +35,6 @@
     </PhysicalRoad>
     <PhysicalRoad objectid="osm:12" logicalRoadRef="osm:1" tags="motorised">         
       <Geometry>SRID=4326;LINESTRING(2.33291823515682 48.8512936936498,2.33291536054791 48.8511507641427,2.33276219779197 48.8505000691534,2.33269608178706 48.8502583617113,2.33271898882681 48.8494948682754,2.33276435374865 48.8487028704476)</Geometry>
-      <ConditionnalCost>
-        <objectid>"terra:1234579"</objectid> 
-        <cost>0.2567</cost> 
-        <tags>"walk,wheelchair"</tags>
-      </ConditionnalCost>
     </PhysicalRoad>
     <StreetNumber objectid="osm:30" physicalRoadRef="osm:10" number="4">
         <Geometry>SRID=4326;POINT(2.33276309610 48.8487009788)></Geometry>
