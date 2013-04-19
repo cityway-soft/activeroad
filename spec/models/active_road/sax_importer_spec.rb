@@ -7,22 +7,22 @@ describe ActiveRoad::SaxImporter do
 
   it "should have import all logical roads" do
     subject.import
-    ActiveRoad::LogicalRoad.all.size.should == 3
+    ActiveRoad::LogicalRoad.all.size.should == 0
   end
 
   it "should have import all physical roads" do
     subject.import
-    ActiveRoad::PhysicalRoad.all.size.should == 3
+    ActiveRoad::PhysicalRoad.all.size.should == 109
   end
 
   it "should have import all junctions" do
     subject.import
-    ActiveRoad::Junction.all.size.should == 1
+    ActiveRoad::Junction.all.size.should == 92
   end
 
   it "should have import all street number" do
     subject.import
-    ActiveRoad::StreetNumber.all.size.should == 1
+    ActiveRoad::StreetNumber.all.size.should == 23
   end
 
 end

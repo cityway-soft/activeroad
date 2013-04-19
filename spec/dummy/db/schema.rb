@@ -10,13 +10,22 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20120419093427) do
+ActiveRecord::Schema.define(:version => 20130419155438) do
+
+  create_table "junction_conditionnal_costs", :force => true do |t|
+    t.column "junction_id", :integer
+    t.column "cost", :float
+    t.column "tags", :string
+    t.column "start_physical_road_id", :integer
+    t.column "end_physical_road_id", :integer
+  end
 
   create_table "junctions", :force => true do |t|
     t.column "objectid", :string
     t.column "created_at", :datetime, :null => false
     t.column "updated_at", :datetime, :null => false
     t.column "geometry", :point, :srid => 4326
+    t.column "tags", :string
   end
 
   add_index "junctions", ["objectid"], :name => "index_junctions_on_objectid"
@@ -39,6 +48,12 @@ ActiveRecord::Schema.define(:version => 20120419093427) do
   add_index "logical_roads", ["name"], :name => "index_logical_roads_on_name"
   add_index "logical_roads", ["objectid"], :name => "index_logical_roads_on_objectid"
 
+  create_table "physical_road_conditionnal_costs", :force => true do |t|
+    t.column "physical_road_id", :integer
+    t.column "cost", :float
+    t.column "tags", :string
+  end
+
   create_table "physical_roads", :force => true do |t|
     t.column "objectid", :string
     t.column "logical_road_id", :integer
@@ -46,6 +61,9 @@ ActiveRecord::Schema.define(:version => 20120419093427) do
     t.column "updated_at", :datetime, :null => false
     t.column "geometry", :line_string, :srid => 4326
     t.column "kind", :string
+    t.column "tags", :string
+    t.column "length", :integer, :default => 0
+    t.column "minimum_width", :integer, :default => 0
   end
 
   add_index "physical_roads", ["geometry"], :name => "index_physical_roads_on_geometry", :spatial=> true 
@@ -60,6 +78,7 @@ ActiveRecord::Schema.define(:version => 20120419093427) do
     t.column "created_at", :datetime, :null => false
     t.column "updated_at", :datetime, :null => false
     t.column "geometry", :point, :srid => 4326
+    t.column "objectid", :string
   end
 
   add_index "street_numbers", ["number", "physical_road_id"], :name => "index_street_numbers_on_number_and_physical_road_id"

@@ -1,44 +1,2482 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Referential xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
- xsi:noNamespaceSchemaLocation="file:/Users/marc/dev/raods/roads-exchange.xsd" name="Place Saint Sulpice septembre 2012">
-    <LogicalRoad objectid="osm:1">
-        <Name>Rue Bonaparte</Name>
-    </LogicalRoad>
-    <LogicalRoad objectid="osm:2">
-        <Name>Place Saint-Sulpice</Name>
-    </LogicalRoad>
-    <LogicalRoad objectid="osm:3">
-        <Name>Rue du Four</Name>
-    </LogicalRoad>
-    <PhysicalRoad objectid="osm:10" logicalRoadRef="osm:2" tags="road" >
-      <Geometry>SRID=4326;LINESTRING(2.33382661157212 48.8512277853463,2.33378789418338 48.8512855955042)</Geometry>
-      <ConditionnalCost objectid="terra:123456" cost="*0.20357" tags="skate" />
-      <ConditionnalCost objectid="terra:12345345" cost="*0.003" tags="bicycle" />
-      <ConditionnalCost objectid="terra:1234576" cost="*0.2567" tags="walk,wheelchair" />
-    </PhysicalRoad>
-    <Junction objectid="osm:20" tags="skate,bicycle,walk">
-        <Geometry>SRID=4326;POINT(2.33276309610726 48.8487009788122)></Geometry>
-        <physicalRoadRef>osm:1</physicalRoadRef>
-        <physicalRoadRef>osm:2</physicalRoadRef>
-        <physicalRoadRef>osm:3</physicalRoadRef>
-        <ConditionnalCost objectid="terra:123456" cost="60" tags="skate,bicycle,walk">
-            <physicalRoadStartRef>osm:1</physicalRoadStartRef>
-            <phyiscalRoadEndRef>osm:2</phyiscalRoadEndRef>
-        </ConditionnalCost>
-        <ConditionnalCost objectid="terra:123445" cost="120" tags="wheelchair">
-            <physicalRoadStartRef>osm:41467715</physicalRoadStartRef>
-            <phyiscalRoadEndRef>osm:22926188</phyiscalRoadEndRef>
-        </ConditionnalCost>
-    </Junction>
-    <PhysicalRoad objectid="osm:11" logicalRoadRef="osm:3" tags="bicycle,skate">
-      <Geometry>SRID=4326;LINESTRING(2.33192685440927 48.8524576850146,2.3329399743867 48.8526260867651,2.33314712589122 48.8526456518318,2.33316491253384 48.8526473659913,2.33318683142677 48.8526476615361,2.33369195411104 48.8526545772826,2.33391383798621 48.8526929980792,2.33433919027324 48.8527843803477,2.33442578786663 48.852781484017,2.33451687703644 48.852778351251,2.33506107643556 48.8528840967725,2.33561048606333 48.8530141947851,2.33576355898774 48.8530822877492,2.33586982968585 48.8531294562585)</Geometry>
-    </PhysicalRoad>
-    <PhysicalRoad objectid="osm:12" logicalRoadRef="osm:1" tags="motorised">         
-      <Geometry>SRID=4326;LINESTRING(2.33291823515682 48.8512936936498,2.33291536054791 48.8511507641427,2.33276219779197 48.8505000691534,2.33269608178706 48.8502583617113,2.33271898882681 48.8494948682754,2.33276435374865 48.8487028704476)</Geometry>
-    </PhysicalRoad>
-    <StreetNumber objectid="osm:30" physicalRoadRef="osm:10" number="4">
-        <Geometry>SRID=4326;POINT(2.33276309610 48.8487009788)></Geometry>
-        <LocationOnRoad>SRID=4326;POINT(2.33276309610 48.8487009788)></LocationOnRoad>
-    </StreetNumber>
-    
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="roads-exchange.xsl"?>
+<Referential xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="file:./roads-exchange-SP4-SP5.xsd" name="Place Saint Sulpice septembre 2012">
+	<StreetNumber>
+		<ObjectId>ign-obj-46</ObjectId>
+		<Geometry>SRID=4326;POINT(355 -575)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>25</Number>
+		<TrajectoryNodeRef>ign-obj-47</TrajectoryNodeRef>
+	</StreetNumber>
+	<StreetNumber>
+		<ObjectId>ign-obj-45</ObjectId>
+		<Geometry>SRID=4326;POINT(457 -575)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>24</Number>
+		<TrajectoryNodeRef>ign-obj-48</TrajectoryNodeRef>
+	</StreetNumber>
+	<StreetNumber>
+		<ObjectId>ign-obj-44</ObjectId>
+		<Geometry>SRID=4326;POINT(626 -579)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>23</Number>
+		<TrajectoryNodeRef>ign-obj-49</TrajectoryNodeRef>
+	</StreetNumber>
+	<StreetNumber>
+		<ObjectId>ign-obj-43</ObjectId>
+		<Geometry>SRID=4326;POINT(763 -574)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>22</Number>
+		<TrajectoryNodeRef>ign-obj-50</TrajectoryNodeRef>
+	</StreetNumber>
+	<StreetNumber>
+		<ObjectId>ign-obj-41</ObjectId>
+		<Geometry>SRID=4326;POINT(1076 -341)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>19</Number>
+		<TrajectoryNodeRef>ign-obj-51</TrajectoryNodeRef>
+	</StreetNumber>
+	<StreetNumber>
+		<ObjectId>ign-obj-39</ObjectId>
+		<Geometry>SRID=4326;POINT(803 -386)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>17</Number>
+		<TrajectoryNodeRef>ign-obj-52</TrajectoryNodeRef>
+	</StreetNumber>
+	<StreetNumber>
+		<ObjectId>ign-obj-38</ObjectId>
+		<Geometry>SRID=4326;POINT(707 -382)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>16</Number>
+		<TrajectoryNodeRef>ign-obj-53</TrajectoryNodeRef>
+	</StreetNumber>
+	<StreetNumber>
+		<ObjectId>ign-obj-37</ObjectId>
+		<Geometry>SRID=4326;POINT(812 -297)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>14</Number>
+		<TrajectoryNodeRef>ign-obj-54</TrajectoryNodeRef>
+	</StreetNumber>
+	<StreetNumber>
+		<ObjectId>ign-obj-35</ObjectId>
+		<Geometry>SRID=4326;POINT(456 -386)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>12</Number>
+		<TrajectoryNodeRef>ign-obj-55</TrajectoryNodeRef>
+	</StreetNumber>
+	<StreetNumber>
+		<ObjectId>ign-obj-40</ObjectId>
+		<Geometry>SRID=4326;POINT(1079 -266)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>18</Number>
+		<TrajectoryNodeRef>ign-obj-56</TrajectoryNodeRef>
+	</StreetNumber>
+	<StreetNumber>
+		<ObjectId>ign-obj-34</ObjectId>
+		<Geometry>SRID=4326;POINT(379 -381)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>11</Number>
+		<TrajectoryNodeRef>ign-obj-57</TrajectoryNodeRef>
+	</StreetNumber>
+	<StreetNumber>
+		<ObjectId>ign-obj-33</ObjectId>
+		<Geometry>SRID=4326;POINT(440 -283)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>10</Number>
+		<TrajectoryNodeRef>ign-obj-58</TrajectoryNodeRef>
+	</StreetNumber>
+	<StreetNumber>
+		<ObjectId>ign-obj-32</ObjectId>
+		<Geometry>SRID=4326;POINT(377 -283)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>9</Number>
+		<TrajectoryNodeRef>ign-obj-59</TrajectoryNodeRef>
+	</StreetNumber>
+	<StreetNumber>
+		<ObjectId>ign-obj-31</ObjectId>
+		<Geometry>SRID=4326;POINT(127 -548)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>8</Number>
+		<TrajectoryNodeRef>ign-obj-60</TrajectoryNodeRef>
+	</StreetNumber>
+	<StreetNumber>
+		<ObjectId>ign-obj-30</ObjectId>
+		<Geometry>SRID=4326;POINT(130 -397)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>7</Number>
+		<TrajectoryNodeRef>ign-obj-61</TrajectoryNodeRef>
+	</StreetNumber>
+	<StreetNumber>
+		<ObjectId>ign-obj-29</ObjectId>
+		<Geometry>SRID=4326;POINT(134 -310)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>6</Number>
+		<TrajectoryNodeRef>ign-obj-62</TrajectoryNodeRef>
+	</StreetNumber>
+	<StreetNumber>
+		<ObjectId>ign-obj-36</ObjectId>
+		<Geometry>SRID=4326;POINT(712 -297)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>13</Number>
+		<TrajectoryNodeRef>ign-obj-63</TrajectoryNodeRef>
+	</StreetNumber>
+	<StreetNumber>
+		<ObjectId>ign-obj-27</ObjectId>
+		<Geometry>SRID=4326;POINT(725 -105)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>4</Number>
+		<TrajectoryNodeRef>ign-obj-64</TrajectoryNodeRef>
+	</StreetNumber>
+	<StreetNumber>
+		<ObjectId>ign-obj-24</ObjectId>
+		<Geometry>SRID=4326;POINT(235 -101)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>1</Number>
+		<TrajectoryNodeRef>ign-obj-65</TrajectoryNodeRef>
+	</StreetNumber>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-21</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((256 -619, 1146 -628, 1140 -517, 1107.04 -517.559, 1075.95 -518.087, 869.112 -521.597, 838.968 -522.108, 669 -524.992, 629.96 -525.655, 517.992 -527.554, 488.984 -528.047, 324.912 -530.831, 291.041 -531.405, 256 -532, 256 -576, 256 -602, 256 -619), (1091 -545, 1085 -602, 301 -595, 300 -560, 1091 -545))</Geometry>
+	</PhysicalRoad>
+	<StreetNumber>
+		<ObjectId>ign-obj-42</ObjectId>
+		<Geometry>SRID=4326;POINT(991 -575)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>20</Number>
+		<TrajectoryNodeRef>ign-obj-66</TrajectoryNodeRef>
+	</StreetNumber>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-14</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((886 -440, 1041.72 -431.927, 1041.23 -406.897, 886 -408, 886 -440))</Geometry>
+	</PhysicalRoad>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-20</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((78 -629, 176 -625, 176.307 -609.945, 177.102 -570.982, 182.592 -301.971, 183.41 -261.927, 184 -233, 138.817 -231.494, 108.051 -230.468, 94 -230, 78 -629), (158 -260, 151 -596, 99 -591, 111 -256, 158 -260))</Geometry>
+	</PhysicalRoad>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-9</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((538.274 -442.982, 614.702 -438.093, 616.335 -408.073, 539.197 -405.93, 538.274 -442.982))</Geometry>
+	</PhysicalRoad>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-19</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((1125 -195, 1103.09 -194.004, 1062.04 -192.138, 1037 -191, 1037.65 -224.027, 1038.53 -268.852, 1041.23 -406.897, 1041.72 -431.927, 1042 -446, 1070.31 -448.682, 1103.11 -451.79, 1137 -455, 1125 -195), (1113 -416, 1066 -413, 1059 -222, 1100 -222, 1113 -416))</Geometry>
+	</PhysicalRoad>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-17</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((286 -445, 302.051 -445.573, 332.084 -446.646, 492.094 -452.361, 521.057 -453.395, 538 -454, 538.274 -442.982, 539.197 -405.93, 542.209 -284.931, 543.255 -242.932, 544 -213, 529.064 -213.291, 501.055 -213.836, 338.98 -216.989, 301.994 -217.708, 287 -218, 286.78 -268.003, 286.608 -307.003, 286 -445), (496 -420, 346 -409, 350 -264, 495 -264, 496 -420))</Geometry>
+	</PhysicalRoad>
+	<StreetNumber>
+		<ObjectId>ign-obj-25</ObjectId>
+		<Geometry>SRID=4326;POINT(398 -107)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>2</Number>
+		<TrajectoryNodeRef>ign-obj-67</TrajectoryNodeRef>
+	</StreetNumber>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-22</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((82 -22, 84 -154, 102.954 -153.735, 134.948 -153.287, 227 -152, 297 -152, 335 -152, 501 -152, 530 -152, 652 -152, 687 -152, 839 -152, 868 -152, 957 -152, 1064.97 -150.92, 1099.97 -150.57, 1157 -150, 1163 -21, 82 -22), (1111 -43, 1109 -120, 123 -123, 119 -52, 1111 -43))</Geometry>
+	</PhysicalRoad>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-16</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((176.307 -609.945, 256 -602, 256 -576, 177.102 -570.982, 176.307 -609.945))</Geometry>
+	</PhysicalRoad>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-10</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((291.041 -531.405, 324.912 -530.831, 332.084 -446.646, 302.051 -445.573, 291.041 -531.405))</Geometry>
+	</PhysicalRoad>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-15</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((886 -273, 1038.53 -268.852, 1037.65 -224.027, 886 -232, 886 -273))</Geometry>
+	</PhysicalRoad>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-18</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((614 -451, 635.046 -451.851, 669.112 -453.229, 840.993 -460.18, 871.146 -461.399, 886 -462, 886 -440, 886 -408, 886 -273, 886 -232, 886 -207, 871.025 -207.289, 834.077 -208.002, 681.999 -210.938, 650.03 -211.555, 627 -212, 624.768 -253.042, 622.538 -294.029, 616.335 -408.073, 614.702 -438.093, 614 -451), (836 -255, 834 -424, 676 -411, 681 -257, 836 -255))</Geometry>
+	</PhysicalRoad>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-8</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((542.209 -284.931, 622.538 -294.029, 624.768 -253.042, 543.255 -242.932, 542.209 -284.931))</Geometry>
+	</PhysicalRoad>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-12</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((629.96 -525.655, 669 -524.992, 669.112 -453.229, 635.046 -451.851, 629.96 -525.655))</Geometry>
+	</PhysicalRoad>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-11</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((488.984 -528.047, 517.992 -527.554, 521.057 -453.395, 492.094 -452.361, 488.984 -528.047))</Geometry>
+	</PhysicalRoad>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-7</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((182.592 -301.971, 286.608 -307.003, 286.78 -268.003, 183.41 -261.927, 182.592 -301.971))</Geometry>
+	</PhysicalRoad>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-6</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((1062.04 -192.138, 1103.09 -194.004, 1099.97 -150.57, 1064.97 -150.92, 1062.04 -192.138))</Geometry>
+	</PhysicalRoad>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-1</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((134.948 -153.287, 102.954 -153.735, 108.051 -230.468, 138.817 -231.494, 134.948 -153.287))</Geometry>
+	</PhysicalRoad>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-5</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((834.077 -208.002, 871.025 -207.289, 868 -152, 839 -152, 834.077 -208.002))</Geometry>
+	</PhysicalRoad>
+	<StreetNumber>
+		<ObjectId>ign-obj-26</ObjectId>
+		<Geometry>SRID=4326;POINT(553 -105)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>3</Number>
+		<TrajectoryNodeRef>ign-obj-68</TrajectoryNodeRef>
+	</StreetNumber>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-4</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((650.03 -211.555, 681.999 -210.938, 687 -152, 652 -152, 650.03 -211.555))</Geometry>
+	</PhysicalRoad>
+	<StreetNumber>
+		<ObjectId>ign-obj-28</ObjectId>
+		<Geometry>SRID=4326;POINT(975 -106)</Geometry>
+		<LogicalRoadRef></LogicalRoadRef>
+		<Number>5</Number>
+		<TrajectoryNodeRef>ign-obj-69</TrajectoryNodeRef>
+	</StreetNumber>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-3</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((501 -152, 501.055 -213.836, 529.064 -213.291, 530 -152, 501 -152))</Geometry>
+	</PhysicalRoad>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-2</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((335 -152, 297 -152, 301.994 -217.708, 338.98 -216.989, 335 -152))</Geometry>
+	</PhysicalRoad>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-13</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((838.968 -522.108, 869.112 -521.597, 871.146 -461.399, 840.993 -460.18, 838.968 -522.108))</Geometry>
+	</PhysicalRoad>
+	<PhysicalRoad>
+		<ObjectId>ign-obj-23</ObjectId>
+		<Tags>tag1, tag2</Tags>
+		<Geometry>SRID=4326;POLYGON((1103.11 -451.79, 1070.31 -448.682, 1075.95 -518.087, 1107.04 -517.559, 1103.11 -451.79))</Geometry>
+	</PhysicalRoad>
+	<Junction>
+		<ObjectId>ign-obj-139</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1075.95 -518.087, 1107.04 -517.559)</Geometry>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-23</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-140</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(838.968 -522.108, 869.112 -521.597)</Geometry>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-13</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-141</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(629.96 -525.655, 669 -524.992)</Geometry>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-12</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-142</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(488.984 -528.047, 517.992 -527.554)</Geometry>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-11</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-143</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(291.041 -531.405, 324.912 -530.831)</Geometry>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-10</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-144</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(256 -602, 256 -576)</Geometry>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-16</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-145</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1041.23 -406.897, 1041.72 -431.927)</Geometry>
+		<PhysicalRoadRef>ign-obj-14</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-146</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(886 -440, 886 -408)</Geometry>
+		<PhysicalRoadRef>ign-obj-14</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-147</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(108.051 -230.468, 138.817 -231.494)</Geometry>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-1</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-148</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(176.307 -609.945, 177.102 -570.982)</Geometry>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-16</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-149</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(182.592 -301.971, 183.41 -261.927)</Geometry>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-7</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-150</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(614.702 -438.093, 616.335 -408.073)</Geometry>
+		<PhysicalRoadRef>ign-obj-9</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-151</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(538.274 -442.982, 539.197 -405.93)</Geometry>
+		<PhysicalRoadRef>ign-obj-9</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-152</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1062.04 -192.138, 1103.09 -194.004)</Geometry>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-6</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-153</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1037.65 -224.027, 1038.53 -268.852)</Geometry>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-15</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-154</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1070.31 -448.682, 1103.11 -451.79)</Geometry>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-23</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-155</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(501.055 -213.836, 529.064 -213.291)</Geometry>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-3</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-156</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(301.994 -217.708, 338.98 -216.989)</Geometry>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-2</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-157</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(286.608 -307.003, 286.78 -268.003)</Geometry>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-7</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-158</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(302.051 -445.573, 332.084 -446.646)</Geometry>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-10</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-159</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(492.094 -452.361, 521.057 -453.395)</Geometry>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-11</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-160</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(542.209 -284.931, 543.255 -242.932)</Geometry>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-8</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-161</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(102.954 -153.735, 134.948 -153.287)</Geometry>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-1</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-162</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(297 -152, 335 -152)</Geometry>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-2</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-163</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(501 -152, 530 -152)</Geometry>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-3</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-164</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(652 -152, 687 -152)</Geometry>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-4</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-165</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(839 -152, 868 -152)</Geometry>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-5</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-166</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1064.97 -150.92, 1099.97 -150.57)</Geometry>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-6</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-167</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(886 -273, 886 -232)</Geometry>
+		<PhysicalRoadRef>ign-obj-15</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-168</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(834.077 -208.002, 871.025 -207.289)</Geometry>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-5</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-169</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(650.03 -211.555, 681.999 -210.938)</Geometry>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-4</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-170</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(622.538 -294.029, 624.768 -253.042)</Geometry>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-8</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-171</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(635.046 -451.851, 669.112 -453.229)</Geometry>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-12</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<Junction>
+		<ObjectId>ign-obj-172</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(840.993 -460.18, 871.146 -461.399)</Geometry>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-13</PhysicalRoadRef>
+		<Height>0</Height>
+	</Junction>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-100</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(861.011 -253.317)</Geometry>
+		<TrajectoryArcRef>ign-obj-249</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-250</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-251</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-101</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(651.57 -285.088)</Geometry>
+		<TrajectoryArcRef>ign-obj-235</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-252</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-253</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-102</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(518.862 -263.951)</Geometry>
+		<TrajectoryArcRef>ign-obj-198</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-247</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-254</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-103</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(318.63 -249.158)</Geometry>
+		<TrajectoryArcRef>ign-obj-245</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-255</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-256</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-104</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(1091.51 -517.823)</Geometry>
+		<TrajectoryArcRef>ign-obj-194</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-257</TrajectoryArcRef>
+		<JunctionRef>ign-obj-139</JunctionRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-23</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-105</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(854.04 -521.852)</Geometry>
+		<TrajectoryArcRef>ign-obj-196</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-258</TrajectoryArcRef>
+		<JunctionRef>ign-obj-140</JunctionRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-13</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-106</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(649.514 -525.323)</Geometry>
+		<TrajectoryArcRef>ign-obj-202</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-259</TrajectoryArcRef>
+		<JunctionRef>ign-obj-141</JunctionRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-12</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-107</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(503.488 -527.801)</Geometry>
+		<TrajectoryArcRef>ign-obj-204</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-260</TrajectoryArcRef>
+		<JunctionRef>ign-obj-142</JunctionRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-11</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-108</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(308.021 -531.117)</Geometry>
+		<TrajectoryArcRef>ign-obj-212</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-261</TrajectoryArcRef>
+		<JunctionRef>ign-obj-143</JunctionRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-10</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-109</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(256 -588.981)</Geometry>
+		<TrajectoryArcRef>ign-obj-176</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-262</TrajectoryArcRef>
+		<JunctionRef>ign-obj-144</JunctionRef>
+		<PhysicalRoadRef>ign-obj-16</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-110</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(1041.48 -419.409)</Geometry>
+		<TrajectoryArcRef>ign-obj-182</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-263</TrajectoryArcRef>
+		<JunctionRef>ign-obj-145</JunctionRef>
+		<PhysicalRoadRef>ign-obj-14</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-111</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(886 -423.989)</Geometry>
+		<TrajectoryArcRef>ign-obj-236</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-263</TrajectoryArcRef>
+		<JunctionRef>ign-obj-146</JunctionRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-14</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-112</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(123.446 -230.982)</Geometry>
+		<TrajectoryArcRef>ign-obj-188</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-264</TrajectoryArcRef>
+		<JunctionRef>ign-obj-147</JunctionRef>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-1</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-113</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(176.706 -590.402)</Geometry>
+		<TrajectoryArcRef>ign-obj-179</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-262</TrajectoryArcRef>
+		<JunctionRef>ign-obj-148</JunctionRef>
+		<PhysicalRoadRef>ign-obj-16</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-114</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(183.001 -281.952)</Geometry>
+		<TrajectoryArcRef>ign-obj-186</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-265</TrajectoryArcRef>
+		<JunctionRef>ign-obj-149</JunctionRef>
+		<PhysicalRoadRef>ign-obj-7</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-115</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(615.521 -423.033)</Geometry>
+		<TrajectoryArcRef>ign-obj-208</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-266</TrajectoryArcRef>
+		<JunctionRef>ign-obj-150</JunctionRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-9</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-116</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(538.736 -424.42)</Geometry>
+		<TrajectoryArcRef>ign-obj-246</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-266</TrajectoryArcRef>
+		<JunctionRef>ign-obj-151</JunctionRef>
+		<PhysicalRoadRef>ign-obj-9</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-117</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(1082.5 -193.068)</Geometry>
+		<TrajectoryArcRef>ign-obj-207</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-267</TrajectoryArcRef>
+		<JunctionRef>ign-obj-152</JunctionRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-6</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-118</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(1038.07 -245.818)</Geometry>
+		<TrajectoryArcRef>ign-obj-173</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-206</TrajectoryArcRef>
+		<JunctionRef>ign-obj-153</JunctionRef>
+		<PhysicalRoadRef>ign-obj-15</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-119</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(1038.1 -247.052)</Geometry>
+		<TrajectoryArcRef>ign-obj-174</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-268</TrajectoryArcRef>
+		<JunctionRef>ign-obj-153</JunctionRef>
+		<PhysicalRoadRef>ign-obj-15</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-120</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(1086.74 -450.239)</Geometry>
+		<TrajectoryArcRef>ign-obj-239</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-257</TrajectoryArcRef>
+		<JunctionRef>ign-obj-154</JunctionRef>
+		<PhysicalRoadRef>ign-obj-23</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-121</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(515.057 -213.563)</Geometry>
+		<TrajectoryArcRef>ign-obj-197</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-269</TrajectoryArcRef>
+		<JunctionRef>ign-obj-155</JunctionRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-3</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-122</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(320.494 -217.348)</Geometry>
+		<TrajectoryArcRef>ign-obj-256</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-270</TrajectoryArcRef>
+		<JunctionRef>ign-obj-156</JunctionRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-2</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-123</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(286.694 -287.508)</Geometry>
+		<TrajectoryArcRef>ign-obj-244</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-265</TrajectoryArcRef>
+		<JunctionRef>ign-obj-157</JunctionRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-7</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-124</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(317.09 -446.11)</Geometry>
+		<TrajectoryArcRef>ign-obj-219</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-261</TrajectoryArcRef>
+		<JunctionRef>ign-obj-158</JunctionRef>
+		<PhysicalRoadRef>ign-obj-10</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-125</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(506.576 -452.878)</Geometry>
+		<TrajectoryArcRef>ign-obj-213</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-260</TrajectoryArcRef>
+		<JunctionRef>ign-obj-159</JunctionRef>
+		<PhysicalRoadRef>ign-obj-11</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-126</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(542.732 -263.942)</Geometry>
+		<TrajectoryArcRef>ign-obj-254</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-271</TrajectoryArcRef>
+		<JunctionRef>ign-obj-160</JunctionRef>
+		<PhysicalRoadRef>ign-obj-8</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-127</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(118.957 -153.511)</Geometry>
+		<TrajectoryArcRef>ign-obj-225</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-264</TrajectoryArcRef>
+		<JunctionRef>ign-obj-161</JunctionRef>
+		<PhysicalRoadRef>ign-obj-1</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-128</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(316.01 -152)</Geometry>
+		<TrajectoryArcRef>ign-obj-224</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-270</TrajectoryArcRef>
+		<JunctionRef>ign-obj-162</JunctionRef>
+		<PhysicalRoadRef>ign-obj-2</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-129</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(515.499 -152)</Geometry>
+		<TrajectoryArcRef>ign-obj-216</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-269</TrajectoryArcRef>
+		<JunctionRef>ign-obj-162</JunctionRef>
+		<PhysicalRoadRef>ign-obj-3</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-130</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(669.473 -152)</Geometry>
+		<TrajectoryArcRef>ign-obj-232</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-272</TrajectoryArcRef>
+		<JunctionRef>ign-obj-162</JunctionRef>
+		<PhysicalRoadRef>ign-obj-4</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-131</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(853.517 -152)</Geometry>
+		<TrajectoryArcRef>ign-obj-189</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-273</TrajectoryArcRef>
+		<JunctionRef>ign-obj-162</JunctionRef>
+		<PhysicalRoadRef>ign-obj-5</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-132</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(1082.48 -150.745)</Geometry>
+		<TrajectoryArcRef>ign-obj-228</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-267</TrajectoryArcRef>
+		<JunctionRef>ign-obj-166</JunctionRef>
+		<PhysicalRoadRef>ign-obj-6</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-133</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(886 -252.51)</Geometry>
+		<TrajectoryArcRef>ign-obj-175</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-250</TrajectoryArcRef>
+		<JunctionRef>ign-obj-146</JunctionRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-15</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-134</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(852.598 -207.645)</Geometry>
+		<TrajectoryArcRef>ign-obj-248</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-273</TrajectoryArcRef>
+		<JunctionRef>ign-obj-168</JunctionRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-5</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-135</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(665.982 -211.247)</Geometry>
+		<TrajectoryArcRef>ign-obj-233</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-272</TrajectoryArcRef>
+		<JunctionRef>ign-obj-169</JunctionRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-4</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-136</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(623.653 -273.542)</Geometry>
+		<TrajectoryArcRef>ign-obj-252</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-271</TrajectoryArcRef>
+		<JunctionRef>ign-obj-170</JunctionRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-8</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-137</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(652.076 -452.54)</Geometry>
+		<TrajectoryArcRef>ign-obj-240</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-259</TrajectoryArcRef>
+		<JunctionRef>ign-obj-171</JunctionRef>
+		<PhysicalRoadRef>ign-obj-12</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-138</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(856.069 -460.79)</Geometry>
+		<TrajectoryArcRef>ign-obj-243</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-258</TrajectoryArcRef>
+		<JunctionRef>ign-obj-172</JunctionRef>
+		<PhysicalRoadRef>ign-obj-13</PhysicalRoadRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-47</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(354.455 -544.648)</Geometry>
+		<TrajectoryArcRef>ign-obj-211</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-274</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-48</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(456.422 -542.816)</Geometry>
+		<TrajectoryArcRef>ign-obj-203</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-274</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-49</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(625.702 -610.319)</Geometry>
+		<TrajectoryArcRef>ign-obj-178</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-275</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-50</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(762.341 -537.32)</Geometry>
+		<TrajectoryArcRef>ign-obj-195</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-200</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-51</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(1051.67 -341.684)</Geometry>
+		<TrajectoryArcRef>ign-obj-183</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-276</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-52</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(799.696 -439.868)</Geometry>
+		<TrajectoryArcRef>ign-obj-242</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-277</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-53</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(703.812 -433.987)</Geometry>
+		<TrajectoryArcRef>ign-obj-241</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-277</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-54</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(860.751 -297.288)</Geometry>
+		<TrajectoryArcRef>ign-obj-238</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-251</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-55</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(453.387 -433.944)</Geometry>
+		<TrajectoryArcRef>ign-obj-214</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-278</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-56</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(1049.56 -266.828)</Geometry>
+		<TrajectoryArcRef>ign-obj-268</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-276</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-57</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(376.343 -429.745)</Geometry>
+		<TrajectoryArcRef>ign-obj-221</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-278</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-58</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(439.577 -239.518)</Geometry>
+		<TrajectoryArcRef>ign-obj-199</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-279</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-59</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(376.583 -240.131)</Geometry>
+		<TrajectoryArcRef>ign-obj-255</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-279</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-60</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(90.9469 -546.631)</Geometry>
+		<TrajectoryArcRef>ign-obj-180</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-280</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-61</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(96.675 -395.735)</Geometry>
+		<TrajectoryArcRef>ign-obj-280</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-281</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-62</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(99.9786 -308.709)</Geometry>
+		<TrajectoryArcRef>ign-obj-187</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-281</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-63</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(651.167 -294.358)</Geometry>
+		<TrajectoryArcRef>ign-obj-209</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-253</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-64</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(725.048 -136.584)</Geometry>
+		<TrajectoryArcRef>ign-obj-190</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-231</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-65</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(235.055 -137.33)</Geometry>
+		<TrajectoryArcRef>ign-obj-222</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-227</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-66</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(990.631 -613.793)</Geometry>
+		<TrajectoryArcRef>ign-obj-192</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-275</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-67</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(398.046 -137.082)</Geometry>
+		<TrajectoryArcRef>ign-obj-217</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-223</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-68</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(553.048 -136.846)</Geometry>
+		<TrajectoryArcRef>ign-obj-218</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-230</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-69</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(975.196 -136.112)</Geometry>
+		<TrajectoryArcRef>ign-obj-191</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-229</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-70</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(1037.48 -246.469)</Geometry>
+		<TrajectoryArcRef>ign-obj-173</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-174</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-175</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-15</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-71</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(278.406 -588.766)</Geometry>
+		<TrajectoryArcRef>ign-obj-176</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-177</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-178</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-72</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(170.991 -590.505)</Geometry>
+		<TrajectoryArcRef>ign-obj-179</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-180</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-181</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-73</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(1053.85 -419.179)</Geometry>
+		<TrajectoryArcRef>ign-obj-182</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-183</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-184</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-74</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(177.596 -281.663)</Geometry>
+		<TrajectoryArcRef>ign-obj-181</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-185</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-186</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-75</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(124.074 -241.822)</Geometry>
+		<TrajectoryArcRef>ign-obj-185</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-187</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-188</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-76</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(853.74 -136.388)</Geometry>
+		<TrajectoryArcRef>ign-obj-189</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-190</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-191</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-77</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(1092.33 -529.572)</Geometry>
+		<TrajectoryArcRef>ign-obj-192</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-193</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-194</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-78</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(853.621 -534.45)</Geometry>
+		<TrajectoryArcRef>ign-obj-193</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-195</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-196</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-79</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(503.566 -238.896)</Geometry>
+		<TrajectoryArcRef>ign-obj-197</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-198</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-199</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-80</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(649.223 -533.61)</Geometry>
+		<TrajectoryArcRef>ign-obj-200</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-201</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-202</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-81</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(502.916 -541.669)</Geometry>
+		<TrajectoryArcRef>ign-obj-201</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-203</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-204</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-82</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(1082.5 -200.964)</Geometry>
+		<TrajectoryArcRef>ign-obj-205</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-206</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-207</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-83</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(646.311 -406.18)</Geometry>
+		<TrajectoryArcRef>ign-obj-208</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-209</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-210</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-84</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(306.774 -542.812)</Geometry>
+		<TrajectoryArcRef>ign-obj-177</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-211</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-212</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-85</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(505.689 -436.795)</Geometry>
+		<TrajectoryArcRef>ign-obj-213</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-214</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-215</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-86</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(516.085 -136.902)</Geometry>
+		<TrajectoryArcRef>ign-obj-216</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-217</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-218</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-87</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(325.127 -425.988)</Geometry>
+		<TrajectoryArcRef>ign-obj-219</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-220</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-221</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-88</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(315.285 -141.448)</Geometry>
+		<TrajectoryArcRef>ign-obj-222</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-223</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-224</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-89</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(118.123 -139.119)</Geometry>
+		<TrajectoryArcRef>ign-obj-225</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-226</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-227</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-90</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(1082.47 -136.52)</Geometry>
+		<TrajectoryArcRef>ign-obj-226</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-228</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-229</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-91</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(670.232 -139.131)</Geometry>
+		<TrajectoryArcRef>ign-obj-230</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-231</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-232</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-92</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(672.286 -234.12)</Geometry>
+		<TrajectoryArcRef>ign-obj-233</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-234</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-235</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-93</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(859.94 -434.245)</Geometry>
+		<TrajectoryArcRef>ign-obj-236</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-237</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-238</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-94</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(1084.05 -432.046)</Geometry>
+		<TrajectoryArcRef>ign-obj-184</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-205</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-239</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-95</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(658.105 -431.183)</Geometry>
+		<TrajectoryArcRef>ign-obj-210</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-240</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-241</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-96</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(859.937 -434.861)</Geometry>
+		<TrajectoryArcRef>ign-obj-237</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-242</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-243</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-97</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(318.184 -277.049)</Geometry>
+		<TrajectoryArcRef>ign-obj-220</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-244</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-245</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-98</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(517.393 -422.9)</Geometry>
+		<TrajectoryArcRef>ign-obj-215</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-246</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-247</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryNode>
+		<ObjectId>ign-obj-99</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(848.747 -231.279)</Geometry>
+		<TrajectoryArcRef>ign-obj-234</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-248</TrajectoryArcRef>
+		<TrajectoryArcRef>ign-obj-249</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+	</TrajectoryNode>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-173</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1037.48 -246.469, 1038.07 -245.818)</Geometry>
+		<TrajectoryNodeRef>ign-obj-70</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-118</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-15</PhysicalRoadRef>
+		<Length>0.883477</Length>
+		<MinimumWidth>21.7834</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-174</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1037.48 -246.469, 1038.1 -247.052)</Geometry>
+		<TrajectoryNodeRef>ign-obj-70</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-119</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-15</PhysicalRoadRef>
+		<Length>0.850735</Length>
+		<MinimumWidth>21.8044</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-175</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1037.48 -246.469, 886 -252.51)</Geometry>
+		<TrajectoryNodeRef>ign-obj-70</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-133</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-15</PhysicalRoadRef>
+		<Length>151.599</Length>
+		<MinimumWidth>20.4821</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-176</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(278.406 -588.766, 267.98 -588.766, 256 -588.981)</Geometry>
+		<TrajectoryNodeRef>ign-obj-71</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-109</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<Length>22.4083</Length>
+		<MinimumWidth>11.98</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-177</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(278.406 -588.766, 277.903 -553.535, 285.205 -545.892, 303.71 -545.56, 306.774 -542.812)</Geometry>
+		<TrajectoryNodeRef>ign-obj-71</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-84</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<Length>68.4281</Length>
+		<MinimumWidth>14.3673</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-178</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(278.406 -588.766, 278.52 -596.707, 289.121 -607.114, 625.702 -610.319)</Geometry>
+		<TrajectoryNodeRef>ign-obj-71</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-49</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<Length>359.393</Length>
+		<MinimumWidth>12.2199</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-179</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(170.991 -590.505, 176.706 -590.402)</Geometry>
+		<TrajectoryNodeRef>ign-obj-72</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-113</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+		<Length>5.71645</Length>
+		<MinimumWidth>19.4067</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-180</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(170.991 -590.505, 163.748 -598.34, 163.506 -610.058, 162.062 -611.343, 97.4231 -609.563, 88.9276 -599.826, 90.9469 -546.631)</Geometry>
+		<TrajectoryNodeRef>ign-obj-72</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-60</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+		<Length>155.142</Length>
+		<MinimumWidth>9.6362</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-181</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(170.991 -590.505, 164.065 -582.969, 170.134 -288.626, 177.596 -281.663)</Geometry>
+		<TrajectoryNodeRef>ign-obj-72</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-74</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+		<Length>314.847</Length>
+		<MinimumWidth>12.7279</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-182</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1053.85 -419.179, 1053.71 -419.049, 1041.48 -419.409)</Geometry>
+		<TrajectoryNodeRef>ign-obj-73</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-110</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+		<Length>12.4268</Length>
+		<MinimumWidth>12.24</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-183</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1053.85 -419.179, 1053.85 -419.179, 1051.67 -341.684)</Geometry>
+		<TrajectoryNodeRef>ign-obj-73</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-51</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+		<Length>77.5252</Length>
+		<MinimumWidth>11.7108</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-184</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1053.85 -419.179, 1054 -424.677, 1059.17 -430.074, 1084.05 -432.046)</Geometry>
+		<TrajectoryNodeRef>ign-obj-73</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-94</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+		<Length>37.9277</Length>
+		<MinimumWidth>12.3708</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-185</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(177.596 -281.663, 170.438 -273.911, 170.965 -248.338, 169.515 -246.727, 126.342 -244.172, 124.074 -241.822)</Geometry>
+		<TrajectoryNodeRef>ign-obj-74</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-75</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+		<Length>84.8119</Length>
+		<MinimumWidth>12.7193</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-186</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(177.596 -281.663, 183.001 -281.952)</Geometry>
+		<TrajectoryNodeRef>ign-obj-74</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-114</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+		<Length>5.41239</Length>
+		<MinimumWidth>20.0152</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-187</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(124.074 -241.822, 121.946 -243.912, 106.052 -242.971, 102.35 -246.237, 99.9786 -308.709)</Geometry>
+		<TrajectoryNodeRef>ign-obj-75</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-62</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+		<Length>86.3568</Length>
+		<MinimumWidth>8.99392</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-188</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(124.074 -241.822, 123.446 -230.982)</Geometry>
+		<TrajectoryNodeRef>ign-obj-75</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-112</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+		<Length>10.8591</Length>
+		<MinimumWidth>15.2352</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-189</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(853.74 -136.388, 853.74 -138.499, 853.517 -152)</Geometry>
+		<TrajectoryNodeRef>ign-obj-76</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-131</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<Length>15.6135</Length>
+		<MinimumWidth>13.5012</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-190</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(853.74 -136.388, 725.048 -136.584)</Geometry>
+		<TrajectoryNodeRef>ign-obj-76</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-64</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<Length>128.692</Length>
+		<MinimumWidth>15.4159</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-191</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(853.74 -136.388, 956.921 -136.231, 975.196 -136.112)</Geometry>
+		<TrajectoryNodeRef>ign-obj-76</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-69</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<Length>121.457</Length>
+		<MinimumWidth>15.6116</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-192</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1092.33 -529.572, 1094.26 -531.357, 1106.1 -531.144, 1116.37 -542.364, 1114.95 -598.286, 1096.42 -614.8, 990.631 -613.793)</Geometry>
+		<TrajectoryNodeRef>ign-obj-77</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-66</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<Length>216.237</Length>
+		<MinimumWidth>12.6351</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-193</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1092.33 -529.572, 1090.66 -531.422, 854.811 -535.659, 853.621 -534.45)</Geometry>
+		<TrajectoryNodeRef>ign-obj-77</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-78</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<Length>240.078</Length>
+		<MinimumWidth>13.5824</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-194</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1092.33 -529.572, 1091.51 -517.823)</Geometry>
+		<TrajectoryNodeRef>ign-obj-77</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-104</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<Length>11.7784</Length>
+		<MinimumWidth>15.3998</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-195</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(853.621 -534.45, 852.351 -535.703, 762.341 -537.32)</Geometry>
+		<TrajectoryNodeRef>ign-obj-78</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-50</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<Length>91.808</Length>
+		<MinimumWidth>13.8201</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-196</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(853.621 -534.45, 854.04 -521.852)</Geometry>
+		<TrajectoryNodeRef>ign-obj-78</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-105</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<Length>12.6051</Length>
+		<MinimumWidth>15.0484</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-197</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(503.566 -238.896, 514.957 -227.457, 515.057 -213.563)</Geometry>
+		<TrajectoryNodeRef>ign-obj-79</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-121</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<Length>30.0373</Length>
+		<MinimumWidth>13.8894</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-198</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(503.566 -238.896, 503.566 -238.896, 518.105 -238.754, 519.086 -239.759, 518.862 -263.951, 518.862 -263.951)</Geometry>
+		<TrajectoryNodeRef>ign-obj-79</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-102</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<Length>40.1369</Length>
+		<MinimumWidth>23.862</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-199</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(503.566 -238.896, 439.577 -239.518)</Geometry>
+		<TrajectoryNodeRef>ign-obj-79</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-58</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<Length>63.9917</Length>
+		<MinimumWidth>24.4819</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-200</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(649.223 -533.61, 654.961 -539.249, 762.341 -537.32)</Geometry>
+		<TrajectoryNodeRef>ign-obj-80</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-50</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<Length>115.443</Length>
+		<MinimumWidth>13.9099</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-201</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(649.223 -533.61, 643.071 -539.463, 503.216 -541.975, 502.916 -541.669)</Geometry>
+		<TrajectoryNodeRef>ign-obj-80</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-81</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<Length>148.797</Length>
+		<MinimumWidth>14.0288</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-202</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(649.223 -533.61, 649.514 -525.323)</Geometry>
+		<TrajectoryNodeRef>ign-obj-80</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-106</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<Length>8.29265</Length>
+		<MinimumWidth>19.485</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-203</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(502.916 -541.669, 502.592 -541.987, 456.422 -542.816)</Geometry>
+		<TrajectoryNodeRef>ign-obj-81</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-48</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<Length>46.6316</Length>
+		<MinimumWidth>14.1689</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-204</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(502.916 -541.669, 503.488 -527.801)</Geometry>
+		<TrajectoryNodeRef>ign-obj-81</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-107</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<Length>13.8804</Length>
+		<MinimumWidth>14.4803</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-205</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1082.5 -200.964, 1089.75 -207.706, 1111.8 -208.207, 1112.38 -208.761, 1124.77 -427.733, 1117.67 -434.711, 1084.05 -432.046, 1084.05 -432.046)</Geometry>
+		<TrajectoryNodeRef>ign-obj-82</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-94</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+		<Length>295.767</Length>
+		<MinimumWidth>10.9595</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-206</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1082.5 -200.964, 1075.61 -207.385, 1052.45 -206.859, 1048 -211.399, 1048.65 -234.259, 1038.07 -245.818)</Geometry>
+		<TrajectoryNodeRef>ign-obj-82</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-118</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+		<Length>77.4705</Length>
+		<MinimumWidth>10.6012</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-207</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1082.5 -200.964, 1082.5 -193.068)</Geometry>
+		<TrajectoryNodeRef>ign-obj-82</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-117</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+		<Length>7.89582</Length>
+		<MinimumWidth>20.4729</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-208</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(646.311 -406.18, 629.876 -422.773, 615.521 -423.033)</Geometry>
+		<TrajectoryNodeRef>ign-obj-83</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-115</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>37.7121</Length>
+		<MinimumWidth>14.3192</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-209</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(646.311 -406.18, 651.167 -294.358)</Geometry>
+		<TrajectoryNodeRef>ign-obj-83</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-63</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>111.927</Length>
+		<MinimumWidth>28.6047</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-210</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(646.311 -406.18, 646.311 -406.18, 645.614 -422.249, 653.667 -430.911, 658.105 -431.183, 658.105 -431.183)</Geometry>
+		<TrajectoryNodeRef>ign-obj-83</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-95</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>32.3576</Length>
+		<MinimumWidth>21.5827</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-211</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(306.774 -542.812, 309.252 -545.46, 354.455 -544.648)</Geometry>
+		<TrajectoryNodeRef>ign-obj-84</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-47</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<Length>48.8368</Length>
+		<MinimumWidth>14.3167</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-212</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(306.774 -542.812, 308.021 -531.117)</Geometry>
+		<TrajectoryNodeRef>ign-obj-84</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-108</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<Length>11.7613</Length>
+		<MinimumWidth>16.8058</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-213</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(505.689 -436.795, 507.173 -438.398, 506.576 -452.878)</Geometry>
+		<TrajectoryNodeRef>ign-obj-85</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-125</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<Length>16.6768</Length>
+		<MinimumWidth>14.4905</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-214</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(505.689 -436.795, 453.387 -433.944)</Geometry>
+		<TrajectoryNodeRef>ign-obj-85</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-55</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<Length>52.3794</Length>
+		<MinimumWidth>16.0411</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-215</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(505.689 -436.795, 505.689 -436.795, 512.032 -437.14, 517.309 -432.016, 517.393 -422.9, 517.393 -422.9)</Geometry>
+		<TrajectoryNodeRef>ign-obj-85</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-98</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<Length>22.8253</Length>
+		<MinimumWidth>15.922</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-216</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(516.085 -136.902, 515.604 -137.383, 515.499 -152)</Geometry>
+		<TrajectoryNodeRef>ign-obj-86</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-129</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<Length>15.2971</Length>
+		<MinimumWidth>14.4992</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-217</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(516.085 -136.902, 398.046 -137.082)</Geometry>
+		<TrajectoryNodeRef>ign-obj-86</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-67</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<Length>118.039</Length>
+		<MinimumWidth>14.9184</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-218</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(516.085 -136.902, 553.048 -136.846)</Geometry>
+		<TrajectoryNodeRef>ign-obj-86</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-68</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<Length>36.964</Length>
+		<MinimumWidth>15.098</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-219</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(325.127 -425.988, 318.65 -431.485, 317.09 -446.11)</Geometry>
+		<TrajectoryNodeRef>ign-obj-87</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-124</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<Length>23.2035</Length>
+		<MinimumWidth>14.6721</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-220</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(325.127 -425.988, 325.127 -425.988, 315.958 -416.22, 318.184 -277.049, 318.184 -277.049)</Geometry>
+		<TrajectoryNodeRef>ign-obj-87</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-97</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<Length>152.585</Length>
+		<MinimumWidth>20.3966</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-221</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(325.127 -425.988, 326.082 -427.005, 376.343 -429.745)</Geometry>
+		<TrajectoryNodeRef>ign-obj-87</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-57</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<Length>51.7312</Length>
+		<MinimumWidth>18.47</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-222</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(315.285 -141.448, 310.704 -137.214, 235.055 -137.33)</Geometry>
+		<TrajectoryNodeRef>ign-obj-88</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-65</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<Length>81.8866</Length>
+		<MinimumWidth>14.6704</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-223</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(315.285 -141.448, 319.267 -137.201, 398.046 -137.082)</Geometry>
+		<TrajectoryNodeRef>ign-obj-88</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-67</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<Length>84.5996</Length>
+		<MinimumWidth>14.7985</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-224</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(315.285 -141.448, 316.01 -152)</Geometry>
+		<TrajectoryNodeRef>ign-obj-88</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-128</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<Length>10.5772</Length>
+		<MinimumWidth>18.9549</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-225</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(118.123 -139.119, 118.957 -153.511)</Geometry>
+		<TrajectoryNodeRef>ign-obj-89</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-127</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<Length>14.4161</Length>
+		<MinimumWidth>15.9825</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-226</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(118.123 -139.119, 117.219 -138.276, 108.535 -138.35, 103.636 -133.783, 100.285 -39.9932, 103.053 -37.0623, 1122.22 -31.9677, 1136.35 -46.4595, 1133.49 -125.611, 1123.8 -135.143, 1083.51 -135.406, 1082.47 -136.52)</Geometry>
+		<TrajectoryNodeRef>ign-obj-89</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-90</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<Length>1288.53</Length>
+		<MinimumWidth>10.93</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-227</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(118.123 -139.119, 118.937 -138.261, 226.898 -137.342, 235.055 -137.33)</Geometry>
+		<TrajectoryNodeRef>ign-obj-89</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-65</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<Length>117.305</Length>
+		<MinimumWidth>14.658</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-228</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1082.47 -136.52, 1082.48 -150.745)</Geometry>
+		<TrajectoryNodeRef>ign-obj-90</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-132</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<Length>14.2255</Length>
+		<MinimumWidth>16.439</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-229</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1082.47 -136.52, 1081.45 -135.419, 975.196 -136.112)</Geometry>
+		<TrajectoryNodeRef>ign-obj-90</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-69</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<Length>107.757</Length>
+		<MinimumWidth>15.3354</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-230</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(670.232 -139.131, 667.844 -136.671, 553.048 -136.846)</Geometry>
+		<TrajectoryNodeRef>ign-obj-91</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-68</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<Length>118.224</Length>
+		<MinimumWidth>15.1542</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-231</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(670.232 -139.131, 672.91 -136.663, 725.048 -136.584)</Geometry>
+		<TrajectoryNodeRef>ign-obj-91</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-64</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<Length>55.7801</Length>
+		<MinimumWidth>15.3365</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-232</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(670.232 -139.131, 669.473 -152)</Geometry>
+		<TrajectoryNodeRef>ign-obj-91</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-130</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-22</PhysicalRoadRef>
+		<Length>12.8909</Length>
+		<MinimumWidth>17.4638</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-233</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(672.286 -234.12, 665.066 -226.799, 665.982 -211.247)</Geometry>
+		<TrajectoryNodeRef>ign-obj-92</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-135</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>25.8617</Length>
+		<MinimumWidth>15.5314</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-234</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(672.286 -234.12, 848.747 -231.279)</Geometry>
+		<TrajectoryNodeRef>ign-obj-92</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-99</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>176.484</Length>
+		<MinimumWidth>22.9902</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-235</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(672.286 -234.12, 672.286 -234.12, 658.777 -234.338, 653.55 -239.497, 651.57 -285.088, 651.57 -285.088)</Geometry>
+		<TrajectoryNodeRef>ign-obj-92</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-101</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>66.4896</Length>
+		<MinimumWidth>22.947</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-236</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(859.94 -434.245, 869.645 -424.471, 886 -423.989)</Geometry>
+		<TrajectoryNodeRef>ign-obj-93</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-111</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>30.1358</Length>
+		<MinimumWidth>15.9891</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-237</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(859.94 -434.245, 859.937 -434.861)</Geometry>
+		<TrajectoryNodeRef>ign-obj-93</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-96</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>0.615848</Length>
+		<MinimumWidth>26.0597</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-238</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(859.94 -434.245, 860.751 -297.288)</Geometry>
+		<TrajectoryNodeRef>ign-obj-93</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-54</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>136.959</Length>
+		<MinimumWidth>25.2493</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-239</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1084.05 -432.046, 1085.57 -433.627, 1086.74 -450.239)</Geometry>
+		<TrajectoryNodeRef>ign-obj-94</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-120</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+		<Length>18.8514</Length>
+		<MinimumWidth>16.2494</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-240</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(658.105 -431.183, 652.656 -436.067, 652.076 -452.54)</Geometry>
+		<TrajectoryNodeRef>ign-obj-95</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-137</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>23.8</Length>
+		<MinimumWidth>16.4828</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-241</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(658.105 -431.183, 703.812 -433.987)</Geometry>
+		<TrajectoryNodeRef>ign-obj-95</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-53</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>45.7926</Length>
+		<MinimumWidth>20.6286</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-242</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(859.937 -434.861, 851.325 -443.034, 799.696 -439.868)</Geometry>
+		<TrajectoryNodeRef>ign-obj-96</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-52</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>63.5984</Length>
+		<MinimumWidth>17.5493</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-243</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(859.937 -434.861, 863.85 -438.936, 863.85 -438.936, 856.571 -445.701, 856.069 -460.79)</Geometry>
+		<TrajectoryNodeRef>ign-obj-96</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-138</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>30.6833</Length>
+		<MinimumWidth>15.0884</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-244</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(318.184 -277.049, 306.065 -288.546, 286.694 -287.508)</Geometry>
+		<TrajectoryNodeRef>ign-obj-97</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-123</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<Length>36.1035</Length>
+		<MinimumWidth>19.3753</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-245</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(318.184 -277.049, 318.63 -249.158)</Geometry>
+		<TrajectoryNodeRef>ign-obj-97</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-103</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<Length>27.8951</Length>
+		<MinimumWidth>31.4439</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-246</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(517.393 -422.9, 519.338 -424.77, 538.736 -424.42)</Geometry>
+		<TrajectoryNodeRef>ign-obj-98</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-116</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<Length>22.0996</Length>
+		<MinimumWidth>18.495</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-247</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(517.393 -422.9, 518.862 -263.951)</Geometry>
+		<TrajectoryNodeRef>ign-obj-98</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-102</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<Length>158.956</Length>
+		<MinimumWidth>21.3743</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-248</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(848.747 -231.279, 852.271 -227.484, 852.598 -207.645)</Geometry>
+		<TrajectoryNodeRef>ign-obj-99</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-134</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>25.0202</Length>
+		<MinimumWidth>18.4185</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-249</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(848.747 -231.279, 848.747 -231.279, 859.875 -231.099, 861.135 -232.35, 861.011 -253.317)</Geometry>
+		<TrajectoryNodeRef>ign-obj-99</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-100</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>33.872</Length>
+		<MinimumWidth>23.555</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-250</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(861.011 -253.317, 865.774 -253.317, 886 -252.51)</Geometry>
+		<TrajectoryNodeRef>ign-obj-100</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-133</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>25.0052</Length>
+		<MinimumWidth>20.2256</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-251</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(861.011 -253.317, 860.751 -297.288)</Geometry>
+		<TrajectoryNodeRef>ign-obj-100</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-54</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>43.9723</Length>
+		<MinimumWidth>24.9892</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-252</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(651.57 -285.088, 643.926 -275.948, 623.653 -273.542)</Geometry>
+		<TrajectoryNodeRef>ign-obj-101</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-136</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>32.3305</Length>
+		<MinimumWidth>20.3737</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-253</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(651.57 -285.088, 651.167 -294.358)</Geometry>
+		<TrajectoryNodeRef>ign-obj-101</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-63</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>9.27941</Length>
+		<MinimumWidth>28.5032</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-254</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(518.862 -263.951, 521.761 -261.453, 542.732 -263.942)</Geometry>
+		<TrajectoryNodeRef>ign-obj-102</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-126</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<Length>24.9444</Length>
+		<MinimumWidth>20.9145</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-255</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(318.63 -249.158, 327.247 -240.611, 376.583 -240.131)</Geometry>
+		<TrajectoryNodeRef>ign-obj-103</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-59</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<Length>61.4751</Length>
+		<MinimumWidth>23.3893</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-256</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(318.63 -249.158, 313.745 -244.345, 313.745 -244.345, 321.751 -235.666, 320.494 -217.348)</Geometry>
+		<TrajectoryNodeRef>ign-obj-103</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-122</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<Length>37.0264</Length>
+		<MinimumWidth>18.3389</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-257</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1091.51 -517.823, 1086.74 -450.239)</Geometry>
+		<TrajectoryNodeRef>ign-obj-104</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-120</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-23</PhysicalRoadRef>
+		<Length>67.7516</Length>
+		<MinimumWidth>15.5256</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-258</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(854.04 -521.852, 856.069 -460.79)</Geometry>
+		<TrajectoryNodeRef>ign-obj-105</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-138</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-13</PhysicalRoadRef>
+		<Length>61.0964</Length>
+		<MinimumWidth>15.0552</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-259</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(649.514 -525.323, 652.076 -452.54)</Geometry>
+		<TrajectoryNodeRef>ign-obj-106</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-137</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-12</PhysicalRoadRef>
+		<Length>72.8279</Length>
+		<MinimumWidth>17.0369</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-260</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(503.488 -527.801, 506.576 -452.878)</Geometry>
+		<TrajectoryNodeRef>ign-obj-107</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-125</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-11</PhysicalRoadRef>
+		<Length>74.9864</Length>
+		<MinimumWidth>14.4819</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-261</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(308.021 -531.117, 317.09 -446.11)</Geometry>
+		<TrajectoryNodeRef>ign-obj-108</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-124</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-10</PhysicalRoadRef>
+		<Length>85.4893</Length>
+		<MinimumWidth>14.9853</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-262</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(256 -588.981, 176.706 -590.402)</Geometry>
+		<TrajectoryNodeRef>ign-obj-109</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-113</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-16</PhysicalRoadRef>
+		<Length>79.3067</Length>
+		<MinimumWidth>12.9548</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-263</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1041.48 -419.409, 886 -423.989)</Geometry>
+		<TrajectoryNodeRef>ign-obj-110</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-111</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-14</PhysicalRoadRef>
+		<Length>155.546</Length>
+		<MinimumWidth>12.5135</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-264</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(123.446 -230.982, 118.957 -153.511)</Geometry>
+		<TrajectoryNodeRef>ign-obj-112</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-127</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-1</PhysicalRoadRef>
+		<Length>77.6004</Length>
+		<MinimumWidth>15.3269</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-265</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(183.001 -281.952, 286.694 -287.508)</Geometry>
+		<TrajectoryNodeRef>ign-obj-114</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-123</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-7</PhysicalRoadRef>
+		<Length>103.842</Length>
+		<MinimumWidth>19.476</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-266</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(615.521 -423.033, 538.736 -424.42)</Geometry>
+		<TrajectoryNodeRef>ign-obj-115</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-116</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-9</PhysicalRoadRef>
+		<Length>76.7973</Length>
+		<MinimumWidth>14.9769</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-267</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1082.5 -193.068, 1082.48 -150.745)</Geometry>
+		<TrajectoryNodeRef>ign-obj-117</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-132</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-6</PhysicalRoadRef>
+		<Length>42.3229</Length>
+		<MinimumWidth>17.4537</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-268</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1038.1 -247.052, 1049.3 -257.561, 1049.56 -266.828)</Geometry>
+		<TrajectoryNodeRef>ign-obj-119</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-56</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+		<Length>24.6311</Length>
+		<MinimumWidth>10.9943</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-269</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(515.057 -213.563, 515.499 -152)</Geometry>
+		<TrajectoryNodeRef>ign-obj-121</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-129</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-3</PhysicalRoadRef>
+		<Length>61.5647</Length>
+		<MinimumWidth>14.0016</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-270</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(320.494 -217.348, 316.01 -152)</Geometry>
+		<TrajectoryNodeRef>ign-obj-122</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-128</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-2</PhysicalRoadRef>
+		<Length>65.5021</Length>
+		<MinimumWidth>18.4737</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-271</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(542.732 -263.942, 623.653 -273.542)</Geometry>
+		<TrajectoryNodeRef>ign-obj-126</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-136</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-8</PhysicalRoadRef>
+		<Length>81.4883</Length>
+		<MinimumWidth>20.4821</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-272</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(669.473 -152, 665.982 -211.247)</Geometry>
+		<TrajectoryNodeRef>ign-obj-130</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-135</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-4</PhysicalRoadRef>
+		<Length>59.3502</Length>
+		<MinimumWidth>15.9332</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-273</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(853.517 -152, 852.598 -207.645)</Geometry>
+		<TrajectoryNodeRef>ign-obj-131</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-134</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-5</PhysicalRoadRef>
+		<Length>55.6524</Length>
+		<MinimumWidth>14.4613</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-274</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(354.455 -544.648, 456.422 -542.816)</Geometry>
+		<TrajectoryNodeRef>ign-obj-47</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-48</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<Length>101.984</Length>
+		<MinimumWidth>14.215</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-275</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(625.702 -610.319, 990.631 -613.793)</Geometry>
+		<TrajectoryNodeRef>ign-obj-49</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-66</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-21</PhysicalRoadRef>
+		<Length>364.945</Length>
+		<MinimumWidth>12.4192</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-276</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(1051.67 -341.684, 1049.56 -266.828)</Geometry>
+		<TrajectoryNodeRef>ign-obj-51</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-56</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-19</PhysicalRoadRef>
+		<Length>74.886</Length>
+		<MinimumWidth>11.0733</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-277</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(799.696 -439.868, 703.812 -433.987)</Geometry>
+		<TrajectoryNodeRef>ign-obj-52</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-53</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-18</PhysicalRoadRef>
+		<Length>96.0648</Length>
+		<MinimumWidth>18.627</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-278</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(453.387 -433.944, 376.343 -429.745)</Geometry>
+		<TrajectoryNodeRef>ign-obj-55</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-57</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<Length>77.158</Length>
+		<MinimumWidth>17.0233</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-279</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(439.577 -239.518, 376.583 -240.131)</Geometry>
+		<TrajectoryNodeRef>ign-obj-58</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-59</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-17</PhysicalRoadRef>
+		<Length>62.997</Length>
+		<MinimumWidth>23.8692</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-280</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(90.9469 -546.631, 96.675 -395.735)</Geometry>
+		<TrajectoryNodeRef>ign-obj-60</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-61</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+		<Length>151.005</Length>
+		<MinimumWidth>9.31356</MinimumWidth>
+	</TrajectoryArc>
+	<TrajectoryArc>
+		<ObjectId>ign-obj-281</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(96.675 -395.735, 99.9786 -308.709)</Geometry>
+		<TrajectoryNodeRef>ign-obj-61</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-62</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-20</PhysicalRoadRef>
+		<Length>87.0891</Length>
+		<MinimumWidth>9.12749</MinimumWidth>
+	</TrajectoryArc>
 </Referential>

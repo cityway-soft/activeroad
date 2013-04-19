@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
  
-  s.add_development_dependency "guard", "~> 1.5.0"
+  s.add_development_dependency "guard"
   s.add_development_dependency "guard-bundler"
   s.add_development_dependency "guard-rspec"
   s.add_development_dependency "database_cleaner"
@@ -28,10 +28,9 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'rails', '~> 3.2.8'
   s.add_dependency 'activerecord'
-  s.add_dependency 'pg', '>= 0.11.0'
-  s.add_dependency 'shortest_path'
+  s.add_dependency 'georuby-ext', "0.0.2"
+  s.add_dependency 'pg', '>= 0.11.0'  
   s.add_dependency 'ar_pg_array'
-  s.add_dependency "pg"
   s.add_dependency 'nokogiri'
   s.add_dependency 'saxerator'
 end

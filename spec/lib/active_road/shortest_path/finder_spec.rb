@@ -15,7 +15,6 @@ describe ActiveRoad::ShortestPath::Finder do
   subject { ActiveRoad::ShortestPath::Finder.new source, destination }
 
   it "should find a solution between first and last road" do
-    puts subject.path
     subject.path.should_not be_blank
   end
   
