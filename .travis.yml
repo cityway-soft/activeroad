@@ -1,0 +1,12 @@
+language: ruby
+rvm:
+  - 1.8.7
+env:
+  - DB=postgresql
+  - POSTGIS=1.5
+before_install: ./travis/before_install.sh
+before_script: 
+  - ./travis/before_script.sh
+  - "rake ci:prepare"
+  - "rake db:create"
+script: "rake ci:build"

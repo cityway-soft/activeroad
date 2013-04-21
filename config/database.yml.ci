@@ -1,14 +1,12 @@
 development: 
   adapter: postgresql
   database: activeroad
-  username: roads
-  password: roads0
+  username: postgres
   template: template_postgis
 
 test: 
   adapter: postgresql
   database: activeroad_test
-  username: roads
-  password: roads0
+  username: postgres
   template: template_postgis
 
