@@ -33,4 +33,6 @@ Gem::Specification.new do |s|
   s.add_dependency 'ar_pg_array'
   s.add_dependency 'nokogiri'
   s.add_dependency 'saxerator'
+  s.add_dependency 'shortest_path', '0.0.1'
+  s.add_dependency 'dr-postgis_adapter', '0.8.1'
 end
