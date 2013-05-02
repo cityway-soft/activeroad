@@ -4,6 +4,7 @@ source "http://rubygems.org"
 gemspec
 
 # gem 'activeosm', :git => 'git://github.com/dryade/activeosm', :ref => '71f4cc9c6477ec5fbc090576f4dd3b20666b6722' #, :path => '~/Projects/ActiveOSM' 
+gem 'dr-postgis_adapter', '0.8.1', :require => "postgis_adapter"
 
 
 group :development do
