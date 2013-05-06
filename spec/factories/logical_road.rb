@@ -1,4 +1,8 @@
-Factory.define :logical_road, :class => ActiveRoad::LogicalRoad do |f|
-  f.sequence(:objectid) { |n| "logicalroad::#{n}" }
-  f.sequence(:name) { |n| "Road #{n}" }
+FactoryGirl.define do
+
+  factory :logical_road, :class => ActiveRoad::LogicalRoad do
+    sequence(:objectid) { |n|  "logicalroad::#{n}" }
+    sequence(:name) { |n|  "Road #{n}" }
+  end
+
 end

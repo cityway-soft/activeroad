@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe ActiveRoad::PhysicalRoadConditionnalCost do
 
-  subject { Factory(:physical_road_conditionnal_cost) }
+  subject { create(:physical_road_conditionnal_cost) }
 
   it "should have tags" do
     subject.should respond_to(:tags)

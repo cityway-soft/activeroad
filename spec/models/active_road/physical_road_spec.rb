@@ -2,10 +2,10 @@ require 'spec_helper'
 
 describe ActiveRoad::PhysicalRoad do
 
-  subject { Factory(:physical_road) }
+  subject { create(:physical_road) }
 
   it "should validate objectid uniqueness" do
-    other_road = Factory.build :physical_road, :objectid => subject.objectid 
+    other_road = build :physical_road, :objectid => subject.objectid 
     other_road.should_not be_valid
   end
 

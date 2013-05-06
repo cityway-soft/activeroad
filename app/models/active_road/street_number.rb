@@ -1,4 +1,3 @@
-# -*- coding: undecided -*-
 class ActiveRoad::StreetNumber < ActiveRoad::Base
   attr_accessible :objectid, :number, :geometry, :physical_road_id, :location_on_road
 

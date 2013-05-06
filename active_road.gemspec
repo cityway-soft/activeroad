@@ -22,8 +22,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "guard-bundler"
   s.add_development_dependency "guard-rspec"
   s.add_development_dependency "database_cleaner"
-  s.add_development_dependency "factory_girl_rails", '1.7.0'
-  s.add_development_dependency "rcov"
+  s.add_development_dependency "factory_girl_rails", "~> 4.2.1"
   s.add_development_dependency "rspec-rails", "~> 2.11.4"
 
   s.add_dependency 'rails', '~> 3.2.8'

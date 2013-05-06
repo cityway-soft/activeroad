@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe ActiveRoad::StreetNumber do
 
-  subject { Factory :street_number }
+  subject { create :street_number }
 
   it "should have a number" do
     subject.should respond_to(:number)
@@ -11,7 +11,7 @@ describe ActiveRoad::StreetNumber do
   describe "#previous" do
 
     it "should find previous StreetNumber in the same road" do
-      other_number = Factory(:street_number, :physical_road => subject.road, :number => subject.number - 50)
+      other_number = create(:street_number, :physical_road => subject.road, :number => subject.number - 50)
       subject.previous.should == other_number
     end
     
@@ -20,7 +20,7 @@ describe ActiveRoad::StreetNumber do
   describe "#next" do
 
     it "should find next StreetNumber in the same road" do
-      other_number = Factory(:street_number, :physical_road => subject.road, :number => subject.number + 50)
+      other_number = create(:street_number, :physical_road => subject.road, :number => subject.number + 50)
       subject.next.should == other_number
     end
     
@@ -34,7 +34,7 @@ describe ActiveRoad::StreetNumber do
     end
 
     it "should be comptured when not specified at creation" do
-      Factory(:street_number, :location_on_road => nil).location_on_road.should_not be_nil
+      create(:street_number, :location_on_road => nil).location_on_road.should_not be_nil
     end
 
     context "when no location is stored" do

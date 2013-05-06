@@ -73,12 +73,12 @@ class ActiveRoad::SaxImporter
     end
 
     def kind
-      tags_array =  xml['Tags'].name.split(",")
+      tags_array =  xml['Tags'].to_s.split(",")
       (tags_array.present? && tags_array.include?("rail") ) ? "rail" : "road"
     end
 
     def tags
-      xml['Tags'].name
+      xml['Tags'].to_s
     end
     
     def import
@@ -90,30 +90,33 @@ class ActiveRoad::SaxImporter
   class TrajectoryNodeXml < ElementXml
     
     def tags
-      xml['Tags']
+      xml['Tags'].to_s
     end
 
     # def height
     #   xml['Height'] || 0
     # end
 
-    def physical_road 
-      ActiveRoad::PhysicalRoad.find_by_objectid( physical_road_id )
-    end
+    # def physical_road 
+    #   ActiveRoad::PhysicalRoad.find_by_objectid( physical_road_id )
+    # end
 
-    def physical_road_id
-      xml['PhysicalRoadRef']
-    end
+    # def physical_road_id
+    #   xml['PhysicalRoadRef']
+    # end    
 
-    def trajectory_arc_refs
+    def physical_roads
+      physical_roads = []
       xml['TrajectoryArcRef'].each do |trajectory_arc_ref|
-        #puts trajectory_arc_ref
+        physical_road = ActiveRoad::PhysicalRoad.find_by_objectid( trajectory_arc_ref.to_s )
+        physical_roads << physical_road if physical_road.present?        
       end
+      physical_roads
     end 
 
     def import
-       trajectory_arc_refs
-      ActiveRoad::Junction.create :objectid => objectid, :tags => tags, :geometry => geometry
+      junction = ActiveRoad::Junction.create :objectid => objectid, :tags => tags, :geometry => geometry
+      junction.physical_roads << physical_roads
     end
     
   end
