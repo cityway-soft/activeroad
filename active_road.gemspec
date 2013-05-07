@@ -5,13 +5,11 @@ require "active_road/version"
 Gem::Specification.new do |s|
   s.name        = "active_road"
   s.version     = ActiveRoad::VERSION
-  s.authors     = ["Alban Peignier"]
-  s.email       = ["alban.peignier@dryade.net"]
+  s.authors     = ["Alban Peignier", "Luc Donnet"]
+  s.email       = ["alban@tryphon.eu", "luc.donnet@free.fr"]
   s.homepage    = ""
-  s.summary     = %q{Manage roads for Rails}
+  s.summary     = %q{Rails engine to manage roads and rails model}
   s.description = %q{Find street numbers and road ways}
-
-  s.rubyforge_project = "activeroad"
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
@@ -21,15 +19,14 @@ Gem::Specification.new do |s|
   s.add_development_dependency "guard"
   s.add_development_dependency "guard-bundler"
   s.add_development_dependency "guard-rspec"
-  s.add_development_dependency "database_cleaner"
   s.add_development_dependency "factory_girl_rails", "~> 4.2.1"
   s.add_development_dependency "rspec-rails", "~> 2.11.4"
 
-  s.add_dependency 'rails', '~> 3.2.8'
+  s.add_dependency 'rails', '~> 3.2.13'
   s.add_dependency 'activerecord'
+  s.add_dependency 'activerecord-postgres-hstore'
   s.add_dependency 'georuby-ext', "0.0.2"
-  s.add_dependency 'pg', '>= 0.11.0'  
-  s.add_dependency 'ar_pg_array'
+  s.add_dependency 'pg', '~> 0.15.1'  
   s.add_dependency 'nokogiri'
   s.add_dependency 'saxerator'
   s.add_dependency 'shortest_path', '0.0.1'
