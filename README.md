@@ -1,6 +1,6 @@
 # ActiveRoad [![Build Status](https://travis-ci.org/dryade/activeroad.png)](http://travis-ci.org/dryade/activeroad?branch=master) [![Dependency Status](https://gemnasium.com/dryade/activeroad.png)](https://gemnasium.com/dryade/activeroad) [![Code Climate](https://codeclimate.com/github/dryade/activeroad.png)](https://codeclimate.com/github/dryade/activeroad)
 
-Model for roads and rails description
+Rails engine with a model for roads and rails description
 
 Requirements
 ------------

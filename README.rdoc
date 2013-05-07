@@ -1,3 +1,0 @@
-= ActiveRoad
-
-This project rocks !!!
