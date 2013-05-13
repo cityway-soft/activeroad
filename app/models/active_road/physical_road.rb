@@ -1,5 +1,8 @@
+require "activerecord-postgres-hstore"
+
 module ActiveRoad
   class PhysicalRoad < ActiveRoad::Base
+    serialize :tags, ActiveRecord::Coders::Hstore
     attr_accessible :objectid, :kind, :tags, :geometry, :logical_road_id
 
     validates_uniqueness_of :objectid
@@ -12,6 +15,19 @@ module ActiveRoad
 
     acts_as_geom :geometry => :line_string
     delegate :locate_point, :interpolate_point, :length, :to => :geometry
+
+    %w[speed].each do |key|
+      attr_accessible key
+      scope "has_#{key}", lambda { |value| where("properties @> hstore(?, ?)", key, value) }      
+      define_method(key) do
+        properties && properties[key]
+      end
+      
+      define_method("#{key}=") do |value|
+        self.properties = (properties || {}).merge(key => value)
+      end
+    end
+    
 
     def name
       logical_road.try(:name) or objectid

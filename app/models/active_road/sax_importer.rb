@@ -73,12 +73,14 @@ class ActiveRoad::SaxImporter
     end
 
     def kind
-      tags_array =  xml['Tags'].to_s.split(",")
-      (tags_array.present? && tags_array.include?("rail") ) ? "rail" : "road"
+      "road" 
+      #tags_array =  xml['Tags'].to_s.split(",")
+      #(tags_array.present? && tags_array.include?("rail") ) ? "rail" : "road"
     end
 
     def tags
-      xml['Tags'].to_s
+      {}
+      #xml['Tags'].to_s
     end
     
     def import
@@ -90,7 +92,7 @@ class ActiveRoad::SaxImporter
   class TrajectoryNodeXml < ElementXml
     
     def tags
-      xml['Tags'].to_s
+      {} #xml['Tags'].to_s
     end
 
     # def height
