@@ -3,11 +3,13 @@
 #   - tags to find selected physical roads 
 #
 # A classic result would be with a point for departure and arrival : 
-# Paths ==> Path 1      : Access Link => Access Point
-#       |=> Path 2      : Access Point => Junction
-#       |=> Path ...    : Junction => Junction 
-#       |=> Path n-1    : Junction => Access Point 
-#       |=> Path n      : Access Point => Access Link 
+# Paths ==> 1      : Departure Point
+#       |=> 2      : Access Link
+#       |=> 3      : Path between AccessPoint and a Junction
+#       |=> ...    : Path between a Junction and another Junction 
+#       |=> n-2    : Path between a Junction and an Access Point 
+#       |=> n-1    : Access Link
+#       |=> n      : Arrival Point
 
 
 require 'shortest_path/finder'
