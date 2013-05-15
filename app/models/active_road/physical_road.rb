@@ -16,7 +16,7 @@ module ActiveRoad
     acts_as_geom :geometry => :line_string
     delegate :locate_point, :interpolate_point, :length, :to => :geometry
 
-    %w[speed].each do |key|
+    %w[max_speed, max_slope].each do |key|
       attr_accessible key
       scope "has_#{key}", lambda { |value| where("properties @> hstore(?, ?)", key, value) }      
       define_method(key) do
@@ -28,7 +28,6 @@ module ActiveRoad
       end
     end
     
-
     def name
       logical_road.try(:name) or objectid
     end

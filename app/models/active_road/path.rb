@@ -1,3 +1,6 @@
+# A path is a link between differents objects : 
+#  - Departure
+#  - Arrival
 class ActiveRoad::Path
 
   attr_accessor :departure, :arrival, :physical_road
@@ -10,7 +13,7 @@ class ActiveRoad::Path
   end
 
   def name
-    "#{departure} -> #{arrival}"
+    "Path : #{departure} -> #{arrival}"
   end
 
   def locations_on_road
@@ -42,8 +45,8 @@ class ActiveRoad::Path
 
   delegate :access_to_road?, :to => :arrival
 
-  def paths(kind = "road")
-    arrival.paths(kind) - [reverse]
+  def paths(tags = {}, kind = "road")
+    arrival.paths(tags, kind) - [reverse]
   end
 
   def reverse

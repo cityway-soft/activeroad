@@ -1,3 +1,4 @@
+# A junction is a connection between 1 to n physical roads
 require "activerecord-postgres-hstore"
 
 module ActiveRoad
@@ -10,12 +11,24 @@ module ActiveRoad
     has_and_belongs_to_many :physical_roads, :class_name => "ActiveRoad::PhysicalRoad",:uniq => true
     has_many :junction_conditionnal_costs, :class_name => "ActiveRoad::JunctionConditionnalCost"
 
+    %w[max_speed, max_slope].each do |key|
+      attr_accessible key
+      scope "has_#{key}", lambda { |value| where("properties @> hstore(?, ?)", key, value) }      
+      define_method(key) do
+        properties && properties[key]
+      end
+      
+      define_method("#{key}=") do |value|
+        self.properties = (properties || {}).merge(key => value)
+      end
+    end
+
     def location_on_road(road)
       (@location_on_road ||= {})[road.id] ||= road.locate_point(geometry)
     end
 
-    def paths(kind = "road")
-      physical_roads.where(:kind => kind).includes(:junctions).collect do |physical_road|
+    def paths(tags = {}, kind = "road")
+      ActiveRoad::PhysicalRoadFilter.new(tags, kind, physical_roads).filter.includes(:junctions).collect do |physical_road|
         ActiveRoad::Path.all self, (physical_road.junctions - [self]), physical_road
       end.flatten
     end
@@ -29,7 +42,7 @@ module ActiveRoad
     end
 
     def to_s
-      "#{name} (#{objectid}@#{geometry.to_lat_lng})"
+      "Junction @#{geometry.to_lat_lng}"
     end
 
     def name

@@ -1,3 +1,6 @@
+# Access Point is a projection from an origin point on a Physical Road
+# This origin point and Access Point are linked by an Access Link  
+
 class ActiveRoad::AccessPoint
 
   attr_accessor :location, :physical_road, :exit
@@ -9,19 +12,24 @@ class ActiveRoad::AccessPoint
     end
   end
 
-  def self.from(location, kind = "road")
+  # Find access points from a location
+  def self.from(location, tags = {}, kind = "road")
     # TODO find really several roads
-    physical_roads = [ ActiveRoad::PhysicalRoad.where(:kind => kind).nearest_to(location, 100) ]
+    physical_roads = []
+    physical_roads_filtered = ActiveRoad::PhysicalRoadFilter.new(tags, kind).filter
+    physical_roads << physical_roads_filtered.nearest_to(location, 100) if physical_roads_filtered.present?
 
     physical_roads.collect do |physical_road|
       new :location => location, :physical_road => physical_road
     end
   end
-
-  def self.to(location, kind = "road")
+  
+  # Find access points to go to a location
+  def self.to(location, tags = {}, kind = "road")
     # TODO find really several roads
-    physical_roads = [ ActiveRoad::PhysicalRoad.where(:kind => kind).nearest_to(location) ]
-
+    physical_roads = []
+    physical_roads_filtered = ActiveRoad::PhysicalRoadFilter.new(tags, kind).filter
+    physical_roads << physical_roads_filtered.nearest_to(location) if physical_roads_filtered.present?
     physical_roads.collect do |physical_road|
       new :location => location, :physical_road => physical_road, :exit => true
     end
@@ -53,7 +61,7 @@ class ActiveRoad::AccessPoint
     name
   end
 
-  def paths(kind = "road")
+  def paths(tags = {}, kind = "road")
     unless exit?
       ActiveRoad::Path.all self, physical_road.junctions, physical_road
     else
