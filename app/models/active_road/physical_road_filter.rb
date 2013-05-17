@@ -1,14 +1,15 @@
 class ActiveRoad::PhysicalRoadFilter
-  attr_accessor :relation, :tags, :kind
+  attr_accessor :relation, :forbidden_tags, :kind
 
-  def initialize(tags = {}, kind = "road", relation = ActiveRoad::PhysicalRoad.scoped )    
-    @relation, @tags, @kind = relation, tags, kind
+  def initialize(forbidden_tags = {}, kind = "road", relation = ActiveRoad::PhysicalRoad.scoped ) 
+    @relation, @forbidden_tags, @kind = relation, forbidden_tags, kind
   end
 
+  # Must define an sql request with forbidden tags
   def sql_request
     sql_request = ""
-    tags.each do |key, value|
-      if !( (tags.keys.first.present? && tags.keys.first == key) )  
+    forbidden_tags.each do |key, value|
+      if !( (forbidden_tags.keys.first.present? && forbidden_tags.keys.first == key) )  
         sql_request += " AND "
       end
   
@@ -19,15 +20,15 @@ class ActiveRoad::PhysicalRoadFilter
         new_key = key.to_s.gsub("max_", "")
         sql_request += "(tags -> '#{new_key}')::int < :#{key}"
       else
-        sql_request += "tags -> '#{key}' = :#{key}" 
+        sql_request += "tags -> '#{key}' != :#{key}" 
       end
     end
     
-    tags.present? ? sql_request += " AND kind = :kind" : sql_request += "kind = :kind"
+    forbidden_tags.present? ? sql_request += " AND kind = :kind" : sql_request += "kind = :kind"
   end
 
   def sql_arguments
-    tags.merge({ :kind => kind }) 
+    forbidden_tags.merge({ :kind => kind }) 
   end
 
   def filter

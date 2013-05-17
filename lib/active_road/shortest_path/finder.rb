@@ -16,12 +16,13 @@ require 'shortest_path/finder'
 
 class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
 
-  attr_accessor :road_kind, :tags, :speed
+  attr_accessor :road_kind, :forbidden_tags, :speed
 
-  def initialize(departure, arrival, tags = {}, speed = 4, road_kind = "road")
+  # 
+  def initialize(departure, arrival, forbidden_tags = {}, speed = 4, weights = {}, road_kind = "road")
     super departure, arrival
     @road_kind = road_kind
-    @tags = tags
+    @forbidden_tags = forbidden_tags
     @speed = 4000 / 3600 # Convert speed in meter/second
   end
 
@@ -34,7 +35,7 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
   end
 
   def destination_accesses 
-    @destination_accesses ||= ActiveRoad::AccessPoint.to(destination, tags, road_kind)
+    @destination_accesses ||= ActiveRoad::AccessPoint.to(destination, forbidden_tags, road_kind)
   end
 
   # Return Shortest distance to go to the node + Distance from node to destination
@@ -73,9 +74,9 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
 
     paths = 
       if GeoRuby::SimpleFeatures::Point === node
-        ActiveRoad::AccessLink.from(node, tags, road_kind)
+        ActiveRoad::AccessLink.from(node, forbidden_tags, road_kind)
       else
-        node.paths(tags, road_kind)
+        node.paths(forbidden_tags, road_kind)
       end
 
     unless GeoRuby::SimpleFeatures::Point === node # For the first point to access physical roads

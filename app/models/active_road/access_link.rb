@@ -14,8 +14,8 @@ class ActiveRoad::AccessLink
 
   alias_method :to_s, :name
 
-  def self.from(location, tags = {}, kind = "road")
-    ActiveRoad::AccessPoint.from(location, tags, kind).collect do |access_point|
+  def self.from(location, forbidden_tags = {}, kind = "road")
+    ActiveRoad::AccessPoint.from(location, forbidden_tags, kind).collect do |access_point|
       new :departure => location, :arrival => access_point
     end
   end
@@ -31,8 +31,8 @@ class ActiveRoad::AccessLink
 
   delegate :access_to_road?, :to => :arrival
 
-  def paths(tags = {}, kind = "roads")
-    arrival.respond_to?(:paths) ? arrival.paths(tags, kind) : [arrival]
+  def paths(forbidden_tags = {}, kind = "roads")
+    arrival.respond_to?(:paths) ? arrival.paths(forbidden_tags, kind) : [arrival]
   end
 
   def access_to_road?(road)

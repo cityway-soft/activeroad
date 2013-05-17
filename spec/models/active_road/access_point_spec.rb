@@ -9,12 +9,12 @@ describe ActiveRoad::AccessPoint do
   describe ".from" do
 
     it "should return all access point with tags from the location" do
-      access_points = ActiveRoad::AccessPoint.from( point(0, 0), {:speed => "100"}, "road" )
+      access_points = ActiveRoad::AccessPoint.from( point(0, 0), {:speed => "10"}, "road" )
       access_points.size.should == 1
     end
 
     it "should return all access point from the location with tags not in physical roads" do
-      access_points = ActiveRoad::AccessPoint.from( point(0, 0), {:test => "AB"} )
+      access_points = ActiveRoad::AccessPoint.from( point(0, 0), {:speed => "100"} )
       access_points.size.should == 0
     end
     

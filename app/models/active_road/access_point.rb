@@ -13,10 +13,10 @@ class ActiveRoad::AccessPoint
   end
 
   # Find access points from a location
-  def self.from(location, tags = {}, kind = "road")
+  def self.from(location, forbidden_tags = {}, kind = "road")
     # TODO find really several roads
     physical_roads = []
-    physical_roads_filtered = ActiveRoad::PhysicalRoadFilter.new(tags, kind).filter
+    physical_roads_filtered = ActiveRoad::PhysicalRoadFilter.new(forbidden_tags, kind).filter
     physical_roads << physical_roads_filtered.nearest_to(location, 100) if physical_roads_filtered.present?
 
     physical_roads.collect do |physical_road|
@@ -25,10 +25,10 @@ class ActiveRoad::AccessPoint
   end
   
   # Find access points to go to a location
-  def self.to(location, tags = {}, kind = "road")
+  def self.to(location, forbidden_tags = {}, kind = "road")
     # TODO find really several roads
     physical_roads = []
-    physical_roads_filtered = ActiveRoad::PhysicalRoadFilter.new(tags, kind).filter
+    physical_roads_filtered = ActiveRoad::PhysicalRoadFilter.new(forbidden_tags, kind).filter
     physical_roads << physical_roads_filtered.nearest_to(location) if physical_roads_filtered.present?
     physical_roads.collect do |physical_road|
       new :location => location, :physical_road => physical_road, :exit => true
@@ -61,7 +61,7 @@ class ActiveRoad::AccessPoint
     name
   end
 
-  def paths(tags = {}, kind = "road")
+  def paths(forbidden_tags = {}, kind = "road")
     unless exit?
       ActiveRoad::Path.all self, physical_road.junctions, physical_road
     else
