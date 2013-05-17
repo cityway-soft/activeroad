@@ -1,4 +1,4 @@
-class ActiveRoad::SaxImporter
+class ActiveRoad::TerraImport
 
   attr_reader :parser
 
@@ -109,9 +109,13 @@ class ActiveRoad::SaxImporter
 
     def physical_roads
       physical_roads = []
-      xml['TrajectoryArcRef'].each do |trajectory_arc_ref|
-        physical_road = ActiveRoad::PhysicalRoad.find_by_objectid( trajectory_arc_ref.to_s )
-        physical_roads << physical_road if physical_road.present?        
+      if(xml['TrajectoryArcRef'].class == Saxerator::Builder::StringElement)
+        physical_roads << ActiveRoad::PhysicalRoad.find_by_objectid( xml['TrajectoryArcRef'].to_s ) 
+      else
+        xml['TrajectoryArcRef'].each do |trajectory_arc_ref|
+          physical_road = ActiveRoad::PhysicalRoad.find_by_objectid( trajectory_arc_ref.to_s )
+          physical_roads << physical_road if physical_road.present?        
+        end
       end
       physical_roads
     end 
