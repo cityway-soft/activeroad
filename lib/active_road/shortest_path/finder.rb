@@ -16,12 +16,13 @@ require 'shortest_path/finder'
 
 class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
 
-  attr_accessor :road_kind, :tags
+  attr_accessor :road_kind, :tags, :speed
 
-  def initialize(departure, arrival, tags = {}, road_kind = "road")
+  def initialize(departure, arrival, tags = {}, speed = 4, road_kind = "road")
     super departure, arrival
     @road_kind = road_kind
     @tags = tags
+    @speed = 4000 / 3600 # Convert speed in meter/second
   end
 
   def visited?(node)
@@ -36,14 +37,29 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
     @destination_accesses ||= ActiveRoad::AccessPoint.to(destination, tags, road_kind)
   end
 
-  def search_heuristic(node)
+  # Return Shortest distance to go to the node + Distance from node to destination
+  def search_heuristic_distance(node)
     shortest_distances[node] + distance_heuristic(node)
+  end
+  
+  def search_heuristic(node)
+    shortest_distances[node] + time_heuristic(node)
   end
 
   def follow_way?(node, destination, weight)
-    search_heuristic(node) + weight < distance_heuristic(source) * 10
+    search_heuristic(node) + weight < time_heuristic(source) * 10
   end
 
+  # Return a time in second from node to destination
+  def time_heuristic(node)
+    if node.respond_to?(:arrival)
+      node.arrival.to_geometry.spherical_distance(destination) / speed
+    else
+      node.to_geometry.spherical_distance(destination) / speed
+    end
+  end
+
+  # Return a distance in meter from node to destination
   def distance_heuristic(node)
     if node.respond_to?(:arrival)
       node.arrival.to_geometry.spherical_distance(destination)
@@ -52,6 +68,7 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
     end
   end
 
+  # Define weights
   def ways(node)
 
     paths = 
@@ -70,7 +87,7 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
     end    
     
     array = paths.collect do |path|
-      [ path, path.respond_to?(:length) ? path.length : 0 ]
+      [ path, path.respond_to?(:length) ? path.length / speed : 0 ]
     end
 
     Hash[array]
