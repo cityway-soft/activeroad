@@ -6,22 +6,22 @@ describe ActiveRoad::PhysicalRoadFilter do
     
     it "should return sql_request with min key" do
       physical_road_filter = ActiveRoad::PhysicalRoadFilter.new({"min_size" => "2"})    
-      physical_road_filter.sql_request.should == "(tags -> 'size')::int > :min_size AND kind = :kind"
+      physical_road_filter.sql_request.should == "(tags -> 'size')::int > :min_size"
     end
 
     it "should return sql_request with max key" do
       physical_road_filter = ActiveRoad::PhysicalRoadFilter.new({"max_size" => "2"})    
-      physical_road_filter.sql_request.should == "(tags -> 'size')::int < :max_size AND kind = :kind"
+      physical_road_filter.sql_request.should == "(tags -> 'size')::int < :max_size"
     end
 
     it "should return sql_request with default key" do
       physical_road_filter = ActiveRoad::PhysicalRoadFilter.new({"pedestrian" => "true"})    
-      physical_road_filter.sql_request.should == "tags -> 'pedestrian' != :pedestrian AND kind = :kind"
+      physical_road_filter.sql_request.should == "tags -> 'pedestrian' != :pedestrian"
     end
 
     it "should return sql_request with 3 parameter" do       
       physical_road_filter = ActiveRoad::PhysicalRoadFilter.new({"pedestrian" => "true", "max_size" => "2", "min_size" => "1"})    
-      physical_road_filter.sql_request.should == "tags -> 'pedestrian' != :pedestrian AND (tags -> 'size')::int < :max_size AND (tags -> 'size')::int > :min_size AND kind = :kind"
+      physical_road_filter.sql_request.should == "tags -> 'pedestrian' != :pedestrian AND (tags -> 'size')::int < :max_size AND (tags -> 'size')::int > :min_size"
     end
 
   end
@@ -29,12 +29,12 @@ describe ActiveRoad::PhysicalRoadFilter do
   describe "#sql_arguments" do
     it "should return no arguments if no forbidden_tags and no kind" do
       physical_road_filter = ActiveRoad::PhysicalRoadFilter.new
-      physical_road_filter.sql_arguments.should == {:kind => "road"}
+      physical_road_filter.sql_arguments.should == {}
     end
 
     it "should return arguments if forbidden_tags" do
       physical_road_filter = ActiveRoad::PhysicalRoadFilter.new({:test => "ab"})
-      physical_road_filter.sql_arguments.should == {:test => "ab", :kind => "road"}
+      physical_road_filter.sql_arguments.should == {:test => "ab"}
     end
 
   end
@@ -64,10 +64,7 @@ describe ActiveRoad::PhysicalRoadFilter do
       physical_road_filter = ActiveRoad::PhysicalRoadFilter.new()
       physical_road_filter.filter.should =~ [physical_road, physical_road2]      
 
-      physical_road_filter = ActiveRoad::PhysicalRoadFilter.new({}, "road")
-      physical_road_filter.filter.should =~ [physical_road, physical_road2]      
-
-      physical_road_filter = ActiveRoad::PhysicalRoadFilter.new({}, "road")
+      physical_road_filter = ActiveRoad::PhysicalRoadFilter.new({})
       physical_road_filter.filter.should =~ [physical_road, physical_road2]      
     end
     

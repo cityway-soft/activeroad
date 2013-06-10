@@ -3,7 +3,7 @@ require "activerecord-postgres-hstore"
 module ActiveRoad
   class PhysicalRoad < ActiveRoad::Base
     serialize :tags, ActiveRecord::Coders::Hstore
-    attr_accessible :objectid, :kind, :tags, :geometry, :logical_road_id
+    attr_accessible :objectid, :kind, :tags, :geometry, :logical_road_id, :length_in_meter, :width
 
     validates_uniqueness_of :objectid
     validates_presence_of :kind
@@ -14,7 +14,16 @@ module ActiveRoad
     has_many :physical_road_conditionnal_costs
 
     acts_as_geom :geometry => :line_string
-    delegate :locate_point, :interpolate_point, :length, :to => :geometry
+    delegate :locate_point, :interpolate_point, :to => :geometry
+
+    before_validation :update_length_in_meter
+
+    def update_length_in_meter
+      if ( geometry )
+        spherical_factory = ::RGeo::Geographic.spherical_factory  
+        self.update_attribute :length_in_meter, spherical_factory.line_string(geometry.points.collect(&:to_rgeo)).length
+      end
+    end
 
     %w[max_speed, max_slope].each do |key|
       attr_accessible key

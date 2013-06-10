@@ -1,8 +1,11 @@
+# Filter Physical Road by : 
+#  - forbidden_tags
+#  - kind
 class ActiveRoad::PhysicalRoadFilter
-  attr_accessor :relation, :forbidden_tags, :kind
+  attr_accessor :relation, :forbidden_tags
 
-  def initialize(forbidden_tags = {}, kind = "road", relation = ActiveRoad::PhysicalRoad.scoped ) 
-    @relation, @forbidden_tags, @kind = relation, forbidden_tags, kind
+  def initialize(forbidden_tags = {}, relation = ActiveRoad::PhysicalRoad.scoped ) 
+    @relation, @forbidden_tags = relation, forbidden_tags
   end
 
   # Must define an sql request with forbidden tags
@@ -23,16 +26,15 @@ class ActiveRoad::PhysicalRoadFilter
         sql_request += "tags -> '#{key}' != :#{key}" 
       end
     end
-    
-    forbidden_tags.present? ? sql_request += " AND kind = :kind" : sql_request += "kind = :kind"
+    sql_request
   end
 
   def sql_arguments
-    forbidden_tags.merge({ :kind => kind }) 
+    forbidden_tags
   end
 
   def filter
-    @relation.where(sql_request, sql_arguments)
+    sql_arguments.present? ? @relation.where(sql_request, sql_arguments) : @relation
   end
 
   def find_each(&block)

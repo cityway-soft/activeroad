@@ -14,8 +14,8 @@ class ActiveRoad::AccessLink
 
   alias_method :to_s, :name
 
-  def self.from(location, forbidden_tags = {}, kind = "road")
-    ActiveRoad::AccessPoint.from(location, forbidden_tags, kind).collect do |access_point|
+  def self.from(location, forbidden_tags = {})
+    ActiveRoad::AccessPoint.from(location, forbidden_tags).collect do |access_point|
       new :departure => location, :arrival => access_point
     end
   end
@@ -23,6 +23,8 @@ class ActiveRoad::AccessLink
   def length
     @length ||= departure.to_geometry.spherical_distance arrival.to_geometry
   end
+  # TODO Delete this hack due to postgis adapter in physical road
+  alias_method :length_in_meter, :length 
 
   def geometry
     @geometry ||= GeoRuby::SimpleFeatures::LineString.from_points [departure.to_geometry, arrival.to_geometry]
@@ -31,8 +33,8 @@ class ActiveRoad::AccessLink
 
   delegate :access_to_road?, :to => :arrival
 
-  def paths(forbidden_tags = {}, kind = "roads")
-    arrival.respond_to?(:paths) ? arrival.paths(forbidden_tags, kind) : [arrival]
+  def paths(forbidden_tags = {})
+    arrival.respond_to?(:paths) ? arrival.paths(forbidden_tags) : [arrival]
   end
 
   def access_to_road?(road)

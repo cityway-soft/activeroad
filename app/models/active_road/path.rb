@@ -28,8 +28,12 @@ class ActiveRoad::Path
     end
   end
 
-  def length
+  def length  
     length_on_road * road.length
+  end
+
+  def length_in_meter
+    length_on_road * road.length_in_meter
   end
 
   def length_on_road
@@ -45,8 +49,8 @@ class ActiveRoad::Path
 
   delegate :access_to_road?, :to => :arrival
 
-  def paths(tags = {}, kind = "road")
-    arrival.paths(tags, kind) - [reverse]
+  def paths(tags = {})
+    arrival.paths(tags) - [reverse]
   end
 
   def reverse

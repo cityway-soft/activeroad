@@ -27,8 +27,8 @@ module ActiveRoad
       (@location_on_road ||= {})[road.id] ||= road.locate_point(geometry)
     end
 
-    def paths(tags = {}, kind = "road")
-      ActiveRoad::PhysicalRoadFilter.new(tags, kind, physical_roads).filter.includes(:junctions).collect do |physical_road|
+    def paths(tags = {})
+      ActiveRoad::PhysicalRoadFilter.new(tags, physical_roads).filter.includes(:junctions).collect do |physical_road|
         ActiveRoad::Path.all self, (physical_road.junctions - [self]), physical_road
       end.flatten
     end
