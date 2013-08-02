@@ -47,6 +47,10 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
     shortest_distances[node] + time_heuristic(node)
   end
 
+  def refresh_context( node, context)
+      {}
+  end
+
   def follow_way?(node, destination, weight, context={})
     # Vérifier que la dénivelé stockée dans le contexte est inférieure au max toléré
     # context[:uphill] < @forbidden_tags[:uphill] &&
@@ -73,7 +77,7 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
   end
 
   # Define weights
-  def ways(node)
+  def ways(node, context={})
 
     paths =
       if GeoRuby::SimpleFeatures::Point === node
