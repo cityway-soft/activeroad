@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="roads-exchange.xsl"?>
+<Referential xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="file:./roads-exchange-SP4-SP5.xsd" name="Place Saint Sulpice septembre 2012">
+  <TrajectoryNode>
+		<ObjectId>ign-obj-55</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(2.331308046501452 48.85192725813857)</Geometry>
+		<TrajectoryArcRef>ign-obj-205</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-4</PhysicalRoadRef>
+	</TrajectoryNode>
+  <TrajectoryNode>
+		<ObjectId>ign-obj-56</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;POINT(2.331308046501452 48.89192725813857)</Geometry>
+		<TrajectoryArcRef>ign-obj-205</TrajectoryArcRef>
+		<PhysicalRoadRef>ign-obj-4</PhysicalRoadRef>
+	</TrajectoryNode>
+  <TrajectoryArc>
+		<ObjectId>ign-obj-205</ObjectId>
+		<Tags></Tags>
+		<Geometry>SRID=4326;LINESTRING(2.331800215057413 48.85220542836662, 2.331637521069522 48.85226948829244)</Geometry>
+		<TrajectoryNodeRef>ign-obj-55</TrajectoryNodeRef>
+		<TrajectoryNodeRef>ign-obj-56</TrajectoryNodeRef>
+		<PhysicalRoadRef>ign-obj-8</PhysicalRoadRef>
+		<Length>13.90200574121281</Length>
+		<MinimumWidth>1.934781931678176</MinimumWidth>
+	</TrajectoryArc>
+</Referential>

@@ -4,7 +4,7 @@ require "activerecord-postgres-hstore"
 module ActiveRoad
   class Junction < ActiveRoad::Base
     serialize :tags, ActiveRecord::Coders::Hstore
-    attr_accessible :objectid, :tags, :geometry
+    attr_accessible :objectid, :tags, :geometry, :height, :waiting_constraint
 
     validates_uniqueness_of :objectid
 

@@ -1,0 +1,11 @@
+<TrajectoryNode>
+	<ObjectId>ign-obj-93</ObjectId>
+	<Tags></Tags>
+	<Geometry>SRID=4326;POINT(2.33280726637185 48.85139664547131)</Geometry>
+	<TrajectoryArcRef>ign-obj-158</TrajectoryArcRef>
+	<TrajectoryArcRef>ign-obj-187</TrajectoryArcRef>
+	<JunctionRef>ign-obj-111</JunctionRef>
+	<PhysicalRoadRef>ign-obj-13</PhysicalRoadRef>
+	<PhysicalRoadRef>ign-obj-14</PhysicalRoadRef>
+  <Height>5</Height>
+</TrajectoryNode>

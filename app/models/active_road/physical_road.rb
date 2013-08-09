@@ -1,12 +1,25 @@
 require "activerecord-postgres-hstore"
+require "enumerize"
 
 module ActiveRoad
   class PhysicalRoad < ActiveRoad::Base
+    extend Enumerize
+    extend ActiveModel::Naming
+
     serialize :tags, ActiveRecord::Coders::Hstore
-    attr_accessible :objectid, :kind, :tags, :geometry, :logical_road_id, :length_in_meter, :width
+
+    attr_accessible :objectid, :tags, :geometry, :logical_road_id, :length_in_meter, :minimum_width, :covering, :transport_mode, :slope, :cant, :physical_road_type 
+
+    # TODO : Pass covering in array mode???
+    enumerize :covering, :in => [:slippery_gravel, :gravel, :asphalt_road, :asphalt_road_damaged, :pavement, :irregular_pavement, :slippery_pavement]
+    enumerize :transport_mode, :in => [:pedestrian, :bike]
+
+    enumerize :minimum_width, :in => [:wide, :enlarged, :narrow, :cramped], :default => :wide
+    enumerize :slope, :in => [:flat, :medium, :significant, :steep], :default => :flat
+    enumerize :cant, :in => [:flat, :medium, :significant, :steep], :default => :flat
+    enumerize :physical_road_type, :in => [:path_link, :stairs, :crossing], :default => :path_link    
 
     validates_uniqueness_of :objectid
-    validates_presence_of :kind
 
     has_many :numbers, :class_name => "ActiveRoad::StreetNumber", :inverse_of => :physical_road
     belongs_to :logical_road, :class_name => "ActiveRoad::LogicalRoad"
@@ -22,18 +35,6 @@ module ActiveRoad
       if ( geometry )
         spherical_factory = ::RGeo::Geographic.spherical_factory  
         self.update_attribute :length_in_meter, spherical_factory.line_string(geometry.points.collect(&:to_rgeo)).length
-      end
-    end
-
-    %w[max_speed, max_slope].each do |key|
-      attr_accessible key
-      scope "has_#{key}", lambda { |value| where("properties @> hstore(?, ?)", key, value) }      
-      define_method(key) do
-        properties && properties[key]
-      end
-      
-      define_method("#{key}=") do |value|
-        self.properties = (properties || {}).merge(key => value)
       end
     end
     
