@@ -5,8 +5,8 @@ require "active_road/version"
 Gem::Specification.new do |s|
   s.name        = "active_road"
   s.version     = ActiveRoad::VERSION
-  s.authors     = ["Alban Peignier", "Luc Donnet"]
-  s.email       = ["alban@tryphon.eu", "luc.donnet@free.fr"]
+  s.authors     = ["Alban Peignier", "Luc Donnet", "Marc Florisson"]
+  s.email       = ["alban@tryphon.eu", "luc.donnet@free.fr", "mflorisson@gmail.com"]
   s.homepage    = ""
   s.summary     = %q{Rails engine to manage roads and rails model}
   s.description = %q{Find street numbers and road ways}
@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
- 
+
   s.add_development_dependency "guard"
   s.add_development_dependency "guard-bundler"
   s.add_development_dependency "guard-rspec"
@@ -33,6 +33,6 @@ Gem::Specification.new do |s|
   s.add_dependency 'georuby-ext', "0.0.2"  
   s.add_dependency 'nokogiri'
   s.add_dependency 'saxerator'
-  #s.add_dependency 'shortest_path', '0.0.1'
+  s.add_dependency 'shortest_path', '0.0.3'
   s.add_dependency 'enumerize', '0.6.1'
 end

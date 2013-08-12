@@ -28,10 +28,6 @@ class ActiveRoad::Path
     end
   end
 
-  def length  
-    length_on_road * road.length
-  end
-
   def length_in_meter
     length_on_road * road.length_in_meter
   end
