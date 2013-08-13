@@ -34,7 +34,7 @@ describe ActiveRoad::ShortestPath::Finder do
   let!(:e) { create(:junction, :geometry => point(0, 2), :physical_roads => [ ce, ef ] ) }
   let!(:f) { create(:junction, :geometry => point(1, 2), :physical_roads => [ ef, df, cf ] ) }
 
-  it "should find a solution between first and last road" do
+  it "should find a solution between first and last road with with no constraints" do
     subject = ActiveRoad::ShortestPath::Finder.new departure, arrival, 4
     subject.path.should_not be_blank
     subject.path.size.should == 6
@@ -42,18 +42,23 @@ describe ActiveRoad::ShortestPath::Finder do
     subject.path[3].physical_road.objectid.should == "cf"
   end
 
-  describe "Shortest path with constraints" do       
-    
-    it "should find a solution between first and last road with no forbidden tags" do
-      subject = ActiveRoad::ShortestPath::Finder.new departure, arrival, 4, constraints
-      subject.path.should_not be_blank
-      subject.path.size.should == 8
-      subject.path[2].physical_road.objectid.should == "ac"
-      subject.path[3].physical_road.objectid.should == "ce"
-      subject.path[4].physical_road.objectid.should == "ef"
-    end
-
+  it "should find a solution between first and last road with physical_road filter in constraints" do
+    subject = ActiveRoad::ShortestPath::Finder.new departure, arrival, 4, constraints
+    subject.path.should_not be_blank
+    subject.path.size.should == 8
+    subject.path[2].physical_road.objectid.should == "ac"
+    subject.path[3].physical_road.objectid.should == "ce"
+    subject.path[4].physical_road.objectid.should == "ef"
   end
+  
+  it "should find a solution between first and last road with context arguments in constraints" do
+    subject = ActiveRoad::ShortestPath::Finder.new departure, arrival, 4, constraints
+  end
+
+  it "should return something when no solution" do
+    subject = ActiveRoad::ShortestPath::Finder.new departure, arrival, 4, constraints
+  end
+ 
 
   # describe "Shortest path with weights" do
 
