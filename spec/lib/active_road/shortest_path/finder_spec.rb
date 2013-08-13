@@ -13,7 +13,7 @@ describe ActiveRoad::ShortestPath::Finder do
   #    A-----------------B 
   #  
 
-  let(:departure) { point(0, 0) }
+  let(:departure) { point(-0.1, 0.1) }
   let(:arrival) { point(1, 2) }
   let(:speed) { 4 }
   let(:constraints) { {:transport_mode => [:pedestrian, nil]} }
