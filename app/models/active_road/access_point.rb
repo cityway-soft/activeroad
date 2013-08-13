@@ -42,6 +42,8 @@ class ActiveRoad::AccessPoint
   def point_on_road
     @point_on_road ||= physical_road.interpolate_point location_on_road
   end
+  alias_method :to_geometry, :point_on_road
+  alias_method :geometry, :point_on_road
 
   def access_to_road?(road)
     physical_road == road
@@ -49,10 +51,6 @@ class ActiveRoad::AccessPoint
 
   def name
     "Access on #{physical_road.objectid} @#{point_on_road.to_lat_lng} (for @#{location.to_lat_lng})"
-  end
-
-  def to_geometry
-    point_on_road
   end
 
   delegate :spherical_distance, :to => :point_on_road
