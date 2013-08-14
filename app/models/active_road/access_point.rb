@@ -14,23 +14,18 @@ class ActiveRoad::AccessPoint
 
   # Find access points from a location
   def self.from(location, constraints = {})
-    # TODO find really several roads
-    physical_roads = []
     physical_roads_filtered = ActiveRoad::PhysicalRoadFilter.new(constraints).filter
-    physical_roads << physical_roads_filtered.nearest_to(location, 100) if physical_roads_filtered.present?
 
-    physical_roads.collect do |physical_road|
+    physical_roads_filtered.nearest_to(location, 100).collect do |physical_road|
       new :location => location, :physical_road => physical_road
     end
   end
   
   # Find access points to go to a location
   def self.to(location, constraints = {})
-    # TODO find really several roads
-    physical_roads = []
     physical_roads_filtered = ActiveRoad::PhysicalRoadFilter.new(constraints).filter
-    physical_roads << physical_roads_filtered.nearest_to(location) if physical_roads_filtered.present?
-    physical_roads.collect do |physical_road|
+    
+    physical_roads_filtered.nearest_to(location, 100).collect do |physical_road|
       new :location => location, :physical_road => physical_road, :exit => true
     end
   end

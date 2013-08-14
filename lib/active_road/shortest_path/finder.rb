@@ -17,17 +17,24 @@ require 'shortest_path/finder'
 
 class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
 
-  attr_accessor :speed, :constraints, :user_weights
+  attr_accessor :speed, :physical_road_filter, :follow_way_filter, :user_weights
 
-  def initialize(departure, arrival, speed = 4, constraints = {}, user_weights = {})
+  def initialize(departure, arrival, speed = 4, constraints = {}, user_weights = {})    
     super departure, arrival
     @speed = speed * 1000 / 3600 # Convert speed in meter/second
-    @constraints = constraints 
+    @follow_way_filter, @physical_road_filter = {}, {}
+    constraints.each do |key, value|
+      if key == :uphill || key == :downhill || key == :height
+        @follow_way_filter[key] = value # filter to use with follow_way? method     
+      else
+        @physical_road_filter[key] = value  # filter to use with physical_roads
+      end
+    end
     @user_weights = user_weights # Not used
   end
 
   def destination_accesses 
-    @destination_accesses ||= ActiveRoad::AccessPoint.to(destination, constraints)
+    @destination_accesses ||= ActiveRoad::AccessPoint.to(destination, physical_road_filter)
   end  
 
   # Return a time in second from node to destination
@@ -109,33 +116,45 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
     shortest_distances[node] + time_heuristic(node)
   end
 
-  # Update context with uphill
-  # TODO : Fix arguments node is not a node but a pathlink!!
-  def refresh_context( node, context )
+  # Update context with uphill, downhill and height
+  # TODO : Fix arguments node is not a node but a path a point or an access link!!
+  def refresh_context( node, context = {} )
     context_uphill = context[:uphill] ? context[:uphill] : 0
-    node_uphill = (node.class == ActiveRoad::PhysicalRoad && node.uphill) ? node.uphill : 0
-    return { :uphill => (context_uphill + node_uphill)}
-  end
+    context_downhill = context[:downhill] ? context[:downhill] : 0
+    context_height = context[:height] ? context[:height] : 0
 
-  # Ressaut + dénivellé
-  def follow_way?(node, destination, weight, context={})
-    # Check that uphill in the context is less  than uphill constraint
-    if constraints[:uphill]
-      context[:uphill] < constraints[:uphill] && search_heuristic(node) + weight < time_heuristic(source) * 10
+    if( node.class == ActiveRoad::Path )
+      departure = node.departure
+      physical_road = node.physical_road            
+
+      node_uphill = ( physical_road && physical_road.uphill) ? physical_road.uphill : 0
+      node_downhill = (physical_road && physical_road.downhill) ? physical_road.downhill : 0
+      node_height = (departure.class != ActiveRoad::AccessPoint && departure && departure.height) ? departure.height : 0
+      
+      return { :uphill => (context_uphill + node_uphill), :downhill => (context_downhill + node_downhill), :height => (context_height + node_height) }
     else
-      search_heuristic(node) + weight < time_heuristic(source) * 10
+      return {:uphill => context_uphill, :downhill => context_downhill, :height => context_height}
     end
   end
 
-  def ways(node, context={})
+  # Follow way depends from uphill, downhill, height and heuristics
+  def follow_way?(node, destination, weight, context={})
+    # Check that arguments in the context is less  than the object parameters    
+    request = true
+    request = request && context[:uphill] <= follow_way_filter[:uphill] if follow_way_filter[:uphill] && context[:uphill].present?
+    request = request && context[:downhill] <= follow_way_filter[:downhill] if follow_way_filter[:downhill] && context[:downhill].present?
+    request = request && context[:height] <= follow_way_filter[:height] if follow_way_filter[:height] && context[:height].present?    
+    request = request && search_heuristic(node) + weight < time_heuristic(source) * 10
+  end
 
+  def ways(node, context={})
     paths =
       if GeoRuby::SimpleFeatures::Point === node
-        ActiveRoad::AccessLink.from(node, constraints)
+        ActiveRoad::AccessLink.from(node, physical_road_filter)
       else
-        node.paths(constraints)
+        node.paths(physical_road_filter)
       end
-
+    
     unless GeoRuby::SimpleFeatures::Point === node # For the first point to access physical roads
       destination_accesses.select do |destination_access|
         if node.access_to_road?(destination_access.physical_road)
@@ -147,7 +166,6 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
     array = paths.collect do |path|
       [ path, path_weights(path)]
     end
-
     Hash[array]
   end
 

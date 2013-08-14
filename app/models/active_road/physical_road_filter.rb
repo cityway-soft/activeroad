@@ -1,5 +1,5 @@
 # Filter Physical Road by : 
-#  - forbidden_tags
+#  - constraints
 class ActiveRoad::PhysicalRoadFilter
   attr_accessor :relation, :constraints
 
