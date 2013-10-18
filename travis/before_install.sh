@@ -3,7 +3,7 @@ if [[ "$POSTGIS" == "2.0" ]]; then
 fi
 
 sudo apt-get update
-sudo apt-get install -qq libgeos-dev libproj-dev postgresql-9.1-postgis
+sudo apt-get install -qq libgeos-dev libproj-dev postgresql-9.1-postgis ruby-kyotocabinet
 
 if [[ "$POSTGIS" == "2.0" ]]; then
   sudo apt-get install -qq libgeos++-dev

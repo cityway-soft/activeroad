@@ -7,9 +7,10 @@ require 'rspec/autorun'
 
 require 'factory_girl_rails'
 require 'saxerator'
-require 'activerecord-import'
+require "activerecord-postgres-hstore"
+require "activerecord-import/base"
+ActiveRecord::Import.require_adapter('postgresql')
 require 'georuby-ext'
-require 'enumerize'
 
 ENGINE_RAILS_ROOT=File.join(File.dirname(__FILE__), '../')
 

@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="osmconvert 0.7P" timestamp="2013-05-08T18:59:04Z">
+	<bounds minlat="2.10568" minlon="-54.61269" maxlat="6.370288" maxlon="-51.49161"/>
+	<node id="1" lat="0" lon="0" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+  <node id="2" lat="5.308056" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+	<node id="3" lat="5.308056" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+  <node id="4" lat="5.308056" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+	<node id="5" lat="5.308056" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+  <way id="1" version="2" timestamp="2012-07-09T12:29:25Z" changeset="12161456" uid="218937" user="wl59">
+		<nd ref="1"/>
+		<nd ref="2"/>
+		<nd ref="3"/>	
+		<tag k="building" v="yes"/>
+		<tag k="source" v="cadastre-dgi-fr source : Direction Générale des Impôts - Cadastre. Mise à jour : 2010"/>
+	</way>
+  <way id="2" version="2" timestamp="2012-07-09T12:29:25Z" changeset="12161456" uid="218937" user="wl59">
+		<nd ref="1"/>
+		<nd ref="4"/>
+		<nd ref="5"/>	
+		<tag k="addr:housenumber" v="73"/>
+		<tag k="building" v="yes"/>
+		<tag k="source" v="cadastre-dgi-fr source : Direction Générale des Impôts - Cadastre. Mise à jour : 2010"/>
+	</way>
+  <way id="3" version="2" timestamp="2012-07-09T12:29:25Z" changeset="12161456" uid="218937" user="wl59">
+		<nd ref="1"/>
+		<nd ref="4"/>
+		<nd ref="5"/>	
+		<tag k="highway" v="road"/>
+	</way>
+</osm>

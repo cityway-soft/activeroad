@@ -1,9 +1,8 @@
-require "activerecord-postgres-hstore"
 require "enumerize"
 
 module ActiveRoad
   class PhysicalRoad < ActiveRoad::Base
-    extend Enumerize
+    extend ::Enumerize
     extend ActiveModel::Naming
 
     serialize :tags, ActiveRecord::Coders::Hstore
@@ -12,7 +11,8 @@ module ActiveRoad
 
     # TODO : Pass covering in array mode???
     enumerize :covering, :in => [:slippery_gravel, :gravel, :asphalt_road, :asphalt_road_damaged, :pavement, :irregular_pavement, :slippery_pavement]
-    enumerize :transport_mode, :in => [:pedestrian, :bike]
+    #serialize :transport_mode, Array
+    enumerize :transport_mode, :in => [:pedestrian, :bike, :car, :train]
 
     enumerize :minimum_width, :in => [:wide, :enlarged, :narrow, :cramped], :default => :wide
     enumerize :slope, :in => [:flat, :medium, :significant, :steep], :default => :flat

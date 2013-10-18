@@ -4,6 +4,7 @@ source "http://rubygems.org"
 gemspec
 
 gem 'dr-postgis_adapter', :require => "postgis_adapter"
+gem "saxerator", "0.8.0", :git => "git://github.com/soulcutter/saxerator.git"
 
 group :development do
   gem 'rails-erd'
