@@ -1,8 +1,8 @@
 require 'spec_helper'
 
 describe ActiveRoad::OsmImport do
-  let(:xml_file) { File.expand_path("../../../fixtures/osm.xml", __FILE__) }
-
+  #let(:xml_file) { File.expand_path("../../../fixtures/osm.xml", __FILE__) }
+  let(:xml_file) { File.expand_path("/home/luc/Documents/cityway/spot/donnees/osm/guyane-latest.osm", __FILE__) }
 
   subject { ActiveRoad::OsmImport.new( xml_file ) } 
 
@@ -64,7 +64,7 @@ describe ActiveRoad::OsmImport do
 
     it "should save ways in the database" do   
       subject.update_node_with_ways(subject.database)
-      ActiveRoad::PhysicalRoad.all.size.should == 1
+      ActiveRoad::PhysicalRoad.all.size.should == 2
       ActiveRoad::PhysicalRoad.first.objectid = "3"
     end
   end

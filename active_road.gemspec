@@ -29,9 +29,11 @@ Gem::Specification.new do |s|
   s.add_dependency 'dr-postgis_adapter', '0.8.1'
   s.add_dependency 'sqlite3', '~> 1.3.7' 
   s.add_dependency 'pg', '~> 0.15.1' 
-  s.add_dependency 'activerecord-import', '0.4.1'
+  #s.add_dependency 'activerecord-import', '0.4.1'
   s.add_dependency 'georuby-ext', "0.0.2"  
   s.add_dependency 'nokogiri'
+  #s.add_dependency 'bzip2-ruby'
+  s.add_dependency 'progressbar'
   s.add_dependency 'saxerator'
   s.add_dependency 'shortest_path', '0.0.3'
   s.add_dependency 'enumerize', '0.7.0'

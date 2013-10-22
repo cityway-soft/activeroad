@@ -5,6 +5,7 @@ gemspec
 
 gem 'dr-postgis_adapter', :require => "postgis_adapter"
 gem "saxerator", "0.8.0", :git => "git://github.com/soulcutter/saxerator.git"
+gem "activerecord-import", :git => "https://github.com/demands/activerecord-import.git"
 
 group :development do
   gem 'rails-erd'

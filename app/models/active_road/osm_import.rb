@@ -31,15 +31,12 @@ class  ActiveRoad::OsmImport
   end
 
   def open_database(path)
-    unless database.open(path, DB::OWRITER | DB::OCREATE)
-      Rails.logger.error("open error: %s\n", database.error)
-    end
+    database.open(path, DB::OWRITER | DB::OCREATE)
+    database.clear
   end
 
   def close_database
-    unless database.close
-      Rails.logger.error("close error: %s\n", database.error)
-    end
+    database.close   
   end
 
   def transport_modes(tag_key, tag_value)
@@ -72,32 +69,37 @@ class  ActiveRoad::OsmImport
     physical_roads_values = []
 
     parser.for_tag(:way).each do |way|
+      # Fix the problem with dates
       way_id = way.attributes["id"]
 
       transport_modes = []
       node_ids = []
-
-      tags = way["tag"]      
-      if tags.size == 0
-        if tags.attributes["k"] == "highway" || tags.attributes["k"] == "railway"
-          transport_modes = transport_modes(tags.attributes["k"], tags.attributes["v"])
-        end
-      else
-        tags.each do |tag|
-          if tag.attributes["k"] == "highway" || tag.attributes["k"] == "railway"
-            transport_modes = transport_modes(tag.attributes["k"], tag.attributes["v"])
+      
+      if way.key?("tag")
+        tags = way["tag"]
+        if tags.size == 0
+          if tags.attributes["k"] == "highway" || tags.attributes["k"] == "railway"
+            transport_modes = transport_modes(tags.attributes["k"], tags.attributes["v"])
           end
-        end    
-      end       
+        else
+          tags.each do |tag|
+            if tag.attributes["k"] == "highway" || tag.attributes["k"] == "railway"
+              transport_modes = transport_modes(tag.attributes["k"], tag.attributes["v"])
+            end
+          end    
+        end       
+      end
 
       if transport_modes.present?
         
-        nodes = way["nd"]
-        if nodes.size == 0
-          node_ids << nodes.attributes["ref"]
-        else          
-          nodes.each do |node|
-            node_ids << node.attributes["ref"]
+        if way.key?("nd")
+          nodes = way["nd"]
+          if nodes.size == 0
+            node_ids << nodes.attributes["ref"]
+          else          
+            nodes.each do |node|
+              node_ids << node.attributes["ref"]
+            end
           end
         end
   
@@ -115,7 +117,7 @@ class  ActiveRoad::OsmImport
       end
 
       # Save physical roads in the stack
-      save_physical_roads(physical_roads_values) if physical_roads_values.count == 1000      
+      save_physical_roads(physical_roads_values) if (physical_roads_values.count == 1000)      
     end
 
     # Save physical roads in the stack
@@ -147,7 +149,7 @@ class  ActiveRoad::OsmImport
     junction_columns = [:objectid, :geometry]
 
     # Save junctions in the stack
-    ActiveRoad::Junction.import junction_columns, junctions_values if junctions_values.present?
+    ActiveRoad::Junction.import(junction_columns, junctions_values) if junctions_values.present?
 
     # Link the junction with physical roads
     junctions_ways.each do |junction_objectid, way_objectids|
@@ -164,6 +166,7 @@ class  ActiveRoad::OsmImport
   def import
     # process the database by iterator
     DB::process(database_path) { |database|           
+      database.clear
       backup_nodes(database)
       update_node_with_ways(database)
       iterate_nodes(database)
