@@ -3,7 +3,7 @@ require 'kyotocabinet'
 class  ActiveRoad::OsmImport
   include KyotoCabinet
   
-  attr_reader :parser, :database_path
+  attr_reader :parser, :database_path, :xml_file
 
   # See for more details :  
   # http://wiki.openstreetmap.org/wiki/FR:France_roads_tagging
@@ -22,8 +22,24 @@ class  ActiveRoad::OsmImport
   cattr_reader :tag_for_train_values
 
   def initialize(xml_file, database_path = "/tmp/osm.kch")
-    @parser = ::Saxerator.parser(File.new(xml_file))
+    @xml_file = xml_file
+    @parser = select_parser(xml_file)
     @database_path = database_path
+  end
+
+  def select_parser(xml_file)
+    case xml_file
+    when /.osm.bz2/ # TODO : Test bzip2
+      # ::Bzip2::Reader.open(xml_file) do |xml_file_unzip|
+      #   parser = ::Saxerator.parser(File.new(xml_file_unzip))
+      # end
+    when /.osm/
+      parser = ::Saxerator.parser(File.new(xml_file))
+    else
+      # TODO :  Throw file extension error
+      Rails.logger.error "Error : file extension is not recognized"
+    end
+    parser    
   end
 
   def database
@@ -126,7 +142,7 @@ class  ActiveRoad::OsmImport
 
   def save_physical_roads(physical_roads_values)
     physical_road_columns = [:objectid]
-    ActiveRoad::PhysicalRoad.import physical_road_columns, physical_roads_values
+    ActiveRoad::PhysicalRoad.import(physical_road_columns, physical_roads_values, :validate => false)
   end
   
   def iterate_nodes(database)
@@ -149,7 +165,7 @@ class  ActiveRoad::OsmImport
     junction_columns = [:objectid, :geometry]
 
     # Save junctions in the stack
-    ActiveRoad::Junction.import(junction_columns, junctions_values) if junctions_values.present?
+    ActiveRoad::Junction.import(junction_columns, junctions_values, :validate => false) if junctions_values.present?
 
     # Link the junction with physical roads
     junctions_ways.each do |junction_objectid, way_objectids|
@@ -164,6 +180,7 @@ class  ActiveRoad::OsmImport
   end
 
   def import
+
     # process the database by iterator
     DB::process(database_path) { |database|           
       database.clear
