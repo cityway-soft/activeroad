@@ -16,12 +16,14 @@ cd kyotocabinet-1.2.76
 make install
 
 # Installer les bindings ruby pour kyotocabinet
+cd /tmp
 wget http://fallabs.com/kyotocabinet/rubypkg/kyotocabinet-ruby-1.32.tar.gz
+tar xzf kyotocabinet-ruby-1.32.tar.gz
 cd kyotocabinet-ruby-1.32
 ruby extconf.rb
 make
 ruby test.rb
-su make install
+make install
 
 if [[ "$POSTGIS" == "2.0" ]]; then
   sudo apt-get install -qq libgeos++-dev
