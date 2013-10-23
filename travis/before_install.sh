@@ -21,7 +21,7 @@ cd kyotocabinet-ruby-1.32
 ruby extconf.rb
 make
 ruby test.rb
-make install
+su make install
 
 if [[ "$POSTGIS" == "2.0" ]]; then
   sudo apt-get install -qq libgeos++-dev
