@@ -22,7 +22,6 @@ tar xzf kyotocabinet-ruby-1.32.tar.gz
 cd kyotocabinet-ruby-1.32
 ruby extconf.rb
 make
-ruby test.rb
 sudo make install
 
 if [[ "$POSTGIS" == "2.0" ]]; then
