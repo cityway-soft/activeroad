@@ -12,7 +12,7 @@ cd /tmp
 wget http://fallabs.com/kyotocabinet/pkg/kyotocabinet-1.2.76.tar.gz
 tar xzf kyotocabinet-1.2.76.tar.gz
 cd kyotocabinet-1.2.76
-./configure –enable-zlib –enable-lzo –enable-lzma && make
+./configure –enable-zlib –enable-lzo –enable-lzma --prefix=/usr && make
 sudo make install
 
 # Installer les bindings ruby pour kyotocabinet
