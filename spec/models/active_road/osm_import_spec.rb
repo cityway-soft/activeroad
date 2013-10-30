@@ -1,9 +1,11 @@
 require 'spec_helper'
 
 describe ActiveRoad::OsmImport do
-  #let(:xml_file) { File.expand_path("../../../fixtures/osm.xml", __FILE__) }
-  let(:xml_file) { File.expand_path("/home/luc/Documents/cityway/spot/donnees/osm/guyane-latest.osm", __FILE__) }
+  let(:xml_file) { File.expand_path("../../../fixtures/test.osm", __FILE__) }
+  #let(:bzip_file) { File.expand_path("../../../fixtures/test.osm.bz2", __FILE__) }
+  #let(:xml_file) { File.expand_path("/home/luc/Documents/cityway/spot/donnees/osm/se.osm", __FILE__) }
 
+  # TODO : Switch between bz2 and normal files
   subject { ActiveRoad::OsmImport.new( xml_file ) } 
 
   describe "#transport_modes" do
