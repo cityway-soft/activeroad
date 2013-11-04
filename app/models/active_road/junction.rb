@@ -28,7 +28,7 @@ module ActiveRoad
     end
 
     def paths(tags = {})
-      ActiveRoad::PhysicalRoadFilter.new(tags, physical_roads).filter.includes(:junctions).collect do |physical_road|
+      physical_roads.includes(:junctions).collect do |physical_road|
         ActiveRoad::Path.all self, (physical_road.junctions - [self]), physical_road
       end.flatten
     end
@@ -42,7 +42,7 @@ module ActiveRoad
     end
 
     def to_s
-      "Junction @#{geometry.to_lat_lng}"
+      "Junction @#{geometry.lng},#{geometry.lat}"
     end
 
     def name

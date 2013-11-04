@@ -17,20 +17,17 @@ require 'shortest_path/finder'
 
 class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
 
-  attr_accessor :speed, :physical_road_filter, :follow_way_filter, :user_weights
+  attr_accessor :speed, :physical_road_filter, :follow_way_filter, :user_weights, :request_conditionnal_costs_linker, :constraints
 
-  def initialize(departure, arrival, speed = 4, constraints = {}, user_weights = {})    
+  def initialize(departure, arrival, speed = 4, constraints = [], follow_way_filter = {})    
     super departure, arrival
     @speed = speed * 1000 / 3600 # Convert speed in meter/second
-    @follow_way_filter, @physical_road_filter = {}, {}
-    constraints.each do |key, value|
-      if key == :uphill || key == :downhill || key == :height
-        @follow_way_filter[key] = value # filter to use with follow_way? method     
-      else
-        @physical_road_filter[key] = value  # filter to use with physical_roads
-      end
-    end
-    @user_weights = user_weights # Not used
+    @constraints = constraints
+    @follow_way_filter = follow_way_filter
+  end
+
+  def request_conditionnal_costs_linker
+    @request_conditionnal_costs_linker ||= ActiveRoad::RequestConditionnalCostLinker.new(constraints)
   end
 
   def destination_accesses 
@@ -66,20 +63,12 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
     if path.class != GeoRuby::SimpleFeatures::Point && path.departure.class == ActiveRoad::Junction && path.departure && path.departure.waiting_constraint
       path_weights += path.departure.waiting_constraint
     end
-    
-    # TODO Refactor user weights
-    # if path.respond_to?(:road) # PhysicalRoad only no AccessLink
-    #   path_tags = path.road.tags
-    
-    #   user_weights.each do |key, value|
-    #     if path_tags.keys.include? key
-    #       min, max, percentage = value[0], value[1], value[2]
-      #       if min <= path_tags[key].to_i && path_tags[key].to_i <= max
-    #         path_weights += path_weight(path_length, percentage)
-    #       end                    
-    #     end
-    #   end
-    # end      
+
+    # Add physical road weighy if it's a physical road
+    if path.class == ActiveRoad::Path && path.physical_road
+      cc_percentage = request_conditionnal_costs_linker.conditionnal_costs_sum(path.physical_road.physical_road_conditionnal_costs)
+      path_weights += path_weight(path.length_in_meter, cc_percentage) if path.respond_to?(:length_in_meter)
+    end
     
     path_weights
   end 
@@ -144,7 +133,7 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
     request = request && context[:uphill] <= follow_way_filter[:uphill] if follow_way_filter[:uphill] && context[:uphill].present?
     request = request && context[:downhill] <= follow_way_filter[:downhill] if follow_way_filter[:downhill] && context[:downhill].present?
     request = request && context[:height] <= follow_way_filter[:height] if follow_way_filter[:height] && context[:height].present?    
-    request = request && search_heuristic(node) + weight < time_heuristic(source) * 10
+    request = request && ( search_heuristic(node) + weight ) < ( time_heuristic(source) * 10 )
   end
 
   def ways(node, context={})

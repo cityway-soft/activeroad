@@ -6,14 +6,11 @@ module ActiveRoad
     extend ::Enumerize
     extend ActiveModel::Naming
 
-    serialize :tags, ActiveRecord::Coders::Hstore
-
     attr_accessible :objectid, :tags, :geometry, :logical_road_id, :length_in_meter, :minimum_width, :covering, :transport_mode, :slope, :cant, :physical_road_type 
+    serialize :tags, ActiveRecord::Coders::Hstore
 
     # TODO : Pass covering in array mode???
     enumerize :covering, :in => [:slippery_gravel, :gravel, :asphalt_road, :asphalt_road_damaged, :pavement, :irregular_pavement, :slippery_pavement]
-    #serialize :transport_mode, Array
-    enumerize :transport_mode, :in => [:pedestrian, :bike, :car, :train]
 
     enumerize :minimum_width, :in => [:wide, :enlarged, :narrow, :cramped], :default => :wide
     enumerize :slope, :in => [:flat, :medium, :significant, :steep], :default => :flat
@@ -29,6 +26,8 @@ module ActiveRoad
 
     acts_as_geom :geometry => :line_string
     delegate :locate_point, :interpolate_point, :to => :geometry
+
+    #validates_inclusion_of :transport_modes, :in => %w{ "pedestrian", "bike", "car", "train" }
 
     before_validation :update_length_in_meter
 

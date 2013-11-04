@@ -8,13 +8,8 @@ describe ActiveRoad::AccessPoint do
   describe ".from" do
 
     it "should return all access point with tags from the location" do
-      access_points = ActiveRoad::AccessPoint.from( point(0, 0), { :minimum_width => :wide } )
+      access_points = ActiveRoad::AccessPoint.from( point(0, 0) )
       access_points.size.should == 1
-    end
-
-    it "should return all access point from the location with tags not in physical roads" do
-      access_points = ActiveRoad::AccessPoint.from( point(0, 0), { :minimum_width => :narrow } )
-      access_points.size.should == 0
     end
     
   end
@@ -22,13 +17,8 @@ describe ActiveRoad::AccessPoint do
   describe ".to" do
   
     it "should return all access point with tags from the location" do
-      access_points = ActiveRoad::AccessPoint.to( point(0, 0), { :minimum_width => :wide } )
+      access_points = ActiveRoad::AccessPoint.to( point(0, 0) )
       access_points.size.should == 1
-    end
-
-    it "should return all access point from the location with tags not in physical roads" do
-      access_points = ActiveRoad::AccessPoint.to( point(0, 0), { :minimum_width => :narrow } )
-      access_points.size.should == 0
     end
     
   end

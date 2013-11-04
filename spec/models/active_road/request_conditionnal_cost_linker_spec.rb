@@ -39,25 +39,32 @@ describe ActiveRoad::RequestConditionnalCostLinker do
   describe "#linked?" do
 
     it "should return true if tags in conditionnal costs and tag in constraints have common tags" do
-      subject.linked?(physical_road_conditionnal_costs).should == true
+      rcc = ActiveRoad::RequestConditionnalCostLinker.new(["bike", "pavement"])
+      rcc.linked?(physical_road_conditionnal_costs).should == true
     end
 
-    it "should return false if tags in conditionnal costs and negativ cost in constraints have common tags" do
+    it "should return true if tags in conditionnal costs and unauthorized constraints have common tags" do
+      rcc = ActiveRoad::RequestConditionnalCostLinker.new(["~asphalt"])
       physical_road_conditionnal_costs << create(:physical_road_conditionnal_cost, :tags => "asphalt", :cost => 0.1)
-      subject.linked?(physical_road_conditionnal_costs).should == false
+      rcc.linked?(physical_road_conditionnal_costs).should == true
+    end
+    
+    it "should return false if tags in conditionnal costs have common tags with authorized or unauthorized constraints" do
+      rcc = ActiveRoad::RequestConditionnalCostLinker.new([])
+      rcc.linked?(physical_road_conditionnal_costs).should == false
     end
     
   end
 
-  describe "#total_cost" do
+  describe "#conditionnal_costs_sum" do
 
     it "should return all tags for conditionnal costs" do
-      subject.total_cost(physical_road_conditionnal_costs).should == 0.4
+      subject.conditionnal_costs_sum(physical_road_conditionnal_costs).should == 0.4
     end
 
     it "should return all tags for conditionnal costs" do
       physical_road_conditionnal_costs.first.destroy
-      subject.total_cost(physical_road_conditionnal_costs).should == 0.3
+      subject.conditionnal_costs_sum(physical_road_conditionnal_costs).should == 0.3
     end
     
   end
