@@ -1,18 +1,31 @@
 # ActiveRoad [![Build Status](https://travis-ci.org/dryade/activeroad.png)](http://travis-ci.org/dryade/activeroad?branch=master) [![Dependency Status](https://gemnasium.com/dryade/activeroad.png)](https://gemnasium.com/dryade/activeroad) [![Code Climate](https://codeclimate.com/github/dryade/activeroad.png)](https://codeclimate.com/github/dryade/activeroad)
 
-Rails engine with a model for roads and rails description
+Rails engine with a model for transport networks which includes
+ - an itinerary research
+ - the possibility to import osm data
 
 Requirements
 ------------
  
 This code has been run and tested on Ruby 1.9.3
 
+External Deps
+-------------
+On Debian/Ubuntu/Kubuntu OS : 
+```sh
+sudo apt-get install git postgresql postgis build-essential ruby-dev libproj-dev libgeos-dev libffi-dev zlib1g-dev libxslt1-dev libxml2-dev libbz2-dev
+```
+
+Must install ![kyotocabinet](../wiki/Kyotocabinet)
+
+
 Installation
 ------------
  
 This package is available in RubyGems and can be installed with:
- 
+```sh 
    gem install active_road
+```
 
 More Information
 ----------------
@@ -23,7 +36,36 @@ There is extensive usage documentation available [on the wiki](https://github.co
 Example Usage 
 ------------
 
-...
+h3. Import data
+
+Import OSM data : 
+
+```sh
+bundle exec rake 'app:active_road:import:osm_data[/data/guyane-latest.osm]'
+
+```
+
+h3. Itinerary research
+
+Example of basic finder : 
+
+```ruby
+ from = Georuby::SimpleFeature::Point.from_x_y(0, 0)
+ to = Georuby::SimpleFeature::Point.from_x_y(1, 1)
+ speed = 4 # In kilometer/hour        
+ finder = ActiveRoad::ShortestPath::Finder.new(from, to, speed).tap do |finder|
+   finder.timeout = 30.seconds
+ end
+
+ # Get geometry
+ finder.geometry
+
+ # Get steps
+ finder.paths
+```
+
+For a more complex query, you can use 2 arguments : 
+TODO: ...
 
 License
 -------
