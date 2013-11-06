@@ -16,7 +16,7 @@ On Debian/Ubuntu/Kubuntu OS :
 sudo apt-get install git postgresql postgis build-essential ruby-dev libproj-dev libgeos-dev libffi-dev zlib1g-dev libxslt1-dev libxml2-dev libbz2-dev
 ```
 
-Must install ![kyotocabinet](../wiki/Kyotocabinet)
+Must install [kyotocabinet](../wiki/Kyotocabinet)
 
 
 Installation
@@ -36,7 +36,7 @@ There is extensive usage documentation available [on the wiki](https://github.co
 Example Usage 
 ------------
 
-h3. Import data
+### Import data
 
 Import OSM data : 
 
@@ -45,7 +45,7 @@ bundle exec rake 'app:active_road:import:osm_data[/data/guyane-latest.osm]'
 
 ```
 
-h3. Itinerary research
+### Itinerary research
 
 Example of basic finder : 
 
@@ -64,8 +64,20 @@ Example of basic finder :
  finder.paths
 ```
 
-For a more complex query, you can use 2 arguments : 
-TODO: ...
+For a more complex query, you can use constraints arguments. It's an array of string which 
+describes :  
+ * if we use conditionnal cost for a physical road  Ex : ["bike"]
+ * if we not use a physical road because it contains a specific conditionnal cost Ex : ["~bike"]
+
+```ruby
+ from = Georuby::SimpleFeature::Point.from_x_y(0, 0)
+ to = Georuby::SimpleFeature::Point.from_x_y(1, 1)
+ speed = 4 # In kilometer/hour        
+ constraints = ["bike"]
+ finder = ActiveRoad::ShortestPath::Finder.new(from, to, speed, constraints).tap do |finder|
+   finder.timeout = 30.seconds
+ end
+```
 
 License
 -------
