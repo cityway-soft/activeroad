@@ -16,7 +16,7 @@ On Debian/Ubuntu/Kubuntu OS :
 sudo apt-get install git postgresql postgis build-essential ruby-dev libproj-dev libgeos-dev libffi-dev zlib1g-dev libxslt1-dev libxml2-dev libbz2-dev
 ```
 
-Must install [kyotocabinet](../wiki/Kyotocabinet)
+Must install [kyotocabinet](https://github.com/dryade/activeroad/wiki/Kyotocabinet)
 
 
 Installation
