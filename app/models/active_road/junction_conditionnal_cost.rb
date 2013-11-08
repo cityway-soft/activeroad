@@ -1,5 +1,6 @@
 module ActiveRoad
   class JunctionConditionnalCost < ActiveRoad::Base
+    attr_accessible :tags, :cost, :start_physical_road, :end_physical_road
 
     belongs_to :junction
     belongs_to :start_physical_road, :class_name => 'ActiveRoad::PhysicalRoad', :foreign_key => 'start_physical_road_id'

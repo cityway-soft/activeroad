@@ -5,13 +5,6 @@ rescue LoadError
   puts 'You must `gem install bundler` and `bundle install` to run rake tasks'
 end
 
-namespace :ci do
-  task :prepare do
-    cp "config/database.yml.ci", "config/database.yml"
-  end
-  task :build => ["db:migrate", "spec"]
-end
-
 begin
   require 'rdoc/task'
 rescue LoadError
@@ -44,3 +37,11 @@ RSpec::Core::RakeTask.new(:rcov) do |t|
 end
 
 task :spec => "app:db:test:prepare"
+
+namespace :ci do
+  task :prepare do
+    cp "config/database.yml.ci", "config/database.yml"
+  end
+  task :build => ["db:migrate", "spec"]
+end
+

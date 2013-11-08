@@ -1,5 +1,9 @@
 require "active_road/engine"
 require 'erb'
+require 'saxerator'
+require "activerecord-postgres-hstore"
+require "activerecord-import"
+require "enumerize"
 
 module ActiveRoad
 
@@ -15,5 +19,3 @@ end
 
 require "active_road/shortest_path"
 require "active_road/shortest_path/finder"
-
-

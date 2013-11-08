@@ -3,26 +3,43 @@ require 'spec_helper'
 describe ActiveRoad::OsmImport do
   let(:xml_file) { File.expand_path("../../../fixtures/test.osm", __FILE__) }
   #let(:bzip_file) { File.expand_path("../../../fixtures/test.osm.bz2", __FILE__) }
-  #let(:xml_file) { File.expand_path("/home/luc/Documents/cityway/spot/donnees/osm/se.osm", __FILE__) }
 
-  # TODO : Switch between bz2 and normal files
   subject { ActiveRoad::OsmImport.new( xml_file ) } 
 
-  describe "#transport_modes" do
-    it "should return car when highway and tag value for car" do 
-      subject.transport_modes("highway", "primary").should  == ["car"]
+  describe "#extracted_tags" do
+    it "should return an hash with tag_key => tag_value if tags size == 1" do 
+      tags = double("tags", :size => 0, :attributes => {"k" => "highway", "v" => "primary"} )
+      subject.extracted_tags(tags).should  == {"highway" => "primary"}
     end
 
-    it "should return bike when highway and tag value for bike" do   
-      subject.transport_modes("highway", "cycleway").should  == ["bike"]
+    it "should return an hash with tag_key => tag_value if tags size >= 1" do 
+      tags =  [ 
+               double( :attributes => {"k" => "highway", "v" => "primary"}), 
+               double( :attributes => {"k" => "highway", "v" => "pedestrian"}) 
+              ]  
+      subject.extracted_tags(tags).should  == {"highway" => "primary", "highway" => "pedestrian"}
     end
 
-    it "should return pedestrian when highway and tag value for pedestrian" do   
-      subject.transport_modes("highway", "pedestrian").should  == ["pedestrian", "bike"]
+    it "should return an hash with tag_key => tag_value filtered with authorized tag_key" do 
+      tags =  [ 
+               double( :attributes => {"k" => "highway", "v" => "test"}), 
+               double( :attributes => {"k" => "highway", "v" => "pedestrian"}) 
+              ]  
+      subject.extracted_tags(tags).should  == {"highway" => "pedestrian"}
+    end
+  end
+
+  describe "#physical_road_conditionnal_costs" do
+    let(:physical_road) { create(:physical_road) }
+
+    it "should returnconditionnal cost with pedestrian, bike and train to infinity when tag key is car" do 
+      ActiveRoad::PhysicalRoadConditionnalCost.should_receive(:new).exactly(3).times 
+      subject.physical_road_conditionnal_costs({"highway" => "primary"})
     end
 
-    it "should return train when railway and tag value for train" do  
-      subject.transport_modes("railway", "rail").should  == ["train"]
+    it "should return nothing if tag key is not in ['highway', 'railway']" do   
+      ActiveRoad::PhysicalRoadConditionnalCost.should_receive(:new).exactly(0).times 
+      subject.physical_road_conditionnal_costs({"test" => "test"})
     end
   end
 
@@ -46,44 +63,39 @@ describe ActiveRoad::OsmImport do
   end
 
   describe "#update_node_with_ways" do
+    let(:way) { Saxerator::Builder::HashElement.new("Element", {"id" => "1"}) }
+    
     before :each do 
       subject.open_database(subject.database_path)
-      subject.backup_nodes(subject.database)
+      subject.database.set("1", Marshal.dump(ActiveRoad::OsmImport::Node.new("1", 2.0, 2.0)) )
+
+      way["nd"] = [ 
+                   double( :attributes => {"ref" => "1"}), 
+                   double( :attributes => {"ref" => "2"}) 
+                  ] 
     end
 
     after :each  do
       subject.close_database
     end
 
-    it "should have update all nodes with ways in the temporary database" do   
-      subject.update_node_with_ways(subject.database)
+    it "should have update all nodes with way in the temporary database" do   
+      subject.update_node_with_way(way)
       object = Marshal.load(subject.database.get(1))
       object.id.should ==  "1"
-      object.lon.should == 0
-      object.lat.should == 0
-      object. ways.should == ["3"]
-    end
-
-    it "should save ways in the database" do   
-      subject.update_node_with_ways(subject.database)
-      ActiveRoad::PhysicalRoad.all.size.should == 2
-      ActiveRoad::PhysicalRoad.first.objectid = "3"
-    end
-  end
-
-  describe "#save_physical_roads" do
-    it "should save physical roads in postgresql database" do   
-      physical_roads_values = [["1"], ["2"]]
-      subject.save_physical_roads(physical_roads_values)
-      ActiveRoad::PhysicalRoad.all.size.should == 2
-      ActiveRoad::PhysicalRoad.first.objectid.should == "1"
-      ActiveRoad::PhysicalRoad.last.objectid.should == "2"
+      object.lon.should == 2.0
+      object.lat.should == 2.0
+      object.ways.should == ["1"]
     end
   end
 
   describe "#iterate_nodes" do
+    let!(:point) { GeoRuby::SimpleFeatures::Point.from_x_y( 0, 0, 4326) }
+
     before :each do 
       subject.open_database(subject.database_path)
+      subject.database.set("1", Marshal.dump(ActiveRoad::OsmImport::Node.new("1", 2.0, 2.0, ["1"])) )
+      subject.database.set("2", Marshal.dump(ActiveRoad::OsmImport::Node.new("2", 2.0, 2.0, ["1"])) )
     end
 
     after :each  do
@@ -91,8 +103,9 @@ describe ActiveRoad::OsmImport do
     end
 
     it "should iterate nodes to save it" do
+      GeoRuby::SimpleFeatures::Point.stub :from_x_y => point
+      subject.should_receive(:save_junctions).exactly(1).times.with([["1", point], ["2", point]], {"1" => ["1"], "2" => ["1"]})
       subject.iterate_nodes(subject.database)
-      # TODO
     end
   end
 
@@ -119,9 +132,30 @@ describe ActiveRoad::OsmImport do
   end  
 
   describe "#import" do
-    it "should have import all nodes in a temporary database" do   
+    it "should have import all nodes in a temporary database" do  
       subject.import
       # TODO
+    end
+  end
+
+  describe "#save_physical_roads_and_children" do
+    let(:pr1) { ActiveRoad::PhysicalRoad.new :objectid => "physicalroad::1" }
+    let(:pr2) { ActiveRoad::PhysicalRoad.new :objectid => "physicalroad::2" }
+    let(:physical_roads) { [ pr1, pr2 ] }
+    let(:prcc) { ActiveRoad::PhysicalRoadConditionnalCost.new :tags => "car", :cost => 0.3 }
+    let(:physical_road_conditionnal_costs_by_objectid) { {pr1.objectid => [prcc]} }
+    
+    it "should save physical roads in postgresql database" do  
+      subject.save_physical_roads_and_children(physical_roads)
+      ActiveRoad::PhysicalRoad.all.size.should == 2
+      ActiveRoad::PhysicalRoad.first.objectid.should == "physicalroad::1"
+      ActiveRoad::PhysicalRoad.last.objectid.should == "physicalroad::2"
+    end
+
+    it "should save physical road conditionnal costs in postgresql database" do   
+      subject.save_physical_roads_and_children(physical_roads, physical_road_conditionnal_costs_by_objectid)
+      ActiveRoad::PhysicalRoadConditionnalCost.all.size.should == 1
+      ActiveRoad::PhysicalRoadConditionnalCost.first.physical_road_id.should == ActiveRoad::PhysicalRoad.first.id
     end
   end
 

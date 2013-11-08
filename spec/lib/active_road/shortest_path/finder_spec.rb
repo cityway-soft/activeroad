@@ -131,8 +131,8 @@ describe ActiveRoad::ShortestPath::Finder do
 
   describe "#follow_way" do       
     
-    let(:node) { mock(:node) }
-    let(:destination) { mock(:destination) }
+    let(:node) { double(:node) }
+    let(:destination) { double(:destination) }
     let(:weight) { 2 }
     let(:context) { {:uphill => 2} }
     let(:subject) { ActiveRoad::ShortestPath::Finder.new departure, arrival, 4, [], {:uphill => 2} }

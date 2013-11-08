@@ -55,23 +55,36 @@ class  ActiveRoad::OsmImport
     database.close   
   end
 
-  def transport_modes(tag_key, tag_value)
-    transport_modes = []
-    if tag_key == "highway"
-      if ActiveRoad::OsmImport.tag_for_car_values.include?(tag_value)
-        transport_modes << "car"
-      end
-      if ActiveRoad::OsmImport.tag_for_pedestrian_values.include?(tag_value)
-        transport_modes << "pedestrian"
-      end
-      if ActiveRoad::OsmImport.tag_for_bike_values.include?(tag_value)
-        transport_modes << "bike"
-      end
-    elsif ( tag_key == "railway" && ActiveRoad::OsmImport.tag_for_train_values.include?(tag_value) )
-      transport_modes << "train"
-    end
+  def authorized_tags
+    @authorized_tags ||= ["highway", "railway"]
+  end
 
-    transport_modes
+  # Return an hash with tag_key => tag_value for osm attributes
+  def extracted_tags(tags)
+    {}.tap do |extracted_tags|
+      if tags.size == 0 && authorized_tags.include?(tags.attributes["k"])
+        extracted_tags[tags.attributes["k"]] = tags.attributes["v"]
+      else
+        tags.each do |tag|
+          if authorized_tags.include?(tag.attributes["k"])
+            extracted_tags[tag.attributes["k"]] = tag.attributes["v"]
+          end
+        end    
+      end       
+    end
+  end
+
+  def physical_road_conditionnal_costs(tags)
+    [].tap do |prcc|
+      tags.each do |tag_key, tag_value|
+        if ["highway", "railway"].include?(tag_key)
+          prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "car", :cost => Float::INFINITY) if !ActiveRoad::OsmImport.tag_for_car_values.include?(tag_value)  
+          prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "pedestrian", :cost => Float::INFINITY) if !ActiveRoad::OsmImport.tag_for_pedestrian_values.include?(tag_value)
+          prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "bike", :cost => Float::INFINITY) if !ActiveRoad::OsmImport.tag_for_bike_values.include?(tag_value) 
+          prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "train", :cost => Float::INFINITY) if !ActiveRoad::OsmImport.tag_for_train_values.include?(tag_value)
+        end
+      end
+    end
   end
   
   def backup_nodes(database)
@@ -81,89 +94,57 @@ class  ActiveRoad::OsmImport
     end    
   end
 
-  def update_node_with_ways(database)
-    physical_roads_values = []
-
-    parser.for_tag(:way).each do |way|
-      # Fix the problem with dates
-      way_id = way.attributes["id"]
-
-      transport_modes = []
-      node_ids = []
-      
-      if way.key?("tag")
-        tags = way["tag"]
-        if tags.size == 0
-          if tags.attributes["k"] == "highway" || tags.attributes["k"] == "railway"
-            transport_modes = transport_modes(tags.attributes["k"], tags.attributes["v"])
-          end
-        else
-          tags.each do |tag|
-            if tag.attributes["k"] == "highway" || tag.attributes["k"] == "railway"
-              transport_modes = transport_modes(tag.attributes["k"], tag.attributes["v"])
-            end
-          end    
-        end       
-      end
-
-      if transport_modes.present?
-        
-        if way.key?("nd")
-          nodes = way["nd"]
-          if nodes.size == 0
-            node_ids << nodes.attributes["ref"]
-          else          
-            nodes.each do |node|
-              node_ids << node.attributes["ref"]
-            end
-          end
+  def update_node_with_way(way)
+    way_id = way.attributes["id"]
+    # Get node ids for each way
+    node_ids = []
+    if way.key?("nd")
+      nodes = way["nd"]
+      if nodes.size == 0
+        node_ids << nodes.attributes["ref"]
+      else          
+        nodes.each do |node|
+          node_ids << node.attributes["ref"]
         end
-  
-        # Update node data
-        node_ids.each_with_index do |id, index|
-          database.accept(id) { |key, value|
-            node = Marshal.load(value)
-            node.add_way(way_id)
-            Marshal.dump(node)
-          }
-        end
-        
-        # Save way in postgresql database
-        physical_roads_values << [ way_id ]
       end
-
-      # Save physical roads in the stack
-      save_physical_roads(physical_roads_values) if (physical_roads_values.count == 1000)      
     end
 
-    # Save physical roads in the stack
-    save_physical_roads(physical_roads_values) if physical_roads_values.present?        
-  end
-
-  def save_physical_roads(physical_roads_values)
-    physical_road_columns = [:objectid]
-    ActiveRoad::PhysicalRoad.import(physical_road_columns, physical_roads_values, :validate => false)
+    # Update node data with way id
+    node_ids.each_with_index do |id, index|
+      database.accept(id) { |key, value|
+        node = Marshal.load(value)
+        node.add_way(way_id)
+        Marshal.dump(node)
+      }
+    end     
   end
   
   def iterate_nodes(database)
     junctions_values = []    
     junctions_ways = {}
-
     # traverse records by iterator
     database.each { |key, value|
+      
       node = Marshal.load(value)
       geometry = GeoRuby::SimpleFeatures::Point.from_x_y( node.lon, node.lat, 4326) if( node.lon && node.lat )
-      junctions_values << [ node.id, geometry ]
-      junction_ways[node.id] = node.ways
-
-      save_junctions(junctions_values, junction_ways) if junctions_values.count == 1000
+      
+       if node.ways.present? # Take node only if at least one way use it
+         junctions_values << [ node.id, geometry ]
+         junctions_ways[node.id] = node.ways
+       end
+      
+      if junctions_values.count == 1000
+        save_junctions(junctions_values, junction_ways) 
+        #Reset
+        junctions_values = []    
+        junctions_ways = {}
+      end
     }    
-    save_junctions(junctions_values, junctions_ways)
+    save_junctions(junctions_values, junctions_ways) if junctions_values.present?
   end
 
   def save_junctions(junctions_values, junctions_ways)
     junction_columns = [:objectid, :geometry]
-
     # Save junctions in the stack
     ActiveRoad::Junction.import(junction_columns, junctions_values, :validate => false) if junctions_values.present?
 
@@ -171,23 +152,63 @@ class  ActiveRoad::OsmImport
     junctions_ways.each do |junction_objectid, way_objectids|
       junction = ActiveRoad::Junction.find_by_objectid(junction_objectid)
       
-      way_objectids.each do |way_objectid|
-        physical_road = ActiveRoad::PhysicalRoad.find_by_objectid(way_objectid)
-        junction.physical_roads << physical_road if physical_road
-      end
-      
+      physical_roads = ActiveRoad::PhysicalRoad.find_all_by_objectid(way_objectids)
+      junction.physical_roads << physical_roads if physical_roads      
     end
   end
 
   def import
-
     # process the database by iterator
     DB::process(database_path) { |database|           
       database.clear
       backup_nodes(database)
-      update_node_with_ways(database)
+
+      physical_roads = []
+      physical_road_conditionnal_costs_by_objectid = {}
+      parser.for_tag(:way).each do |way|
+        way_id = way.attributes["id"]
+      
+        if way.key?("tag")
+          tags = extracted_tags(way["tag"])
+
+          if tags.present?          
+            update_node_with_way(way)
+
+            physical_road = ActiveRoad::PhysicalRoad.new :objectid => way_id
+            physical_roads << physical_road
+            physical_road_conditionnal_costs_by_objectid[physical_road.objectid] = physical_road_conditionnal_costs(tags)
+          end
+        end
+
+        if (physical_roads.count == 1000)
+          save_physical_roads_and_children(physical_roads, physical_road_conditionnal_costs_by_objectid)
+          
+          # Reset  
+          physical_roads = []
+          physical_road_conditionnal_costs_by_objectid = {}
+        end
+      end
+      
+      save_physical_roads_and_children(physical_roads, physical_road_conditionnal_costs_by_objectid) if physical_roads.present?       
+
       iterate_nodes(database)
     }      
+  end
+
+  def save_physical_roads_and_children(physical_roads, physical_road_conditionnal_costs_by_objectid = {})
+    # Save physical roads
+    ActiveRoad::PhysicalRoad.import(physical_roads)
+
+    # Save physical road conditionnal costs
+    prcc = []
+    physical_road_conditionnal_costs_by_objectid.each do |objectid, physical_road_conditionnal_costs|
+      pr = ActiveRoad::PhysicalRoad.where(:objectid => objectid).first
+      physical_road_conditionnal_costs.each do |physical_road_conditionnal_cost|
+        physical_road_conditionnal_cost.update_attribute :physical_road_id, pr.id
+        prcc << physical_road_conditionnal_cost
+      end
+    end        
+    ActiveRoad::PhysicalRoadConditionnalCost.import(prcc)               
   end
 
   class Node

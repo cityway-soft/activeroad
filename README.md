@@ -7,7 +7,10 @@ Rails engine with a model for transport networks which includes
 Requirements
 ------------
  
-This code has been run and tested on Ruby 1.9.3
+This code has been run and tested on :  
+* Ruby 1.9.3
+* Postgresql 9.X
+* Postgis 1.5.X and Postgis 2.X
 
 External Deps
 -------------

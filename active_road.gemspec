@@ -20,8 +20,8 @@ Gem::Specification.new do |s|
   s.add_development_dependency "guard-bundler"
   s.add_development_dependency "guard-rspec"
   s.add_development_dependency "guard-migrate"
-  s.add_development_dependency "factory_girl_rails", "~> 4.2.1"
-  s.add_development_dependency "rspec-rails", "~> 2.11.4"
+  s.add_development_dependency "factory_girl_rails", ">= 4.2.1"
+  s.add_development_dependency "rspec-rails", ">= 2.11.4"
   s.add_development_dependency 'rails', '~> 3.2.15'
 
   s.add_dependency 'activerecord'

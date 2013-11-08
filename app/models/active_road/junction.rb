@@ -1,6 +1,4 @@
 # A junction is a connection between 1 to n physical roads
-require "activerecord-postgres-hstore"
-
 module ActiveRoad
   class Junction < ActiveRoad::Base
     serialize :tags, ActiveRecord::Coders::Hstore

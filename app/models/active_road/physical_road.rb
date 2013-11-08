@@ -1,6 +1,3 @@
-require "enumerize"
-require "activerecord-postgres-hstore"
-
 module ActiveRoad
   class PhysicalRoad < ActiveRoad::Base
     extend ::Enumerize
