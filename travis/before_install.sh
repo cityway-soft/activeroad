@@ -1,9 +1,11 @@
 if [[ "$POSTGIS" == "2.0" ]]; then
-  echo "yes" | sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
+    echo "yes" | sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
+    sudo apt-get update
+    sudo apt-get install -qq libgeos++-dev libproj-dev postgresql-9.1-postgis-2.0 postgresql-9.1-postgis-2.0-scripts build-essential liblzo2-dev liblzma-dev zlib1g-dev
+  else
+    sudo apt-get update
+    sudo apt-get install -qq libgeos-dev libproj-dev postgresql-9.1-postgis build-essential liblzo2-dev liblzma-dev zlib1g-dev
 fi
-
-sudo apt-get update
-sudo apt-get install -qq libgeos-dev libproj-dev postgresql-9.1-postgis liblzo2-dev liblzma-dev zlib1g-dev build-essential
 
 # Se placer dans le dossier /tmp
 cd /tmp
@@ -23,7 +25,3 @@ cd kyotocabinet-ruby-1.32
 ruby extconf.rb
 make
 sudo make install
-
-if [[ "$POSTGIS" == "2.0" ]]; then
-  sudo apt-get install -qq libgeos++-dev
-fi
