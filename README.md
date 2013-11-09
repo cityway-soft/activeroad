@@ -8,9 +8,9 @@ Requirements
 ------------
  
 This code has been run and tested on :  
-* Ruby 1.9.3
+* Ruby 1.9.3 and ruby 2.0
 * Postgresql 9.X
-* Postgis 1.5.X and Postgis 2.X
+* Postgis 1.5 and 2.X
 
 External Deps
 -------------
