@@ -47,7 +47,7 @@ module ActiveRoad
 
     def self.closest_to(location)
       location_as_text = location.to_ewkt(false)
-      order("ST_Distance(geometry, GeomFromText('#{location_as_text}', 4326))")
+      order("ST_Distance(geometry, ST_GeomFromText('#{location_as_text}', 4326))")
     end
 
     def self.with_in(location, distance = 100)
