@@ -80,7 +80,7 @@ describe ActiveRoad::OsmImport do
     end
 
     it "should have update all nodes with way in the temporary database" do   
-      subject.update_node_with_way(way)
+      subject.update_node_with_way(way, subject.database)
       object = Marshal.load(subject.database.get(1))
       object.id.should ==  "1"
       object.lon.should == 2.0
