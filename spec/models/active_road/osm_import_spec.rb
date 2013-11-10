@@ -134,7 +134,9 @@ describe ActiveRoad::OsmImport do
   describe "#import" do
     it "should have import all nodes in a temporary database" do  
       subject.import
-      # TODO
+      ActiveRoad::PhysicalRoad.all.size.should == 2
+      ActiveRoad::PhysicalRoadConditionnalCost.all.size.should == 6
+      ActiveRoad::Junction.all.size.should == 5
     end
   end
 

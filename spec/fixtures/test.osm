@@ -30,20 +30,11 @@
   <way id="4" version="2" timestamp="2012-07-09T12:29:25Z" changeset="12161456" uid="218937" user="wl59">
 	</way>
 	<way id="5" version="16" timestamp="2012-03-19T21:45:37Z" changeset="11035419" uid="318501" user="Stephixus">
-		<nd ref="318131834"/>
-		<nd ref="369348901"/>
-		<nd ref="1111870244"/>
-		<nd ref="610888686"/>
-		<nd ref="1111871696"/>
-		<nd ref="1111872571"/>
-		<nd ref="1111870404"/>
-		<nd ref="667422728"/>
-		<nd ref="1110577394"/>
-		<nd ref="1111872430"/>
-		<nd ref="1110577327"/>
-		<nd ref="1111870957"/>
-		<nd ref="1111872458"/>
-		<nd ref="290449667"/>
+		<nd ref="1"/>
+		<nd ref="2"/>
+		<nd ref="3"/>
+		<nd ref="4"/>
+		<nd ref="5"/>
 		<tag k="highway" v="secondary"/>
 		<tag k="name" v="Rue J. Symphorien"/>
 	</way>

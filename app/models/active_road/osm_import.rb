@@ -90,16 +90,17 @@ class  ActiveRoad::OsmImport
   def backup_nodes(database)
     # Save nodes in kyotocabinet database
     parser.for_tag(:node).each do |node|
-      database.set(node.attributes["id"], Marshal.dump(Node.new(node.attributes["id"], node.attributes["lon"].to_f, node.attributes["lat"].to_f)) )
-    end    
+      database[ node.attributes["id"] ] = Marshal.dump(Node.new(node.attributes["id"], node.attributes["lon"].to_f, node.attributes["lat"].to_f))
+    end 
   end
 
-  def update_node_with_way(way)
+  def update_node_with_way(way, database)
     way_id = way.attributes["id"]
     # Get node ids for each way
     node_ids = []
     if way.key?("nd")
       nodes = way["nd"]
+
       if nodes.size == 0
         node_ids << nodes.attributes["ref"]
       else          
@@ -116,7 +117,7 @@ class  ActiveRoad::OsmImport
         node.add_way(way_id)
         Marshal.dump(node)
       }
-    end     
+    end
   end
   
   def iterate_nodes(database)
@@ -126,12 +127,11 @@ class  ActiveRoad::OsmImport
     database.each { |key, value|
       
       node = Marshal.load(value)
-      geometry = GeoRuby::SimpleFeatures::Point.from_x_y( node.lon, node.lat, 4326) if( node.lon && node.lat )
-      
-       if node.ways.present? # Take node only if at least one way use it
-         junctions_values << [ node.id, geometry ]
-         junctions_ways[node.id] = node.ways
-       end
+      geometry = GeoRuby::SimpleFeatures::Point.from_x_y( node.lon, node.lat, 4326) if( node.lon && node.lat )    
+      if node.ways.present? # Take node only if at least one way use it
+        junctions_values << [ node.id, geometry ]
+        junctions_ways[node.id] = node.ways
+      end
       
       if junctions_values.count == 1000
         save_junctions(junctions_values, junction_ways) 
@@ -172,7 +172,7 @@ class  ActiveRoad::OsmImport
           tags = extracted_tags(way["tag"])
 
           if tags.present?          
-            update_node_with_way(way)
+            update_node_with_way(way, database)
 
             physical_road = ActiveRoad::PhysicalRoad.new :objectid => way_id
             physical_roads << physical_road
