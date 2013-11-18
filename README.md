@@ -39,9 +39,12 @@ There is extensive usage documentation available [on the wiki](https://github.co
 Example Usage 
 ------------
 
-### Import data
+### Rake tasks
 
-Import OSM data : 
+#### Import data
+
+
+####Import OSM data : 
 
 ```sh
 bundle exec rake 'app:active_road:import:osm_data[/data/guyane-latest.osm]'
@@ -53,8 +56,8 @@ bundle exec rake 'app:active_road:import:osm_data[/data/guyane-latest.osm]'
 Example of basic finder : 
 
 ```ruby
- from = Georuby::SimpleFeature::Point.from_x_y(0, 0)
- to = Georuby::SimpleFeature::Point.from_x_y(1, 1)
+ from = GeoRuby::SimpleFeatures::Point.from_x_y(-52.652771, 5.174379)
+ to = GeoRuby::SimpleFeatures::Point.from_x_y(-52.323182, 4.941829)
  speed = 4 # In kilometer/hour        
  finder = ActiveRoad::ShortestPath::Finder.new(from, to, speed).tap do |finder|
    finder.timeout = 30.seconds
@@ -69,14 +72,14 @@ Example of basic finder :
 
 For a more complex query, you can use constraints arguments. It's an array of string which 
 describes :  
- * if we use conditionnal cost for a physical road  Ex : ["bike"]
- * if we not use a physical road because it contains a specific conditionnal cost Ex : ["~bike"]
+ * if we use conditionnal cost for a physical road  Ex : ["car"]
+ * if we not use a physical road because it contains a specific conditionnal cost Ex : ["~car"]
 
 ```ruby
- from = Georuby::SimpleFeature::Point.from_x_y(0, 0)
- to = Georuby::SimpleFeature::Point.from_x_y(1, 1)
- speed = 4 # In kilometer/hour        
- constraints = ["bike"]
+ from = GeoRuby::SimpleFeatures::Point.from_x_y(-52.652771, 5.174379)
+ to = GeoRuby::SimpleFeatures::Point.from_x_y(-52.323182, 4.941829)
+ speed = 50 # In kilometer/hour        
+ constraints = ["car"]
  finder = ActiveRoad::ShortestPath::Finder.new(from, to, speed, constraints).tap do |finder|
    finder.timeout = 30.seconds
  end
