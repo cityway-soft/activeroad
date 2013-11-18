@@ -157,6 +157,14 @@ class  ActiveRoad::OsmImport
     end
   end
 
+  def update_physical_roads_geometry
+    # Batch physical roads request
+    ActiveRoad::PhysicalRoad.find_each do |physical_road|
+      junction_geometries = physical_road.junctions.collect(&:geometry).flatten
+      physical_road.update_attribute :geometry, GeoRuby::SimpleFeatures::LineString.from_points(junction_geometries)      
+    end
+  end
+
   def import
     # process the database by iterator
     DB::process(database_path) { |database|           
@@ -192,6 +200,8 @@ class  ActiveRoad::OsmImport
       save_physical_roads_and_children(physical_roads, physical_road_conditionnal_costs_by_objectid) if physical_roads.present?       
 
       iterate_nodes(database)
+
+      update_physical_roads_geometry
     }      
   end
 
