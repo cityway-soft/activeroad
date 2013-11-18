@@ -108,7 +108,7 @@ describe ActiveRoad::OsmImport do
       subject.iterate_nodes(subject.database)
     end
   end
-
+  
   describe "#save_junctions" do
 
     let!(:physical_road) { create(:physical_road, :objectid => "1") }
@@ -130,6 +130,23 @@ describe ActiveRoad::OsmImport do
       last_junction.physical_roads.should == [physical_road]
     end
   end  
+
+  describe "#update_physical_roads_geometry" do
+    let!(:junction1) { create(:junction, :geometry => point(2,2) ) }
+    let!(:junction2) { create(:junction, :geometry => point(0,0)) }
+    let!(:junction3) {  create(:junction, :geometry => point(10,10)) }
+    let!(:physical_road) { create(:physical_road) } 
+
+    before :each do
+      physical_road.junctions << [junction1, junction2, junction3]
+    end
+
+    it "should update physical road geometry" do        
+      subject.update_physical_roads_geometry
+      ActiveRoad::PhysicalRoad.first.geometry.should == GeoRuby::SimpleFeatures::LineString.from_points( [point(2.0,2.0), point(0.0,0.0), point(10.0,10.0) ])
+    end
+
+  end
 
   describe "#import" do
     it "should have import all nodes in a temporary database" do  
