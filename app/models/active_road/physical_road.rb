@@ -42,7 +42,8 @@ module ActiveRoad
     alias_method :to_s, :name
 
     def self.nearest_to(location, distance = 100)
-      with_in(location, distance).closest_to(location)
+      # FIX Limit to 2 physical roads for perf, must be extended
+      with_in(location, distance).closest_to(location).limit(2)
     end
 
     def self.closest_to(location)
