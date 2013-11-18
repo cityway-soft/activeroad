@@ -39,9 +39,14 @@ describe ActiveRoad::ShortestPath::Finder do
     it "should find a solution between first and last road with with no constraints" do
       path = ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4).path
       path.should_not be_blank
-      path.size.should == 6
+      path.size.should == 7
+      path[0].should == departure
+      path[1].class.should == ActiveRoad::AccessLink
       path[2].physical_road.objectid.should == "ac"
       path[3].physical_road.objectid.should == "cf"
+      path[4].physical_road.objectid.should == "ef"
+      path[5].class.should == ActiveRoad::AccessLink
+      path[6].should == arrival
     end  
 
     it "should find a solution between first and last road with" do
@@ -59,9 +64,13 @@ describe ActiveRoad::ShortestPath::Finder do
       path = ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4, ["~bike"]).path
       path.should_not be_blank
       path.size.should == 7
+      path[0].should == departure
+      path[1].class.should == ActiveRoad::AccessLink
       path[2].physical_road.objectid.should == "ac"
       path[3].physical_road.objectid.should == "ce"
       path[4].physical_road.objectid.should == "ef"
+      path[5].class.should == ActiveRoad::AccessLink
+      path[6].should == arrival
     end
 
     it "should return something when no solution" do
@@ -133,7 +142,6 @@ describe ActiveRoad::ShortestPath::Finder do
     
     let(:node) { double(:node) }
     let(:destination) { double(:destination) }
-    let(:weight) { 2 }
     let(:context) { {:uphill => 2} }
     let(:subject) { ActiveRoad::ShortestPath::Finder.new departure, arrival, 4, [], {:uphill => 2} }
 
@@ -142,14 +150,18 @@ describe ActiveRoad::ShortestPath::Finder do
       subject.stub :time_heuristic => 2      
     end
     
+    it "should not follow way if weight == Infinity" do      
+      subject.follow_way?(node, destination, Float::INFINITY).should be_false
+    end
+
     it "should not follow way if uphill > uphill max" do     
       subject.follow_way_filter = {:uphill => 1}
-      subject.follow_way?(node, destination, weight, context).should be_false
+      subject.follow_way?(node, destination, 2, context).should be_false
     end
 
     it "should follow way if uphill < uphill max" do
       subject.follow_way_filter = {:uphill => 3}
-      subject.follow_way?(node, destination, weight, context).should be_true
+      subject.follow_way?(node, destination, 2, context).should be_true
     end
 
   end
