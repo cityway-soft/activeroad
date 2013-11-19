@@ -10,14 +10,6 @@ describe ActiveRoad::RequestConditionnalCostLinker do
 
   subject { ActiveRoad::RequestConditionnalCostLinker.new(["bike", "pavement", "~asphalt"]) }
   
-  describe "#tags" do
-
-    it "should return all tags for conditionnal costs" do
-      subject.tags(physical_road_conditionnal_costs).should == ["bike", "pavement"]
-    end
-    
-  end
-  
   describe "#authorized_constraints_intersection_with" do
 
     it "should return true if authorized constraints intersection" do
@@ -40,13 +32,13 @@ describe ActiveRoad::RequestConditionnalCostLinker do
 
     it "should return true if tags in conditionnal costs and tag in constraints have common tags" do
       rcc = ActiveRoad::RequestConditionnalCostLinker.new(["bike", "pavement"])
-      rcc.linked?(physical_road_conditionnal_costs).should == true
+      rcc.linked?(["bike", "pavement"]).should == true
     end
 
     it "should return true if tags in conditionnal costs and unauthorized constraints have common tags" do
       rcc = ActiveRoad::RequestConditionnalCostLinker.new(["~asphalt"])
       physical_road_conditionnal_costs << create(:physical_road_conditionnal_cost, :tags => "asphalt", :cost => 0.1)
-      rcc.linked?(physical_road_conditionnal_costs).should == true
+      rcc.linked?(["bike", "pavement", "asphalt"]).should == true
     end
     
     it "should return false if tags in conditionnal costs have common tags with authorized or unauthorized constraints" do

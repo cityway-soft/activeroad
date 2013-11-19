@@ -4,11 +4,7 @@ module ActiveRoad
 
     def initialize(constraints = [], external_constraints = {})
       @constraints = constraints
-    end
-
-    def tags(conditionnal_costs)
-      conditionnal_costs.collect(&:tags)  
-    end
+    end 
 
     def unauthorized_constraints
       @unauthorized_constraints ||= [].tap do |unauthorized_constraints|
@@ -38,8 +34,8 @@ module ActiveRoad
       (unauthorized_constraints & tags == false || unauthorized_constraints & tags == []) ? false : true 
     end
 
-    def linked?(conditionnal_costs)
-      authorized_constraints_intersection_with?(tags(conditionnal_costs)) || unauthorized_constraints_intersection_with?(tags(conditionnal_costs))
+    def linked?(conditionnal_costs_tags)
+      authorized_constraints_intersection_with?(conditionnal_costs_tags) || unauthorized_constraints_intersection_with?(conditionnal_costs_tags)
     end
 
     def conditionnal_costs_linked(conditionnal_costs)
@@ -47,8 +43,9 @@ module ActiveRoad
     end
 
     def conditionnal_costs_sum(conditionnal_costs)
-      if linked?(conditionnal_costs)
-        if unauthorized_constraints && unauthorized_constraints_intersection_with?(tags(conditionnal_costs))
+      conditionnal_costs_tags = conditionnal_costs.collect(&:tags)  
+      if linked?(conditionnal_costs_tags)
+        if unauthorized_constraints && unauthorized_constraints_intersection_with?(conditionnal_costs_tags)
           return Float::INFINITY
         else
           return conditionnal_costs_linked(conditionnal_costs).collect(&:cost).sum 

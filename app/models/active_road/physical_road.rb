@@ -22,16 +22,14 @@ module ActiveRoad
     has_many :physical_road_conditionnal_costs
 
     acts_as_geom :geometry => :line_string
-    delegate :locate_point, :interpolate_point, :to => :geometry
+    delegate :locate_point, :interpolate_point, :to => :geometry    
 
-    #validates_inclusion_of :transport_modes, :in => %w{ "pedestrian", "bike", "car", "train" }
-
-    before_validation :update_length_in_meter
-
+    before_create :update_length_in_meter
+    before_update :update_length_in_meter
     def update_length_in_meter
-      if ( geometry )
+      if geometry.present?
         spherical_factory = ::RGeo::Geographic.spherical_factory  
-        self.update_attribute :length_in_meter, spherical_factory.line_string(geometry.points.collect(&:to_rgeo)).length
+        self.length_in_meter = spherical_factory.line_string(geometry.points.collect(&:to_rgeo)).length
       end
     end
     
@@ -43,7 +41,7 @@ module ActiveRoad
 
     def self.nearest_to(location, distance = 100)
       # FIX Limit to 2 physical roads for perf, must be extended
-      with_in(location, distance).closest_to(location).limit(2)
+      with_in(location, distance).closest_to(location).limit(2).includes(:junctions, :physical_road_conditionnal_costs)
     end
 
     def self.closest_to(location)
