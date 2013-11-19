@@ -45,8 +45,8 @@ class ActiveRoad::Path
 
   delegate :access_to_road?, :to => :arrival
 
-  def paths(tags = {})
-    arrival.paths(tags) - [reverse]
+  def paths
+    arrival.paths - [reverse]
   end
 
   def reverse
@@ -56,7 +56,7 @@ class ActiveRoad::Path
   def geometry_without_cache
     sorted_locations_on_road = locations_on_road.sort
     reverse = (sorted_locations_on_road != locations_on_road)
-    geometry = road.line_substring *sorted_locations_on_road
+    geometry = road.line_substring(sorted_locations_on_road.first, sorted_locations_on_road.last)
     geometry = geometry.reverse if reverse
     geometry
   end
