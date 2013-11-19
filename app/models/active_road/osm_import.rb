@@ -78,10 +78,10 @@ class  ActiveRoad::OsmImport
     [].tap do |prcc|
       tags.each do |tag_key, tag_value|
         if ["highway", "railway"].include?(tag_key)
-          prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "car", :cost => Float::INFINITY) if !ActiveRoad::OsmImport.tag_for_car_values.include?(tag_value)  
-          prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "pedestrian", :cost => Float::INFINITY) if !ActiveRoad::OsmImport.tag_for_pedestrian_values.include?(tag_value)
-          prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "bike", :cost => Float::INFINITY) if !ActiveRoad::OsmImport.tag_for_bike_values.include?(tag_value) 
-          prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "train", :cost => Float::INFINITY) if !ActiveRoad::OsmImport.tag_for_train_values.include?(tag_value)
+          prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "car", :cost => Float::MAX) if !ActiveRoad::OsmImport.tag_for_car_values.include?(tag_value)  
+          prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "pedestrian", :cost => Float::MAX) if !ActiveRoad::OsmImport.tag_for_pedestrian_values.include?(tag_value)
+          prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "bike", :cost => Float::MAX) if !ActiveRoad::OsmImport.tag_for_bike_values.include?(tag_value) 
+          prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "train", :cost => Float::MAX) if !ActiveRoad::OsmImport.tag_for_train_values.include?(tag_value)
         end
       end
     end

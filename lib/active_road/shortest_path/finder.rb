@@ -31,7 +31,7 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
   end
 
   def destination_accesses 
-    @destination_accesses ||= ActiveRoad::AccessPoint.to(destination, physical_road_filter)
+    @destination_accesses ||= ActiveRoad::AccessPoint.to(destination)
   end  
 
   # Return a time in second from node to destination
@@ -139,9 +139,9 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
   def ways(node, context={})
     paths =
       if GeoRuby::SimpleFeatures::Point === node
-        ActiveRoad::AccessLink.from(node, physical_road_filter)
+        ActiveRoad::AccessLink.from(node)
       else
-        node.paths(physical_road_filter)
+        node.paths
       end
     
     unless GeoRuby::SimpleFeatures::Point === node # For the first point to access physical roads
@@ -155,6 +155,7 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
     array = paths.collect do |path|
       [ path, path_weights(path)]
     end
+
     Hash[array]
   end
 

@@ -50,13 +50,14 @@ describe ActiveRoad::RequestConditionnalCostLinker do
 
   describe "#conditionnal_costs_sum" do
 
-    it "should return all tags for conditionnal costs" do
+    it "should return the sum for conditionnal costs" do
       subject.conditionnal_costs_sum(physical_road_conditionnal_costs).should == 0.4
     end
 
-    it "should return all tags for conditionnal costs" do
-      physical_road_conditionnal_costs.first.destroy
-      subject.conditionnal_costs_sum(physical_road_conditionnal_costs).should == 0.3
+    it "should return infinity for conditionnal costs with an infinity value in it" do
+      rcc = ActiveRoad::RequestConditionnalCostLinker.new(["bike", "pavement", "test"])
+      physical_road_conditionnal_costs << create(:physical_road_conditionnal_cost, :tags => "test", :cost => Float::MAX)
+      rcc.conditionnal_costs_sum(physical_road_conditionnal_costs).should == Float::INFINITY
     end
     
   end

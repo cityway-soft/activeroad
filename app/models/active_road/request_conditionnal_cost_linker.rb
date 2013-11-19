@@ -46,7 +46,7 @@ module ActiveRoad
       conditionnal_costs_tags = conditionnal_costs.collect(&:tags)  
       if linked?(conditionnal_costs_tags)
         if unauthorized_constraints && unauthorized_constraints_intersection_with?(conditionnal_costs_tags)
-          return Float::INFINITY
+          return Float::MAX
         else
           return conditionnal_costs_linked(conditionnal_costs).collect(&:cost).sum 
         end

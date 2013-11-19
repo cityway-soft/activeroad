@@ -108,6 +108,14 @@ describe ActiveRoad::ShortestPath::Finder do
       subject.path_weights(path).should == 2 / (4 * 1000/3600) + (2 / (4 * 1000/3600)) * 0.2
     end
 
+    it "should return path weights == Infinity and physical roads weight if physical roads have weight" do
+      physical_road = create(:physical_road)
+      physical_road_conditionnal_cost = create(:physical_road_conditionnal_cost, :physical_road => physical_road, :tags => "test", :cost => Float::MAX)
+      path = ActiveRoad::Path.new(:departure => create(:junction), :physical_road => physical_road )
+      path.stub :length_in_meter => 2
+      subject.path_weights(path).should == Float::INFINITY
+    end
+
   end
 
   describe "#refresh_context" do
