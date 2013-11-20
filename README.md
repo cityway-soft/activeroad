@@ -51,6 +51,22 @@ bundle exec rake 'app:active_road:import:osm_data[/data/guyane-latest.osm]'
 
 ```
 
+<table>
+    <th>
+        <td>OSM Data</td>
+        <td>time to import</td>
+        <td>nodes</td>
+        <td>way</td>
+    </th>
+    <tr>
+        <td>guyane</td>
+        <td>624,1 seconds</td>
+        <td>479209</td>
+        <td>121870</td>
+    </tr>
+</table>
+
+
 ### Itinerary research
 
 Example of basic finder : 
@@ -71,7 +87,7 @@ Example of basic finder :
 ```
 
 For a more complex query, you can use constraints arguments. It's an array of string which 
-describes :  
+describes :
  * if we use conditionnal cost for a physical road  Ex : ["car"]
  * if we not use a physical road because it contains a specific conditionnal cost Ex : ["~car"]
 
