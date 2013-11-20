@@ -58,7 +58,8 @@ describe ActiveRoad::OsmImport do
       object.id.should ==  "1"
       object.lon.should == 0
       object.lat.should == 0
-      object. ways.should == []
+      object.ways.should == []
+      object.end_of_way.should == false
     end
   end
 
@@ -68,10 +69,13 @@ describe ActiveRoad::OsmImport do
     before :each do 
       subject.open_database(subject.database_path)
       subject.database.set("1", Marshal.dump(ActiveRoad::OsmImport::Node.new("1", 2.0, 2.0)) )
+      subject.database.set("2", Marshal.dump(ActiveRoad::OsmImport::Node.new("1", 2.0, 2.0)) )
+      subject.database.set("3", Marshal.dump(ActiveRoad::OsmImport::Node.new("1", 2.0, 2.0)) )
 
       way["nd"] = [ 
                    double( :attributes => {"ref" => "1"}), 
-                   double( :attributes => {"ref" => "2"}) 
+                   double( :attributes => {"ref" => "2"}), 
+                   double( :attributes => {"ref" => "3"}) 
                   ] 
     end
 
@@ -81,11 +85,26 @@ describe ActiveRoad::OsmImport do
 
     it "should have update all nodes with way in the temporary database" do   
       subject.update_node_with_way(way, subject.database)
-      object = Marshal.load(subject.database.get(1))
-      object.id.should ==  "1"
-      object.lon.should == 2.0
-      object.lat.should == 2.0
-      object.ways.should == ["1"]
+      node1 = Marshal.load(subject.database.get(1))
+      node1.id.should ==  "1"
+      node1.lon.should == 2.0
+      node1.lat.should == 2.0
+      node1.ways.should == ["1"]
+      node1.end_of_way.should == true
+
+      node2 = Marshal.load(subject.database.get(2))
+      node2.id.should ==  "1"
+      node2.lon.should == 2.0
+      node2.lat.should == 2.0
+      node2.ways.should == ["1"]
+      node2.end_of_way.should == false
+
+      node3 = Marshal.load(subject.database.get(3))
+      node3.id.should ==  "1"
+      node3.lon.should == 2.0
+      node3.lat.should == 2.0
+      node3.ways.should == ["1"]
+      node3.end_of_way.should == true
     end
   end
 
@@ -94,8 +113,8 @@ describe ActiveRoad::OsmImport do
 
     before :each do 
       subject.open_database(subject.database_path)
-      subject.database.set("1", Marshal.dump(ActiveRoad::OsmImport::Node.new("1", 2.0, 2.0, ["1"])) )
-      subject.database.set("2", Marshal.dump(ActiveRoad::OsmImport::Node.new("2", 2.0, 2.0, ["1"])) )
+      subject.database.set("1", Marshal.dump(ActiveRoad::OsmImport::Node.new("1", 2.0, 2.0, ["1", "2"])) )
+      subject.database.set("2", Marshal.dump(ActiveRoad::OsmImport::Node.new("2", 2.0, 2.0, ["1", "3"])) )
     end
 
     after :each  do
@@ -104,7 +123,7 @@ describe ActiveRoad::OsmImport do
 
     it "should iterate nodes to save it" do
       GeoRuby::SimpleFeatures::Point.stub :from_x_y => point
-      subject.should_receive(:save_junctions).exactly(1).times.with([["1", point], ["2", point]], {"1" => ["1"], "2" => ["1"]})
+      subject.should_receive(:save_junctions).exactly(1).times.with([["1", point], ["2", point]], {"1" => ["1", "2"], "2" => ["1", "3"]})
       subject.iterate_nodes(subject.database)
     end
   end
@@ -131,19 +150,29 @@ describe ActiveRoad::OsmImport do
     end
   end  
 
-  describe "#update_physical_roads_geometry" do
-    let!(:junction1) { create(:junction, :geometry => point(2,2) ) }
-    let!(:junction2) { create(:junction, :geometry => point(0,0)) }
-    let!(:junction3) {  create(:junction, :geometry => point(10,10)) }
-    let!(:physical_road) { create(:physical_road) } 
+  describe "#way_geometry" do
+    let(:way) { Saxerator::Builder::HashElement.new("Element", {"id" => "1"}) }   
+      
+    before :each do 
+      subject.open_database(subject.database_path)
 
-    before :each do
-      physical_road.junctions << [junction1, junction2, junction3]
+      way["nd"] = [ 
+                   double( :attributes => {"ref" => "1"}), 
+                   double( :attributes => {"ref" => "2"}), 
+                   double( :attributes => {"ref" => "3"}) 
+                  ] 
+
+      subject.database.set("1", Marshal.dump(ActiveRoad::OsmImport::Node.new("1", 0.0, 0.0, ["1", "2"])) )
+      subject.database.set("2", Marshal.dump(ActiveRoad::OsmImport::Node.new("2", 1.0, 1.0, ["1", "3"])) )
+      subject.database.set("3", Marshal.dump(ActiveRoad::OsmImport::Node.new("3", 2.0, 2.0, ["1", "3"])) )
     end
 
+    after :each  do
+      subject.close_database
+    end   
+
     it "should update physical road geometry" do        
-      subject.update_physical_roads_geometry
-      ActiveRoad::PhysicalRoad.first.geometry.should == GeoRuby::SimpleFeatures::LineString.from_points( [point(2.0,2.0), point(0.0,0.0), point(10.0,10.0) ])
+      subject.way_geometry(way, subject.database).should ==  GeoRuby::SimpleFeatures::LineString.from_points( [point(0.0,0.0), point(1.0,1.0), point(2.0,2.0) ])
     end
 
   end
@@ -153,7 +182,7 @@ describe ActiveRoad::OsmImport do
       subject.import
       ActiveRoad::PhysicalRoad.all.size.should == 2
       ActiveRoad::PhysicalRoadConditionnalCost.all.size.should == 6
-      ActiveRoad::Junction.all.size.should == 5
+      ActiveRoad::Junction.all.size.should == 4
     end
   end
 
@@ -162,7 +191,7 @@ describe ActiveRoad::OsmImport do
     let(:pr2) { ActiveRoad::PhysicalRoad.new :objectid => "physicalroad::2" }
     let(:physical_roads) { [ pr1, pr2 ] }
     let(:prcc) { ActiveRoad::PhysicalRoadConditionnalCost.new :tags => "car", :cost => 0.3 }
-    let(:physical_road_conditionnal_costs_by_objectid) { {pr1.objectid => [prcc]} }
+    let(:physical_road_conditionnal_costs_by_objectid) { {pr1.objectid => [ [prcc] ]} }
     
     it "should save physical roads in postgresql database" do  
       subject.save_physical_roads_and_children(physical_roads)

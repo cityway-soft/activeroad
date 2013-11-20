@@ -133,7 +133,7 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
     request = request && context[:uphill] <= follow_way_filter[:uphill] if follow_way_filter[:uphill] && context[:uphill].present?
     request = request && context[:downhill] <= follow_way_filter[:downhill] if follow_way_filter[:downhill] && context[:downhill].present?
     request = request && context[:height] <= follow_way_filter[:height] if follow_way_filter[:height] && context[:height].present?    
-    request = request && ( search_heuristic(node) + weight ) < ( time_heuristic(source) * 10 )
+    request = request && ( search_heuristic(node) + weight ) < ( time_heuristic(source) * 4 )
   end
 
   def ways(node, context={})

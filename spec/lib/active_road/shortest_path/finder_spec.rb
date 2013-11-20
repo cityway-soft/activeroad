@@ -49,17 +49,21 @@ describe ActiveRoad::ShortestPath::Finder do
       path[6].should == arrival
     end  
 
-    it "should find a solution between first and last road with" do
-      cf_conditionnal_costs = create(:physical_road_conditionnal_cost, :physical_road => cf, :tags => "bike", :cost => 0.5)
+    it "should find a solution between first and last road with constraints" do
+      cf_conditionnal_costs = create(:physical_road_conditionnal_cost, :physical_road => cf, :tags => "bike", :cost => 0.7)
       path = ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4, ["bike"]).path
       path.should_not be_blank
       path.size.should == 7
+      path[0].should == departure
+      path[1].class.should == ActiveRoad::AccessLink
       path[2].physical_road.objectid.should == "ac"
       path[3].physical_road.objectid.should == "ce"
       path[4].physical_road.objectid.should == "ef"
+      path[5].class.should == ActiveRoad::AccessLink
+      path[6].should == arrival
     end
     
-    it "should find a solution between first and last road with context arguments in constraints" do
+    it "should find a solution between first and last road with constraints which block the itinerary" do
       cf_conditionnal_costs = create(:physical_road_conditionnal_cost, :physical_road => cf, :tags => "bike", :cost => 0.5)  
       path = ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4, ["~bike"]).path
       path.should_not be_blank

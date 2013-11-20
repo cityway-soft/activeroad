@@ -98,26 +98,50 @@ class  ActiveRoad::OsmImport
     way_id = way.attributes["id"]
     # Get node ids for each way
     node_ids = []
+    ends_of_way = []
     if way.key?("nd")
       nodes = way["nd"]
 
-      if nodes.size == 0
-        node_ids << nodes.attributes["ref"]
-      else          
+      # Take only the first and the last node => the end of physical roads
+      if nodes.size >= 0 
         nodes.each do |node|
-          node_ids << node.attributes["ref"]
+          ends_of_way << node.attributes["ref"] if(node.attributes["ref"] == nodes.first.attributes["ref"] || node.attributes["ref"] == nodes.last.attributes["ref"])
+          node_ids << node.attributes["ref"]  
         end
       end
-    end
+    end  
 
     # Update node data with way id
     node_ids.each_with_index do |id, index|
       database.accept(id) { |key, value|
         node = Marshal.load(value)
         node.add_way(way_id)
+        node.end_of_way = true if ends_of_way.include?(key)
         Marshal.dump(node)
       }
     end
+  end
+
+  def way_geometry(way, database)
+    node_ids = []
+    if way.key?("nd")
+      nodes = way["nd"]
+
+      # Take only the first and the last node => the end of physical roads
+      if nodes.size >= 0 
+        nodes.each do |node|
+          node_ids << node.attributes["ref"] 
+        end
+      end
+    end
+
+    nodes_geometry = []
+    node_ids.each do |id|
+      node = Marshal.load(database[id])
+      nodes_geometry << GeoRuby::SimpleFeatures::Point.from_x_y(node.lon, node.lat, 4326)
+    end
+
+    GeoRuby::SimpleFeatures::LineString.from_points(nodes_geometry, 4326) if nodes_geometry.present?    
   end
   
   def iterate_nodes(database)
@@ -128,7 +152,7 @@ class  ActiveRoad::OsmImport
       
       node = Marshal.load(value)
       geometry = GeoRuby::SimpleFeatures::Point.from_x_y( node.lon, node.lat, 4326) if( node.lon && node.lat )    
-      if node.ways.present? # Take node only if at least one way use it
+      if node.ways.present? && (node.ways.count >= 2 || node.end_of_way == true )  # Take node with at least two ways or at the end of a way
         junctions_values << [ node.id, geometry ]
         junctions_ways[node.id] = node.ways
       end
@@ -157,14 +181,6 @@ class  ActiveRoad::OsmImport
     end
   end
 
-  def update_physical_roads_geometry
-    # Batch physical roads request
-    ActiveRoad::PhysicalRoad.find_each do |physical_road|
-      junction_geometries = physical_road.junctions.collect(&:geometry).flatten
-      physical_road.update_attribute :geometry, GeoRuby::SimpleFeatures::LineString.from_points(junction_geometries)      
-    end
-  end
-
   def import
     # process the database by iterator
     DB::process(database_path) { |database|           
@@ -172,7 +188,7 @@ class  ActiveRoad::OsmImport
       backup_nodes(database)
 
       physical_roads = []
-      physical_road_conditionnal_costs_by_objectid = {}
+      attributes_by_objectid = {}
       parser.for_tag(:way).each do |way|
         way_id = way.attributes["id"]
       
@@ -181,38 +197,40 @@ class  ActiveRoad::OsmImport
 
           if tags.present?          
             update_node_with_way(way, database)
-
-            physical_road = ActiveRoad::PhysicalRoad.new :objectid => way_id
+            
+            spherical_factory = ::RGeo::Geographic.spherical_factory
+            geometry = way_geometry(way, database)
+            length_in_meter = spherical_factory.line_string(geometry.points.collect(&:to_rgeo)).length
+            physical_road = ActiveRoad::PhysicalRoad.new :objectid => way_id, :geometry => geometry, :length_in_meter => length_in_meter
             physical_roads << physical_road
-            physical_road_conditionnal_costs_by_objectid[physical_road.objectid] = physical_road_conditionnal_costs(tags)
+            attributes_by_objectid[physical_road.objectid] = [physical_road_conditionnal_costs(tags)]
           end
         end
 
         if (physical_roads.count == 1000)
-          save_physical_roads_and_children(physical_roads, physical_road_conditionnal_costs_by_objectid)
+          save_physical_roads_and_children(physical_roads, attributes_by_objectid)
           
           # Reset  
           physical_roads = []
-          physical_road_conditionnal_costs_by_objectid = {}
+          attributes_by_objectid = {}
         end
       end
       
-      save_physical_roads_and_children(physical_roads, physical_road_conditionnal_costs_by_objectid) if physical_roads.present?       
-
+      save_physical_roads_and_children(physical_roads, attributes_by_objectid) if physical_roads.present?
       iterate_nodes(database)
-
-      update_physical_roads_geometry
     }      
   end
 
-  def save_physical_roads_and_children(physical_roads, physical_road_conditionnal_costs_by_objectid = {})
+  def save_physical_roads_and_children(physical_roads, attributes_by_objectid = {})
     # Save physical roads
     ActiveRoad::PhysicalRoad.import(physical_roads)
 
     # Save physical road conditionnal costs
     prcc = []
-    physical_road_conditionnal_costs_by_objectid.each do |objectid, physical_road_conditionnal_costs|
+    attributes_by_objectid.each do |objectid, attributes|
       pr = ActiveRoad::PhysicalRoad.where(:objectid => objectid).first
+
+      physical_road_conditionnal_costs = attributes.first
       physical_road_conditionnal_costs.each do |physical_road_conditionnal_cost|
         physical_road_conditionnal_cost.update_attribute :physical_road_id, pr.id
         prcc << physical_road_conditionnal_cost
@@ -222,13 +240,14 @@ class  ActiveRoad::OsmImport
   end
 
   class Node
-    attr_accessor :id, :lon, :lat, :ways
+    attr_accessor :id, :lon, :lat, :ways, :end_of_way
 
-    def initialize(id, lon, lat, ways = [])
+    def initialize(id, lon, lat, ways = [], end_of_way = false)
       @id = id
       @lon = lon
       @lat = lat
       @ways = ways
+      @end_of_way = end_of_way
     end
 
     def add_way(id)
@@ -236,11 +255,11 @@ class  ActiveRoad::OsmImport
     end
 
     def marshal_dump
-      [@id, @lon, @lat, @ways]
+      [@id, @lon, @lat, @ways, @end_of_way]
     end
     
     def marshal_load array
-      @id, @lon, @lat, @ways = array
+      @id, @lon, @lat, @ways, @end_of_way = array
     end
   end
 
