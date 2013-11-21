@@ -52,12 +52,12 @@ bundle exec rake 'app:active_road:import:osm_data[/data/guyane-latest.osm]'
 ```
 
 <table>
-    <th>
+    <tr>
         <td>OSM Data</td>
         <td>time to import</td>
         <td>nodes</td>
         <td>way</td>
-    </th>
+    </tr>
     <tr>
         <td>guyane</td>
         <td>624,1 seconds</td>
