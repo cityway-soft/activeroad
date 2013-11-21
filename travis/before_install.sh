@@ -1,10 +1,10 @@
 if [[ "$POSTGIS" == "2.0" ]]; then
     echo "yes" | sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
     sudo apt-get update
-    sudo apt-get install -qq libgeos++-dev libproj-dev postgresql-9.1-postgis-2.0 postgresql-9.1-postgis-2.0-scripts build-essential liblzo2-dev liblzma-dev zlib1g-dev
+    sudo apt-get install -qq libgeos++-dev libproj-dev postgresql-9.1-postgis-2.0 postgresql-9.1-postgis-2.0-scripts build-essential liblzo2-dev liblzma-dev zlib1g-dev libprotobuf-c0-dev
   else
     sudo apt-get update
-    sudo apt-get install -qq libgeos-dev libproj-dev postgresql-9.1-postgis build-essential liblzo2-dev liblzma-dev zlib1g-dev
+    sudo apt-get install -qq libgeos-dev libproj-dev postgresql-9.1-postgis build-essential liblzo2-dev liblzma-dev zlib1g-dev libprotobuf-c0-dev
 fi
 
 # Se placer dans le dossier /tmp

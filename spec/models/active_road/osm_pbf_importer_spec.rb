@@ -1,30 +1,23 @@
 require 'spec_helper'
 
-describe ActiveRoad::OsmImport do
-  let(:xml_file) { File.expand_path("../../../fixtures/test.osm", __FILE__) }
-  #let(:bzip_file) { File.expand_path("../../../fixtures/test.osm.bz2", __FILE__) }
+describe ActiveRoad::OsmPbfImporter do
+  let(:pbf_file) { File.expand_path("../../../fixtures/test.osm.pbf", __FILE__) }
 
-  subject { ActiveRoad::OsmImport.new( xml_file ) } 
-
+  subject { ActiveRoad::OsmPbfImporter.new( pbf_file, "/tmp/osm_test.kch" ) } 
+  
   describe "#extracted_tags" do
     it "should return an hash with tag_key => tag_value if tags size == 1" do 
-      tags = double("tags", :size => 0, :attributes => {"k" => "highway", "v" => "primary"} )
+      tags = {"highway" => "primary"} 
       subject.extracted_tags(tags).should  == {"highway" => "primary"}
     end
 
     it "should return an hash with tag_key => tag_value if tags size >= 1" do 
-      tags =  [ 
-               double( :attributes => {"k" => "highway", "v" => "primary"}), 
-               double( :attributes => {"k" => "highway", "v" => "pedestrian"}) 
-              ]  
+      tags = { "highway" => "primary", "highway" => "pedestrian"}
       subject.extracted_tags(tags).should  == {"highway" => "primary", "highway" => "pedestrian"}
     end
 
     it "should return an hash with tag_key => tag_value filtered with authorized tag_key" do 
-      tags =  [ 
-               double( :attributes => {"k" => "highway", "v" => "test"}), 
-               double( :attributes => {"k" => "highway", "v" => "pedestrian"}) 
-              ]  
+      tags =  {"highway" => "test", "highway" => "pedestrian"} 
       subject.extracted_tags(tags).should  == {"highway" => "pedestrian"}
     end
   end
@@ -54,7 +47,7 @@ describe ActiveRoad::OsmImport do
 
     it "should have import all nodes in a temporary database" do         
       subject.backup_nodes(subject.database)
-      object = Marshal.load(subject.database.get(1))
+      object = Marshal.load(subject.database.get("1"))
       object.id.should ==  "1"
       object.lon.should == 0
       object.lat.should == 0
@@ -64,19 +57,13 @@ describe ActiveRoad::OsmImport do
   end
 
   describe "#update_node_with_ways" do
-    let(:way) { Saxerator::Builder::HashElement.new("Element", {"id" => "1"}) }
+    let(:way) { { :id => 1, :refs => [1,2,3] } }
     
     before :each do 
       subject.open_database(subject.database_path)
-      subject.database.set("1", Marshal.dump(ActiveRoad::OsmImport::Node.new("1", 2.0, 2.0)) )
-      subject.database.set("2", Marshal.dump(ActiveRoad::OsmImport::Node.new("1", 2.0, 2.0)) )
-      subject.database.set("3", Marshal.dump(ActiveRoad::OsmImport::Node.new("1", 2.0, 2.0)) )
-
-      way["nd"] = [ 
-                   double( :attributes => {"ref" => "1"}), 
-                   double( :attributes => {"ref" => "2"}), 
-                   double( :attributes => {"ref" => "3"}) 
-                  ] 
+      subject.database.set("1", Marshal.dump(ActiveRoad::OsmPbfImporter::Node.new("1", 2.0, 2.0)) )
+      subject.database.set("2", Marshal.dump(ActiveRoad::OsmPbfImporter::Node.new("2", 2.0, 2.0)) )
+      subject.database.set("3", Marshal.dump(ActiveRoad::OsmPbfImporter::Node.new("3", 2.0, 2.0)) )
     end
 
     after :each  do
@@ -93,14 +80,14 @@ describe ActiveRoad::OsmImport do
       node1.end_of_way.should == true
 
       node2 = Marshal.load(subject.database.get(2))
-      node2.id.should ==  "1"
+      node2.id.should ==  "2"
       node2.lon.should == 2.0
       node2.lat.should == 2.0
       node2.ways.should == ["1"]
       node2.end_of_way.should == false
 
       node3 = Marshal.load(subject.database.get(3))
-      node3.id.should ==  "1"
+      node3.id.should ==  "3"
       node3.lon.should == 2.0
       node3.lat.should == 2.0
       node3.ways.should == ["1"]
@@ -113,8 +100,8 @@ describe ActiveRoad::OsmImport do
 
     before :each do 
       subject.open_database(subject.database_path)
-      subject.database.set("1", Marshal.dump(ActiveRoad::OsmImport::Node.new("1", 2.0, 2.0, ["1", "2"])) )
-      subject.database.set("2", Marshal.dump(ActiveRoad::OsmImport::Node.new("2", 2.0, 2.0, ["1", "3"])) )
+      subject.database.set("1", Marshal.dump(ActiveRoad::OsmPbfImporter::Node.new("1", 2.0, 2.0, ["1", "2"])) )
+      subject.database.set("2", Marshal.dump(ActiveRoad::OsmPbfImporter::Node.new("2", 2.0, 2.0, ["1", "3"])) )
     end
 
     after :each  do
@@ -151,20 +138,13 @@ describe ActiveRoad::OsmImport do
   end  
 
   describe "#way_geometry" do
-    let(:way) { Saxerator::Builder::HashElement.new("Element", {"id" => "1"}) }   
-      
+    let(:way) { { :id => 1, :refs => [1,2,3] } }
+    
     before :each do 
       subject.open_database(subject.database_path)
-
-      way["nd"] = [ 
-                   double( :attributes => {"ref" => "1"}), 
-                   double( :attributes => {"ref" => "2"}), 
-                   double( :attributes => {"ref" => "3"}) 
-                  ] 
-
-      subject.database.set("1", Marshal.dump(ActiveRoad::OsmImport::Node.new("1", 0.0, 0.0, ["1", "2"])) )
-      subject.database.set("2", Marshal.dump(ActiveRoad::OsmImport::Node.new("2", 1.0, 1.0, ["1", "3"])) )
-      subject.database.set("3", Marshal.dump(ActiveRoad::OsmImport::Node.new("3", 2.0, 2.0, ["1", "3"])) )
+      subject.database.set("1", Marshal.dump(ActiveRoad::OsmPbfImporter::Node.new("1", 0.0, 0.0)) )
+      subject.database.set("2", Marshal.dump(ActiveRoad::OsmPbfImporter::Node.new("2", 1.0, 1.0)) )
+      subject.database.set("3", Marshal.dump(ActiveRoad::OsmPbfImporter::Node.new("3", 2.0, 2.0)) )
     end
 
     after :each  do
@@ -207,14 +187,14 @@ describe ActiveRoad::OsmImport do
     end
   end
 
-  describe ActiveRoad::OsmImport::Node do
+  describe ActiveRoad::OsmPbfImporter::Node do
     
-    let(:subject) { ActiveRoad::OsmImport::Node.new(122323131, 34.2, 12.5) } 
+    let(:subject) { ActiveRoad::OsmPbfImporter::Node.new("122323131", 34.2, 12.5) } 
 
     it "should return a node object when unmarhalling a dump of node object" do
       data = Marshal.dump(subject)
       object = Marshal.load(data)
-      object.should be_an_instance_of(ActiveRoad::OsmImport::Node)
+      object.should be_an_instance_of(ActiveRoad::OsmPbfImporter::Node)
       object.id.should == subject.id
       object.lon.should == subject.lon
       object.lat.should == subject.lat
@@ -222,14 +202,14 @@ describe ActiveRoad::OsmImport do
     end
 
     it "should return a node object with ways when we add a way" do
-      subject.add_way(1223344)
+      subject.add_way("1223344")
       data = Marshal.dump(subject)
       object = Marshal.load(data)
-      object.should be_an_instance_of(ActiveRoad::OsmImport::Node)
+      object.should be_an_instance_of(ActiveRoad::OsmPbfImporter::Node)
       object.id.should == subject.id
       object.lon.should == subject.lon
       object.lat.should == subject.lat
-      object.ways.should == [ 1223344 ]
+      object.ways.should == [ "1223344" ]
     end
 
   end

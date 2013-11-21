@@ -37,5 +37,5 @@ Gem::Specification.new do |s|
   s.add_dependency 'saxerator'
   s.add_dependency 'shortest_path', '0.0.3'
   s.add_dependency 'enumerize', '0.7.0'
-  s.add_dependency "acts_as_list", "~> 0.2.0"
+  s.add_dependency "pbf_parser"
 end

@@ -10,18 +10,35 @@ namespace :active_road do
 
   namespace :import do
  
-    # bundle exec rake "app:active_road:import:osm_data['/home/user/test.csv']"
-    desc "Import osm data from an osm file"
-    task :osm_data, [:file] => [:environment, :reset] do |task, args|      
+    # bundle exec rake "app:active_road:import:osm_xml_data[/home/user/test.osm]"
+    desc "Import osm data from an xml file"
+    task :osm_xml_data, [:file] => [:environment, :reset] do |task, args|      
       begin
-        puts "Import data from osm file #{args.file}"
+        puts "Import data from osm xml file #{args.file}"
         raise "You should provide a valid osm file" if args.file.blank?
         start = Time.now
-        ActiveRoad::OsmImport.new(args.file).import
+        ActiveRoad::OsmXmlImporter.new(args.file).import
         puts "OSM import finished in #{(Time.now - start)} seconds"
         puts "Completed import successfully."    
       rescue => e
         puts("Failed to import osm data : " + e.message)
+        puts e.backtrace.join("\n")
+      end    
+    end
+
+    # bundle exec rake "app:active_road:import:osm_pbf_data[/home/user/test.osm.pbf]"
+    desc "Import osm data from a pbf file"
+    task :osm_pbf_data, [:file] => [:environment, :reset] do |task, args|      
+      begin
+        puts "Import data from osm pbf file #{args.file}"
+        raise "You should provide a valid osm file" if args.file.blank?
+        start = Time.now
+        ActiveRoad::OsmPbfImporter.new(args.file).import
+        puts "OSM import finished in #{(Time.now - start)} seconds"
+        puts "Completed import successfully."    
+      rescue => e
+        puts("Failed to import osm data : " + e.message)
+        puts e.backtrace.join("\n")
       end    
     end
 
@@ -39,6 +56,21 @@ namespace :active_road do
       end    
     end
 
+  end
+  
+  task :itinerary, [:from, :to, :speed, :constraints] => [:environment] do |task, args|      
+    puts "Search an itinerary"
+    raise "You should provide arguments" if args.from.blank? || args.to.blank? || args.speed.blank?
+    start = Time.now
+    begin
+      finder = ActiveRoad::ShortestPath::Finder.new(args.from, args.to, args.speed, args.constraints).tap do |finder|
+        finder.timeout = 30.seconds
+      end
+      puts "Itinerary in json : #{finder.to_json}"
+    rescue => e
+      puts("Failed to find an itinerary : " + e.message)
+    end    
+    puts "Itinerary research finished in #{(Time.now - start)} seconds"
   end
 
 #   nammespace :install do
