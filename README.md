@@ -71,6 +71,12 @@ bundle exec rake 'app:active_road:import:osm_data[/data/guyane-latest.osm]'
 
 Example of basic finder : 
 
+Actually we can use only 4 transport modes : 
+* car
+* train
+* pedestrian
+* bike 
+
 ```ruby
  from = GeoRuby::SimpleFeatures::Point.from_x_y(-52.652771, 5.174379)
  to = GeoRuby::SimpleFeatures::Point.from_x_y(-52.323182, 4.941829)
