@@ -1,4 +1,4 @@
-sudo apt-get install -qq libgeos++-dev libproj-dev postgresql-9.1-postgis-2.0 postgresql-9.1-postgis-2.0-scripts build-essential liblzo2-dev liblzma-dev zlib1g-dev libprotobuf-c0-dev
+sudo apt-get install -qq libgeos++-dev libproj-dev build-essential liblzo2-dev liblzma-dev zlib1g-dev libprotobuf-c0-dev postgresql-9.3-postgis-2.1
 
 # Se placer dans le dossier /tmp
 cd /tmp
