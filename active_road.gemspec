@@ -30,7 +30,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'sqlite3', '~> 1.3.7' 
   s.add_dependency 'pg', '>= 0.15.1' 
   s.add_dependency 'activerecord-import', '0.4.1'
-  s.add_dependency 'georuby-ext', "0.0.3"  
+  s.add_dependency 'georuby-ext', "0.0.5"  
   s.add_dependency 'nokogiri'
   #s.add_dependency 'bzip2-ruby'
   s.add_dependency 'progressbar'
