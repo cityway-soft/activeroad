@@ -4,6 +4,10 @@ addons:
 rvm:
   - 1.9.3
   - 2.0
+notifications:
+  recipients:
+    - mflorisson@cityway.fr
+    - ldonnet@cityway.fr
 before_install: ./travis/before_install.sh
 before_script: 
   - ./travis/before_script.sh
