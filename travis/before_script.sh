@@ -1,6 +1,7 @@
 createdb -U postgres template_postgis
 
 psql -U postgres -d template_postgis -c "CREATE EXTENSION postgis;"
+locate 'legacy.sql'
 ls -al /usr/share/postgresql/9.3/contrib
 ls -al /usr/share/postgresql/9.3/extension
 ls -al /usr/share/postgresql/9.3/contrib/postgis-2.1
