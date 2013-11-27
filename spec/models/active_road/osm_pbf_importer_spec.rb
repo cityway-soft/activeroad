@@ -25,36 +25,34 @@ describe ActiveRoad::OsmPbfImporter do
   describe "#physical_road_conditionnal_costs" do
     let(:physical_road) { create(:physical_road) }
 
-    it "should returnconditionnal cost with pedestrian, bike and train to infinity when tag key is car" do 
-      ActiveRoad::PhysicalRoadConditionnalCost.should_receive(:new).exactly(3).times 
-      subject.physical_road_conditionnal_costs({"highway" => "primary"})
+    it "should return conditionnal cost with pedestrian, bike and train to infinity when tag key is car" do
+      subject.physical_road_conditionnal_costs({"highway" => "primary"}).should == [["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]]
     end
 
     it "should return nothing if tag key is not in ['highway', 'railway']" do   
-      ActiveRoad::PhysicalRoadConditionnalCost.should_receive(:new).exactly(0).times 
-      subject.physical_road_conditionnal_costs({"test" => "test"})
+      subject.physical_road_conditionnal_costs({"test" => "test"}).should == []
     end
   end
 
-  describe "#backup_nodes" do
-    before :each do 
-      subject.open_database(subject.database_path)
-    end
+  # describe "#backup_nodes" do
+  #   before :each do 
+  #     subject.open_database(subject.database_path)
+  #   end
 
-    after :each  do
-      subject.close_database
-    end
+  #   after :each  do
+  #     subject.close_database
+  #   end
 
-    it "should have import all nodes in a temporary database" do         
-      subject.backup_nodes(subject.database)
-      object = Marshal.load(subject.database.get("1"))
-      object.id.should ==  "1"
-      object.lon.should == 0
-      object.lat.should == 0
-      object.ways.should == []
-      object.end_of_way.should == false
-    end
-  end
+  #   it "should have import all nodes in a temporary database" do         
+  #     subject.backup_nodes(subject.database)
+  #     object = Marshal.load(subject.database.get("1"))
+  #     object.id.should ==  "1"
+  #     object.lon.should == 0
+  #     object.lat.should == 0
+  #     object.ways.should == []
+  #     object.end_of_way.should == false
+  #   end
+  # end
 
   describe "#update_node_with_ways" do
     let(:way) { { :id => 1, :refs => [1,2,3] } }
@@ -170,7 +168,7 @@ describe ActiveRoad::OsmPbfImporter do
     let(:pr1) { ActiveRoad::PhysicalRoad.new :objectid => "physicalroad::1" }
     let(:pr2) { ActiveRoad::PhysicalRoad.new :objectid => "physicalroad::2" }
     let(:physical_roads) { [ pr1, pr2 ] }
-    let(:prcc) { ActiveRoad::PhysicalRoadConditionnalCost.new :tags => "car", :cost => 0.3 }
+    let(:prcc) { [ "car", 0.3 ] }
     let(:physical_road_conditionnal_costs_by_objectid) { {pr1.objectid => [ [prcc] ]} }
     
     it "should save physical roads in postgresql database" do  

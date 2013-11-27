@@ -4,7 +4,7 @@ module ActiveRoad
   class OsmPbfImporter
     include KyotoCabinet
 
-    attr_reader :parser, :database_path, :xml_file 
+    attr_reader :parser, :database_path, :xml_file, :batch_size, :progress_bar 
     
     # See for more details :  
     # http://wiki.openstreetmap.org/wiki/FR:France_roads_tagging
@@ -22,7 +22,7 @@ module ActiveRoad
     @@tag_for_train_values = %w{rail tram funicular light_rail subway}
     cattr_reader :tag_for_train_values
 
-    def initialize(xml_file, database_path = "/tmp/osm.kch")
+    def initialize(xml_file, database_path = "/tmp/osm_pbf.kch")
       @xml_file = xml_file
       @database_path = database_path
     end
@@ -31,6 +31,14 @@ module ActiveRoad
       @parser ||= PbfParser.new(xml_file)
     end
     
+    def batch_size
+      @batch_size = 5000
+    end
+
+    def progress_bar
+      @progress_bar ||= ProgressBar.create(:format => '%a |%b>>%i| %p%% %t')
+    end
+
     def database
       @database ||= DB::new
     end
@@ -63,33 +71,33 @@ module ActiveRoad
       [].tap do |prcc|
         tags.each do |tag_key, tag_value|
           if ["highway", "railway"].include?(tag_key)
-            prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "car", :cost => Float::MAX) if !ActiveRoad::OsmPbfImporter.tag_for_car_values.include?(tag_value)  
-            prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "pedestrian", :cost => Float::MAX) if !ActiveRoad::OsmPbfImporter.tag_for_pedestrian_values.include?(tag_value)
-            prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "bike", :cost => Float::MAX) if !ActiveRoad::OsmPbfImporter.tag_for_bike_values.include?(tag_value) 
-            prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "train", :cost => Float::MAX) if !ActiveRoad::OsmPbfImporter.tag_for_train_values.include?(tag_value)
+            prcc << [ "car", Float::MAX] if !ActiveRoad::OsmPbfImporter.tag_for_car_values.include?(tag_value)  
+            prcc << [ "pedestrian", Float::MAX] if !ActiveRoad::OsmPbfImporter.tag_for_pedestrian_values.include?(tag_value)
+            prcc << [ "bike", Float::MAX] if !ActiveRoad::OsmPbfImporter.tag_for_bike_values.include?(tag_value) 
+            prcc << [ "train", Float::MAX] if !ActiveRoad::OsmPbfImporter.tag_for_train_values.include?(tag_value)
           end
         end
       end
     end
     
-    def backup_nodes(database)      
-      # Process the file until it finds any way.
-      parser.next until parser.nodes.any?
+    # def backup_nodes(database)      
+    #   # Process the file until it finds any way.
+    #   parser.next until parser.nodes.any?
       
-      counter = 0
-      # Once it found at least one way, iterate to find the remaining ways.
-      until parser.nodes.empty?        
-        parser.nodes.each do |node|
-          # Save nodes in kyotocabinet database
-          counter += 1
-          database[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat]))
-        end
+    #   counter = 0
+    #   # Once it found at least one way, iterate to find the remaining ways.
+    #   until parser.nodes.empty?        
+    #     parser.nodes.each do |node|
+    #       # Save nodes in kyotocabinet database
+    #       counter += 1
+    #       database[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat]))
+    #     end
 
-        # When there's no more fileblocks to parse, #next returns false
-        # This avoids an infinit loop when the last fileblock still contains ways
-        break unless parser.next
-      end
-    end    
+    #     # When there's no more fileblocks to parse, #next returns false
+    #     # This avoids an infinit loop when the last fileblock still contains ways
+    #     break unless parser.next
+    #   end
+    # end    
 
     def update_node_with_way(way, database)
       way_id = way[:id].to_s
@@ -145,7 +153,7 @@ module ActiveRoad
           junctions_ways[node.id] = node.ways
         end
         
-        if junctions_values.count == 1000
+        if junctions_values.count == batch_size
           save_junctions(junctions_values, junction_ways) 
           #Reset
           junctions_values = []    
@@ -174,57 +182,67 @@ module ActiveRoad
       # process the database by iterator
       DB::process(database_path) { |database|           
         database.clear
-        backup_nodes(database)
+        #backup_nodes(database)
 
-        physical_roads = []
+        physical_road_values = []
         attributes_by_objectid = {}
 
-        # Process the file until it finds any way.
-        parser.next until parser.ways.any?
-        
-        # Once it found at least one way, iterate to find the remaining ways.
-        until parser.ways.empty?
-          parser.ways.each do |way|
-            way_id = way[:id].to_s
-            
-            if way.key?(:tags)
-              tags = extracted_tags(way[:tags])
+        parser.each do |nodes, ways, relations|
+          unless nodes.empty?
+            nodes_counter = 0
+            nodes_hash = {}
+            nodes.each do |node|                
+              nodes_hash[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat]))
+              nodes_counter += 1
               
-              if tags.present?          
-                update_node_with_way(way, database)
-                
-                spherical_factory = ::RGeo::Geographic.spherical_factory
-                geometry = way_geometry(way, database)
-                length_in_meter = spherical_factory.line_string(geometry.points.collect(&:to_rgeo)).length
-                physical_road = ActiveRoad::PhysicalRoad.new :objectid => way_id, :geometry => geometry, :length_in_meter => length_in_meter
-                physical_roads << physical_road
-                attributes_by_objectid[physical_road.objectid] = [physical_road_conditionnal_costs(tags)]
+              if nodes_counter > batch_size  
+                database.set_bulk(nodes_hash, false)
+                nodes_counter = 0
+                nodes_hash = {}
               end
             end
-            
-            if (physical_roads.count == 1000)
-              save_physical_roads_and_children(physical_roads, attributes_by_objectid)
-              
-              # Reset  
-              physical_roads = []
-              attributes_by_objectid = {}
-            end
+            database.set_bulk(nodes_hash, false) if nodes_hash.present?
           end
 
-          # When there's no more fileblocks to parse, #next returns false
-          # This avoids an infinit loop when the last fileblock still contains ways
-          break unless parser.next
-        end
+          unless ways.empty?
+            ways.each do |way|
+              way_id = way[:id].to_s
+              
+              if way.key?(:tags)
+                tags = extracted_tags(way[:tags])
+                
+                if tags.present?          
+                  update_node_with_way(way, database)
+                
+                  spherical_factory = ::RGeo::Geographic.spherical_factory
+                  geometry = way_geometry(way, database)
+                  length_in_meter = spherical_factory.line_string(geometry.points.collect(&:to_rgeo)).length
+                  physical_road_values << [way_id, geometry, length_in_meter]
+                  attributes_by_objectid[way_id] = [physical_road_conditionnal_costs(tags)]
+                end
+              end
+            
+              if (physical_road_values.count == batch_size)
+                save_physical_roads_and_children(physical_road_values, attributes_by_objectid)
+                
+                # Reset  
+                physical_road_values = []
+                attributes_by_objectid = {}
+              end
+            end
+          end
+        end        
         
-        save_physical_roads_and_children(physical_roads, attributes_by_objectid) if physical_roads.present?
+        save_physical_roads_and_children(physical_road_values, attributes_by_objectid) if physical_road_values.present?
         iterate_nodes(database)            
       }      
     end
 
 
-    def save_physical_roads_and_children(physical_roads, attributes_by_objectid = {})
+    def save_physical_roads_and_children(physical_road_values, attributes_by_objectid = {})
       # Save physical roads
-      ActiveRoad::PhysicalRoad.import(physical_roads)
+      physical_road_columns = [:objectid, :geometry, :length_in_meter]
+      ActiveRoad::PhysicalRoad.import(physical_road_columns, physical_road_values, :validate => false)
 
       # Save physical road conditionnal costs
       prcc = []
@@ -233,11 +251,13 @@ module ActiveRoad
 
         physical_road_conditionnal_costs = attributes.first
         physical_road_conditionnal_costs.each do |physical_road_conditionnal_cost|
-          physical_road_conditionnal_cost.update_attribute :physical_road_id, pr.id
+          physical_road_conditionnal_cost.append pr.id
           prcc << physical_road_conditionnal_cost
         end
       end        
-      ActiveRoad::PhysicalRoadConditionnalCost.import(prcc)               
+
+      physical_road_conditionnal_cost_columns = [:tags, :cost, :physical_road_id]
+      ActiveRoad::PhysicalRoadConditionnalCost.import(physical_road_conditionnal_cost_columns, prcc, :validate => false)               
     end
 
     
