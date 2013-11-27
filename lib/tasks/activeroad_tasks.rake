@@ -48,11 +48,12 @@ namespace :active_road do
         puts "Import data from terra file #{args.file}"
         raise "You should provide a valid osm file" if args.file.blank?
         start = Time.now
-        ActiveRoad::TerraImport.new(args.file).extract
+        ActiveRoad::TerraImporter.new(args.file).import
         puts "Terra import finished in #{(Time.now - start)} seconds"
         puts "Completed import successfully."    
       rescue => e
         puts("Failed to import terra data : " + e.message)
+        puts e.backtrace.join("\n")
       end    
     end
 
