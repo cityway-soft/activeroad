@@ -32,11 +32,11 @@ module ActiveRoad
     end
     
     def batch_size
-      @batch_size = 5000
+      @batch_size = 500000
     end
 
     def progress_bar
-      @progress_bar ||= ProgressBar.create(:format => '%a |%b>>%i| %p%% %t')
+      @progress_bar ||= ::ProgressBar.create(:format => '%a |%b>>%i| %p%% %t', :total => 100)
     end
 
     def database
@@ -44,8 +44,7 @@ module ActiveRoad
     end
     
     def open_database(path)
-      database.open(path, DB::OWRITER | DB::OCREATE)
-      database.clear
+      database.open(path, DB::OWRITER | DB::OTRUNCATE)
     end
     
     def close_database
@@ -180,8 +179,7 @@ module ActiveRoad
     
     def import
       # process the database by iterator
-      DB::process(database_path) { |database|           
-        database.clear
+      DB::process(database_path, DB::OWRITER | DB::OTRUNCATE) { |database|           
         #backup_nodes(database)
 
         physical_road_values = []
@@ -191,50 +189,65 @@ module ActiveRoad
           unless nodes.empty?
             nodes_counter = 0
             nodes_hash = {}
-            nodes.each do |node|                
+            nodes.each do |node|     
               nodes_hash[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat]))
               nodes_counter += 1
               
-              if nodes_counter > batch_size  
-                database.set_bulk(nodes_hash, false)
+              if nodes_counter > batch_size
+                database.set_bulk(nodes_hash)
                 nodes_counter = 0
                 nodes_hash = {}
               end
             end
-            database.set_bulk(nodes_hash, false) if nodes_hash.present?
+            database.set_bulk(nodes_hash) if nodes_hash.present?
           end
-
-          unless ways.empty?
-            ways.each do |way|
-              way_id = way[:id].to_s
-              
-              if way.key?(:tags)
-                tags = extracted_tags(way[:tags])
+          
+          unless ways.empty?  
+            database.transaction {
+              ways.each do |way|
+                way_id = way[:id].to_s
                 
-                if tags.present?          
-                  update_node_with_way(way, database)
+                if way.key?(:tags)
+                  tags = extracted_tags(way[:tags])
+                  
+                  if tags.present?          
+                    update_node_with_way(way, database)
+                    
+                    spherical_factory = ::RGeo::Geographic.spherical_factory
+                    geometry = way_geometry(way, database)
+                    length_in_meter = spherical_factory.line_string(geometry.points.collect(&:to_rgeo)).length
+                    physical_road_values << [way_id, geometry, length_in_meter]
+                    attributes_by_objectid[way_id] = [physical_road_conditionnal_costs(tags)]
+                  end
+                end
                 
-                  spherical_factory = ::RGeo::Geographic.spherical_factory
-                  geometry = way_geometry(way, database)
-                  length_in_meter = spherical_factory.line_string(geometry.points.collect(&:to_rgeo)).length
-                  physical_road_values << [way_id, geometry, length_in_meter]
-                  attributes_by_objectid[way_id] = [physical_road_conditionnal_costs(tags)]
+                if (physical_road_values.count == batch_size)
+                  save_physical_roads_and_children(physical_road_values, attributes_by_objectid)
+                  
+                  # Reset  
+                  physical_road_values = []
+                  attributes_by_objectid = {}
                 end
               end
-            
-              if (physical_road_values.count == batch_size)
-                save_physical_roads_and_children(physical_road_values, attributes_by_objectid)
-                
-                # Reset  
-                physical_road_values = []
-                attributes_by_objectid = {}
-              end
-            end
+            }
           end
+
+          # unless relations.empty?
+          #   puts "Je parse les relations"
+          # end
         end        
+
+        progress_bar.progress += 30 
+        progress_bar.log "Finish to import nodes and ways"
         
         save_physical_roads_and_children(physical_road_values, attributes_by_objectid) if physical_road_values.present?
-        iterate_nodes(database)            
+        progress_bar.progress += 40 
+        progress_bar.log "Finish to import physical roads"
+        
+
+        iterate_nodes(database)          
+        progress_bar.progress += 30
+        progress_bar.log "Finish to import junctions"  
       }      
     end
 

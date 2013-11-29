@@ -33,7 +33,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'georuby-ext', "0.0.5"  
   s.add_dependency 'nokogiri'
   #s.add_dependency 'bzip2-ruby'
-  s.add_dependency 'progressbar'
+  s.add_dependency 'ruby-progressbar'
   s.add_dependency 'saxerator'
   s.add_dependency 'shortest_path', '0.0.3'
   s.add_dependency 'enumerize', '0.7.0'

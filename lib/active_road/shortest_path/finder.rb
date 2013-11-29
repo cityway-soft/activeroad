@@ -64,8 +64,8 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
       path_weights += path.departure.waiting_constraint
     end
 
-    # Add physical road weighy if it's a physical road
-    if path.class == ActiveRoad::Path && path.physical_road
+    # Add physical road weight if it's a physical road
+    if path.class == ActiveRoad::Path && path.physical_road && path.physical_road.physical_road_conditionnal_costs.present?
       cc_percentage = request_conditionnal_costs_linker.conditionnal_costs_sum(path.physical_road.physical_road_conditionnal_costs)
       path_weights += path_weight(path.length_in_meter, cc_percentage) if path.respond_to?(:length_in_meter)
     end
