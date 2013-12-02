@@ -41,13 +41,10 @@ Example Usage
 
 ### Rake tasks
 
-#### Import data
-
-
-####Import OSM data : 
+####Import OSM data in XML : 
 
 ```sh
-bundle exec rake 'app:active_road:import:osm_data[/data/guyane-latest.osm]'
+bundle exec rake 'app:active_road:import:osm_xml_data[/data/guyane-latest.osm]'
 
 ```
 
@@ -66,6 +63,27 @@ bundle exec rake 'app:active_road:import:osm_data[/data/guyane-latest.osm]'
     </tr>
 </table>
 
+#### Import OSM data in PBF
+
+```sh
+bundle exec rake 'app:active_road:import:osm_pbf_data[/data/guyane-latest.osm.pbf]'
+
+```
+
+<table>
+    <tr>
+        <td>OSM Data</td>
+        <td>time to import</td>
+        <td>nodes</td>
+        <td>way</td>
+    </tr>
+    <tr>
+        <td>guyane</td>
+        <td>624,1 seconds</td>
+        <td>479209</td>
+        <td>121870</td>
+    </tr>
+</table>
 
 ### Itinerary research
 
