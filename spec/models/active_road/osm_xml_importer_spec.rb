@@ -3,7 +3,7 @@ require 'spec_helper'
 describe ActiveRoad::OsmXmlImporter do
   let(:xml_file) { File.expand_path("../../../fixtures/test.osm", __FILE__) }
 
-  subject { ActiveRoad::OsmXmlImporter.new( xml_file ) } 
+  subject { ActiveRoad::OsmXmlImporter.new( xml_file, "/tmp/osm_xml_test.kch" ) } 
 
   describe "#extracted_tags" do
     it "should return an hash with tag_key => tag_value if tags size == 1" do 

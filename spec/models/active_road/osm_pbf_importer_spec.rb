@@ -3,7 +3,7 @@ require 'spec_helper'
 describe ActiveRoad::OsmPbfImporter do
   let(:pbf_file) { File.expand_path("../../../fixtures/test.osm.pbf", __FILE__) }
 
-  subject { ActiveRoad::OsmPbfImporter.new( pbf_file, "/tmp/osm_test.kch" ) } 
+  subject { ActiveRoad::OsmPbfImporter.new( pbf_file, "/tmp/osm_pbf_test.kch" ) } 
   
   describe "#extracted_tags" do
     it "should return an hash with tag_key => tag_value if tags size == 1" do 

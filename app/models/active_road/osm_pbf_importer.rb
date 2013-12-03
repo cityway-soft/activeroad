@@ -44,7 +44,8 @@ module ActiveRoad
     end
     
     def open_database(path)
-      database.open(path, DB::OWRITER | DB::OTRUNCATE)
+      database.open(path, DB::OWRITER | DB::OCREATE)
+      database.clear
     end
     
     def close_database
@@ -179,7 +180,9 @@ module ActiveRoad
     
     def import
       # process the database by iterator
-      DB::process(database_path, DB::OWRITER | DB::OTRUNCATE) { |database|           
+      # FIX : Want to use DB::OTRUNCATE but it will not create database
+      DB::process(database_path, DB::OWRITER | DB::OCREATE) { |database|           
+        database.clear
         #backup_nodes(database)
 
         physical_road_values = []

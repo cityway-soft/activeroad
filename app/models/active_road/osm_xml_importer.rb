@@ -4,7 +4,7 @@ module ActiveRoad
   class OsmXmlImporter
     include KyotoCabinet
     
-    attr_reader :parser, :database_path, :xml_file
+    attr_reader :parser, :database_path, :xml_file, :progress_bar
 
     # See for more details :  
     # http://wiki.openstreetmap.org/wiki/FR:France_roads_tagging
@@ -26,6 +26,10 @@ module ActiveRoad
       @xml_file = xml_file
       @parser = select_parser(xml_file)
       @database_path = database_path
+    end
+
+    def progress_bar
+      @progress_bar ||= ProgressBar.create(:format => '%a |%b>>%i| %p%% %t')
     end
 
     def select_parser(xml_file)
