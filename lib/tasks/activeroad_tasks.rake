@@ -12,7 +12,7 @@ namespace :active_road do
  
     # bundle exec rake "app:active_road:import:osm_xml_data[/home/user/test.osm]"
     desc "Import osm data from an xml file"
-    task :osm_xml_data, [:file] => [:environment, :reset] do |task, args|      
+    task :osm_xml_data, [:file] => [:environment] do |task, args|      
       begin
         puts "Import data from osm xml file #{args.file}"
         raise "You should provide a valid osm file" if args.file.blank?
@@ -28,7 +28,7 @@ namespace :active_road do
 
     # bundle exec rake "app:active_road:import:osm_pbf_data[/home/user/test.osm.pbf]"
     desc "Import osm data from a pbf file"
-    task :osm_pbf_data, [:file] => [:environment, :reset] do |task, args|      
+    task :osm_pbf_data, [:file] => [:environment] do |task, args|      
       begin
         puts "Import data from osm pbf file #{args.file}"
         raise "You should provide a valid osm file" if args.file.blank?
@@ -43,7 +43,7 @@ namespace :active_road do
     end
 
     desc "Import terra data from a terra file"
-    task :terra_data, [:file] => [:environment, :reset] do |task, args|      
+    task :terra_data, [:file] => [:environment] do |task, args|      
       begin
         puts "Import data from terra file #{args.file}"
         raise "You should provide a valid osm file" if args.file.blank?
