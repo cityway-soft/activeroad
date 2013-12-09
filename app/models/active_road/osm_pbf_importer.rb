@@ -4,7 +4,7 @@ module ActiveRoad
   class OsmPbfImporter
     include KyotoCabinet
 
-    attr_reader :parser, :database_path, :xml_file, :batch_size, :progress_bar 
+    attr_reader :parser, :database_path, :xml_file, :kc_batch_size, :pg_batch_size, :progress_bar 
     
     # See for more details :  
     # http://wiki.openstreetmap.org/wiki/FR:France_roads_tagging
@@ -31,8 +31,12 @@ module ActiveRoad
       @parser ||= PbfParser.new(xml_file)
     end
     
+    def kc_batch_size
+      @kc_batch_size = 500000
+    end
+
     def batch_size
-      @batch_size = 500000
+      @pg_batch_size = 200000
     end
 
     def progress_bar
@@ -153,7 +157,7 @@ module ActiveRoad
           junctions_ways[node.id] = node.ways
         end
         
-        if junctions_values.count == batch_size
+        if junctions_values.count == pg_batch_size
           save_junctions(junctions_values, junction_ways) 
           #Reset
           junctions_values = []    
@@ -196,7 +200,7 @@ module ActiveRoad
               nodes_hash[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat]))
               nodes_counter += 1
               
-              if nodes_counter > batch_size
+              if nodes_counter > kc_batch_size
                 database.set_bulk(nodes_hash)
                 nodes_counter = 0
                 nodes_hash = {}
@@ -224,7 +228,7 @@ module ActiveRoad
                   end
                 end
                 
-                if (physical_road_values.count == batch_size)
+                if (physical_road_values.count == pg_batch_size)
                   save_physical_roads_and_children(physical_road_values, attributes_by_objectid)
                   
                   # Reset  
@@ -243,7 +247,7 @@ module ActiveRoad
         progress_bar.progress += 30 
         progress_bar.log "Finish to import nodes and ways"
         
-        save_physical_roads_and_children(physical_road_values, attributes_by_objectid) if physical_road_values.present?
+        save_physical_roads_and_children(physical_road_values, attributes_by_objectid) if physical_road_values.present? && 
         progress_bar.progress += 40 
         progress_bar.log "Finish to import physical roads"
         
