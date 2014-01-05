@@ -34,7 +34,7 @@ namespace :active_road do
         raise "You should provide a valid osm file" if args.file.blank?
         start = Time.now
         ActiveRoad::OsmPbfImporter.new(args.file).import
-        puts "OSM import finished in #{(Time.now - start)} seconds"
+        #puts "OSM import finished in #{(Time.now - start).strftime('%H:%M:%S')} seconds"
         puts "Completed import successfully."    
       rescue => e
         puts("Failed to import osm data : " + e.message)
@@ -49,7 +49,7 @@ namespace :active_road do
         raise "You should provide a valid osm file" if args.file.blank?
         start = Time.now
         ActiveRoad::TerraImporter.new(args.file).import
-        puts "Terra import finished in #{(Time.now - start)} seconds"
+        #puts "OSM import finished in #{(Time.now - start).strftime('%H:%M:%S')} seconds"
         puts "Completed import successfully."    
       rescue => e
         puts("Failed to import terra data : " + e.message)

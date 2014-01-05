@@ -9805,6 +9805,8 @@ CREATE TABLE junctions (
     updated_at timestamp without time zone NOT NULL,
     geometry geometry,
     tags hstore,
+    height double precision,
+    waiting_constraint double precision,
     CONSTRAINT enforce_dims_geometry CHECK ((st_ndims(geometry) = 2)),
     CONSTRAINT enforce_geotype_geometry CHECK (((geometrytype(geometry) = 'POINT'::text) OR (geometry IS NULL))),
     CONSTRAINT enforce_srid_geometry CHECK ((st_srid(geometry) = 4326))
@@ -9914,10 +9916,19 @@ CREATE TABLE physical_roads (
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     geometry geometry,
-    kind character varying(255),
-    minimum_width integer DEFAULT 0,
     tags hstore,
     length_in_meter double precision DEFAULT 0,
+    minimum_width character varying(255),
+    transport_mode character varying(255),
+    uphill double precision,
+    downhill double precision,
+    slope character varying(255),
+    cant character varying(255),
+    covering character varying(255),
+    steps_count integer,
+    banisters_available boolean,
+    tactile_band boolean,
+    physical_road_type character varying(255),
     CONSTRAINT enforce_dims_geometry CHECK ((st_ndims(geometry) = 2)),
     CONSTRAINT enforce_geotype_geometry CHECK (((geometrytype(geometry) = 'LINESTRING'::text) OR (geometry IS NULL))),
     CONSTRAINT enforce_srid_geometry CHECK ((st_srid(geometry) = 4326))
@@ -10145,13 +10156,6 @@ CREATE INDEX index_physical_roads_on_geometry ON physical_roads USING gist (geom
 
 
 --
--- Name: index_physical_roads_on_kind; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_physical_roads_on_kind ON physical_roads USING btree (kind);
-
-
---
 -- Name: index_physical_roads_on_logical_road_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -10163,6 +10167,13 @@ CREATE INDEX index_physical_roads_on_logical_road_id ON physical_roads USING btr
 --
 
 CREATE INDEX index_physical_roads_on_objectid ON physical_roads USING btree (objectid);
+
+
+--
+-- Name: index_physical_roads_on_physical_road_type; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_physical_roads_on_physical_road_type ON physical_roads USING btree (physical_road_type);
 
 
 --
@@ -10211,6 +10222,8 @@ CREATE UNIQUE INDEX unique_schema_migrations ON schema_migrations USING btree (v
 -- PostgreSQL database dump complete
 --
 
+SET search_path TO "$user",public;
+
 INSERT INTO schema_migrations (version) VALUES ('20110914160756');
 
 INSERT INTO schema_migrations (version) VALUES ('20120201114800');
@@ -10248,3 +10261,9 @@ INSERT INTO schema_migrations (version) VALUES ('20130513134422');
 INSERT INTO schema_migrations (version) VALUES ('20130513134511');
 
 INSERT INTO schema_migrations (version) VALUES ('20130607114951');
+
+INSERT INTO schema_migrations (version) VALUES ('20130801151637');
+
+INSERT INTO schema_migrations (version) VALUES ('20130809155019');
+
+INSERT INTO schema_migrations (version) VALUES ('20130812143049');

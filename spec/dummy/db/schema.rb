@@ -14,7 +14,7 @@ ActiveRecord::Schema.define(:version => 20130419155438) do
 
   create_table "junction_conditionnal_costs", :force => true do |t|
     t.column "junction_id", :integer
-    t.column "cost", :float
+    t.column "cost", :integer
     t.column "tags", :string
     t.column "start_physical_road_id", :integer
     t.column "end_physical_road_id", :integer
@@ -52,6 +52,7 @@ ActiveRecord::Schema.define(:version => 20130419155438) do
     t.column "physical_road_id", :integer
     t.column "cost", :float
     t.column "tags", :string
+    t.column "objectid", :string
   end
 
   create_table "physical_roads", :force => true do |t|

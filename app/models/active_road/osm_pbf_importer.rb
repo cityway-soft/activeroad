@@ -22,7 +22,7 @@ module ActiveRoad
     @@tag_for_train_values = %w{rail tram funicular light_rail subway}
     cattr_reader :tag_for_train_values
 
-    def initialize(xml_file, database_path = "/tmp/osm_pbf.kch")
+    def initialize(xml_file, database_path = "/home/luc/osm_pbf.kch")
       @xml_file = xml_file
       @database_path = database_path
     end
@@ -48,7 +48,7 @@ module ActiveRoad
     end
     
     def open_database(path)
-      database.open(path, DB::OWRITER | DB::OCREATE)
+      database.open(path + "#opts=l#bnum=209715200#msiz=2g", DB::OWRITER | DB::OCREATE)
       database.clear
     end
     
@@ -185,13 +185,16 @@ module ActiveRoad
     def import
       # process the database by iterator
       # FIX : Want to use DB::OTRUNCATE but it will not create database
-      DB::process(database_path, DB::OWRITER | DB::OCREATE) { |database|           
+      DB::process(database_path + "#opts=l#bnum=209715200#msiz=2g", DB::OWRITER | DB::OCREATE) { |database|
         database.clear
         #backup_nodes(database)
 
         physical_road_values = []
         attributes_by_objectid = {}
 
+        # Hack to start time counter
+        progress_bar.progress += 1
+        
         parser.each do |nodes, ways, relations|
           unless nodes.empty?
             nodes_counter = 0
@@ -244,11 +247,11 @@ module ActiveRoad
           # end
         end        
 
-        progress_bar.progress += 30 
+        progress_bar.progress += 39 
         progress_bar.log "Finish to import nodes and ways"
         
         save_physical_roads_and_children(physical_road_values, attributes_by_objectid) if physical_road_values.present? && 
-        progress_bar.progress += 40 
+        progress_bar.progress += 30 
         progress_bar.log "Finish to import physical roads"
         
 
