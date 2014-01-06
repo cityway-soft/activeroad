@@ -22,7 +22,7 @@ module ActiveRoad
     @@tag_for_train_values = %w{rail tram funicular light_rail subway}
     cattr_reader :tag_for_train_values
 
-    def initialize(xml_file, database_path = "/home/luc/osm_pbf.kch")
+    def initialize(xml_file, database_path = "/tmp/osm_pbf.kch")
       @xml_file = xml_file
       @database_path = database_path
     end
