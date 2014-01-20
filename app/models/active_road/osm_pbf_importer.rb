@@ -4,7 +4,7 @@ module ActiveRoad
   class OsmPbfImporter
     include KyotoCabinet
 
-    attr_reader :parser, :database_path, :xml_file, :kc_batch_size, :pg_batch_size, :progress_bar 
+    attr_reader :parser, :database_path, :pbf_file, :progress_bar 
     
     # See for more details :  
     # http://wiki.openstreetmap.org/wiki/FR:France_roads_tagging
@@ -22,22 +22,19 @@ module ActiveRoad
     @@tag_for_train_values = %w{rail tram funicular light_rail subway}
     cattr_reader :tag_for_train_values
 
-    def initialize(xml_file, database_path = "/tmp/osm_pbf.kch")
-      @xml_file = xml_file
+    @@kc_batch_size = 500000
+    cattr_reader :kc_batch_size
+    @@pg_batch_size = 100000 # Not puts a high value because postgres failed to allocate memory 
+    cattr_reader :pg_batch_size
+
+    def initialize(pbf_file, database_path = "/home/luc/osm_pbf.kch")
+      @pbf_file = pbf_file
       @database_path = database_path
     end
 
     def parser
-      @parser ||= PbfParser.new(xml_file)
-    end
-    
-    def kc_batch_size
-      @kc_batch_size = 500000
-    end
-
-    def batch_size
-      @pg_batch_size = 200000
-    end
+      @parser ||= PbfParser.new(pbf_file)
+    end   
 
     def progress_bar
       @progress_bar ||= ::ProgressBar.create(:format => '%a |%b>>%i| %p%% %t', :total => 100)
@@ -48,7 +45,7 @@ module ActiveRoad
     end
     
     def open_database(path)
-      database.open(path + "#opts=l#bnum=209715200#msiz=2g", DB::OWRITER | DB::OCREATE)
+      database.open(path + "#apow=8#opts=l#bnum=835737117#msiz=6442450944", DB::OWRITER | DB::OCREATE)
       database.clear
     end
     
@@ -82,26 +79,7 @@ module ActiveRoad
           end
         end
       end
-    end
-    
-    # def backup_nodes(database)      
-    #   # Process the file until it finds any way.
-    #   parser.next until parser.nodes.any?
-      
-    #   counter = 0
-    #   # Once it found at least one way, iterate to find the remaining ways.
-    #   until parser.nodes.empty?        
-    #     parser.nodes.each do |node|
-    #       # Save nodes in kyotocabinet database
-    #       counter += 1
-    #       database[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat]))
-    #     end
-
-    #     # When there's no more fileblocks to parse, #next returns false
-    #     # This avoids an infinit loop when the last fileblock still contains ways
-    #     break unless parser.next
-    #   end
-    # end    
+    end     
 
     def update_node_with_way(way, database)
       way_id = way[:id].to_s
@@ -115,14 +93,20 @@ module ActiveRoad
       end  
 
       # Update node data with way id
-      node_ids.each_with_index do |id, index|
-        database.accept(id) { |key, value|
-          node = Marshal.load(value)
-          node.add_way(way_id)
-          node.end_of_way = true if [nodes.first.to_s, nodes.last.to_s].include?(node.id)
-          Marshal.dump(node)
-        }
-      end
+      database.accept_bulk(node_ids) { |key, value|
+        node = Marshal.load(value)
+        node.add_way(way_id)
+        node.end_of_way = true if [nodes.first.to_s, nodes.last.to_s].include?(node.id)
+        Marshal.dump(node)
+      }
+      # node_ids.each_with_index do |id, index|
+      #   database.accept(id) { |key, value|
+      #     node = Marshal.load(value)
+      #     node.add_way(way_id)
+      #     node.end_of_way = true if [nodes.first.to_s, nodes.last.to_s].include?(node.id)
+      #     Marshal.dump(node)
+      #   }
+      # end
     end
 
     def way_geometry(way, database)
@@ -141,7 +125,7 @@ module ActiveRoad
         nodes_geometry << GeoRuby::SimpleFeatures::Point.from_x_y(node.lon, node.lat, 4326)
       end
 
-      GeoRuby::SimpleFeatures::LineString.from_points(nodes_geometry, 4326) if nodes_geometry.present?    
+      GeoRuby::SimpleFeatures::LineString.from_points(nodes_geometry, 4326) if nodes_geometry.present? &&  1 < nodes_geometry.count     
     end
     
     def iterate_nodes(database)
@@ -157,7 +141,7 @@ module ActiveRoad
           junctions_ways[node.id] = node.ways
         end
         
-        if junctions_values.count == pg_batch_size
+        if junctions_values.count == @@pg_batch_size
           save_junctions(junctions_values, junction_ways) 
           #Reset
           junctions_values = []    
@@ -185,7 +169,7 @@ module ActiveRoad
     def import
       # process the database by iterator
       # FIX : Want to use DB::OTRUNCATE but it will not create database
-      DB::process(database_path + "#opts=l#bnum=209715200#msiz=2g", DB::OWRITER | DB::OCREATE) { |database|
+      DB::process(database_path + "#apow=8#opts=l#bnum=835737117#msiz=6442450944", DB::OWRITER | DB::OCREATE) { |database|
         database.clear
         #backup_nodes(database)
 
@@ -194,65 +178,89 @@ module ActiveRoad
 
         # Hack to start time counter
         progress_bar.progress += 1
+
+
+        ##########################
+        #   Backup Nodes
+        ##########################
+        start = Time.now
+        nodes_parser = ::PbfParser.new(pbf_file)
+        nodes_counter = 0
+        test_counter = 0
+        nodes_hash = {}
+
+        # Process the file until it finds any node
+        nodes_parser.next until nodes_parser.nodes.any?
         
-        parser.each do |nodes, ways, relations|
-          unless nodes.empty?
-            nodes_counter = 0
-            nodes_hash = {}
-            nodes.each do |node|     
-              nodes_hash[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat]))
-              nodes_counter += 1
+        until nodes_parser.nodes.empty?
+          last_node = nodes_parser.nodes.last
+          nodes_parser.nodes.each do |node|
+            nodes_counter+= 1
+            
+            nodes_hash[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat]))
+            
+            if nodes_counter > @@kc_batch_size || (last_node == node && nodes_hash.present? )
+              database.set_bulk(nodes_hash)
+              nodes_hash = {}
+            end
+          end
+
+          # When there's no more fileblocks to parse, #next returns false
+          # This avoids an infinit loop when the last fileblock still contains ways
+          break unless nodes_parser.next
+        end
+        puts "OSM import finished in #{(Time.now - start)} seconds and got #{nodes_counter} nodes"
+
+        ##########################
+        #   Backup Ways
+        ##########################
+        ways_counter = 0 
+        physical_road_values = []
+        attributes_by_objectid = {}
+        
+        ways_parser = ::PbfParser.new(pbf_file)
+        start = Time.now
+        # Process the file until it finds any way.
+        ways_parser.next until ways_parser.ways.any?
+        
+        # Once it found at least one way, iterate to find the remaining ways.
+        until ways_parser.ways.empty?
+          last_way = ways_parser.ways.last
+          ways_parser.ways.each do |way|
+            ways_counter+= 1
+            way_id = way[:id].to_s
+            
+            if way.key?(:tags)
+              tags = extracted_tags(way[:tags])
+              spherical_factory = ::RGeo::Geographic.spherical_factory
+              geometry = way_geometry(way, database)
               
-              if nodes_counter > kc_batch_size
-                database.set_bulk(nodes_hash)
-                nodes_counter = 0
-                nodes_hash = {}
+              if tags.present? && geometry.present?          
+                update_node_with_way(way, database)                    
+                length_in_meter = spherical_factory.line_string(geometry.points.collect(&:to_rgeo)).length
+                physical_road_values << [way_id, geometry, length_in_meter]
+                attributes_by_objectid[way_id] = [physical_road_conditionnal_costs(tags)]
               end
             end
-            database.set_bulk(nodes_hash) if nodes_hash.present?
-          end
+            
+            if (physical_road_values.count == @@pg_batch_size || (last_way == way && physical_road_values.present?) )
+              save_physical_roads_and_children(physical_road_values, attributes_by_objectid)
+              
+              # Reset  
+              physical_road_values = []
+              attributes_by_objectid = {}
+            end
+          end          
           
-          unless ways.empty?  
-            database.transaction {
-              ways.each do |way|
-                way_id = way[:id].to_s
-                
-                if way.key?(:tags)
-                  tags = extracted_tags(way[:tags])
-                  
-                  if tags.present?          
-                    update_node_with_way(way, database)
-                    
-                    spherical_factory = ::RGeo::Geographic.spherical_factory
-                    geometry = way_geometry(way, database)
-                    length_in_meter = spherical_factory.line_string(geometry.points.collect(&:to_rgeo)).length
-                    physical_road_values << [way_id, geometry, length_in_meter]
-                    attributes_by_objectid[way_id] = [physical_road_conditionnal_costs(tags)]
-                  end
-                end
-                
-                if (physical_road_values.count == pg_batch_size)
-                  save_physical_roads_and_children(physical_road_values, attributes_by_objectid)
-                  
-                  # Reset  
-                  physical_road_values = []
-                  attributes_by_objectid = {}
-                end
-              end
-            }
-          end
+          # When there's no more fileblocks to parse, #next returns false
+          # This avoids an infinit loop when the last fileblock still contains ways
+          break unless ways_parser.next
+        end         
+               
+        puts "OSM import finished in #{(Time.now - start)} seconds and got #{ways_counter} ways"
 
-          # unless relations.empty?
-          #   puts "Je parse les relations"
-          # end
-        end        
-
-        progress_bar.progress += 39 
-        progress_bar.log "Finish to import nodes and ways"
-        
-        save_physical_roads_and_children(physical_road_values, attributes_by_objectid) if physical_road_values.present? && 
-        progress_bar.progress += 30 
-        progress_bar.log "Finish to import physical roads"
+        progress_bar.progress += 69 
+        progress_bar.log "Finish to import nodes and ways"       
         
 
         iterate_nodes(database)          
@@ -260,7 +268,6 @@ module ActiveRoad
         progress_bar.log "Finish to import junctions"  
       }      
     end
-
 
     def save_physical_roads_and_children(physical_road_values, attributes_by_objectid = {})
       # Save physical roads

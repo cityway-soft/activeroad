@@ -179,9 +179,9 @@ describe ActiveRoad::OsmXmlImporter do
   describe "#import" do
     it "should have import all nodes in a temporary database" do  
       subject.import
-      ActiveRoad::PhysicalRoad.all.size.should == 2
-      ActiveRoad::PhysicalRoadConditionnalCost.all.size.should == 6
-      ActiveRoad::Junction.all.size.should == 4
+      ActiveRoad::PhysicalRoad.all.size.should == 3
+      ActiveRoad::PhysicalRoadConditionnalCost.all.size.should == 9
+      ActiveRoad::Junction.all.size.should == 6
     end
   end
 

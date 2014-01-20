@@ -39,7 +39,19 @@
 		<nd ref="3"/>
 		<nd ref="4"/>
 		<nd ref="5"/>
+    <nd ref="9"/>
 		<tag k="highway" v="secondary"/>
 		<tag k="name" v="Rue J. Symphorien"/>
 	</way>
+	<node id="9" lat="5.308056" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+	<node id="10" lat="5.308056" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+  <way id="6" version="16" timestamp="2012-03-19T21:45:37Z" changeset="11035419" uid="318501" user="Stephixus">
+		<nd ref="1"/>
+		<nd ref="5"/>
+		<nd ref="9"/>
+		<nd ref="10"/>
+		<tag k="highway" v="secondary"/>
+		<tag k="name" v="Rue J. Symphorien"/>
+	</way>
+    
 </osm>

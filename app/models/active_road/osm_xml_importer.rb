@@ -34,8 +34,10 @@ module ActiveRoad
 
     def select_parser(xml_file)
       case xml_file
-      when /.osm.pbf/ 
-        #OsmPbfImporter.new(xml_file, temporary_database)
+      when /.osm.bz2/ 
+        Bzip2::Reader.open(file) do |f|
+          #OsmPbfImporter.new(xml_file, temporary_database)
+        end
       when /.osm/
         parser = ::Saxerator.parser(File.new(xml_file))
       else

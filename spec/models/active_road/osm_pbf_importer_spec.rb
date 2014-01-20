@@ -158,9 +158,11 @@ describe ActiveRoad::OsmPbfImporter do
   describe "#import" do
     it "should have import all nodes in a temporary database" do  
       subject.import
-      ActiveRoad::PhysicalRoad.all.size.should == 2
-      ActiveRoad::PhysicalRoadConditionnalCost.all.size.should == 6
-      ActiveRoad::Junction.all.size.should == 4
+      ActiveRoad::PhysicalRoad.all.size.should == 3
+      ActiveRoad::PhysicalRoad.all.collect(&:objectid).should == ["3", "5", "6"]
+      ActiveRoad::PhysicalRoadConditionnalCost.all.size.should == 9
+      ActiveRoad::Junction.all.size.should == 6
+      ActiveRoad::Junction.all.collect(&:objectid).should =~ ["1", "2", "5", "8", "9", "10"]
     end
   end
 
