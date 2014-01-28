@@ -6,6 +6,7 @@ require 'rspec/rails'
 require 'rspec/autorun'
 
 require 'factory_girl_rails'
+require 'ruby-prof'
 
 ENGINE_RAILS_ROOT=File.join(File.dirname(__FILE__), '../')
 
@@ -22,7 +23,7 @@ RSpec.configure do |config|
   # config.mock_with :flexmock
   # config.mock_with :rr
   config.mock_with :rspec
-
+  
   # Factory Girl
   config.include FactoryGirl::Syntax::Methods
 
@@ -38,5 +39,8 @@ RSpec.configure do |config|
   # automatically. This will be the default behavior in future versions of
   # rspec-rails.
   config.infer_base_class_for_anonymous_controllers = false
+
+  # Exclude performance test for rspec
+  config.filter_run_excluding :profile => true
 
 end

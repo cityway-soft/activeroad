@@ -34,26 +34,6 @@ describe ActiveRoad::OsmPbfImporter do
     end
   end
 
-  # describe "#backup_nodes" do
-  #   before :each do 
-  #     subject.open_database(subject.database_path)
-  #   end
-
-  #   after :each  do
-  #     subject.close_database
-  #   end
-
-  #   it "should have import all nodes in a temporary database" do         
-  #     subject.backup_nodes(subject.database)
-  #     object = Marshal.load(subject.database.get("1"))
-  #     object.id.should ==  "1"
-  #     object.lon.should == 0
-  #     object.lat.should == 0
-  #     object.ways.should == []
-  #     object.end_of_way.should == false
-  #   end
-  # end
-
   describe "#update_node_with_ways" do
     let(:way) { { :id => 1, :refs => [1,2,3] } }
     
@@ -108,13 +88,12 @@ describe ActiveRoad::OsmPbfImporter do
 
     it "should iterate nodes to save it" do
       GeoRuby::SimpleFeatures::Point.stub :from_x_y => point
-      subject.should_receive(:save_junctions).exactly(1).times.with([["1", point], ["2", point]], {"1" => ["1", "2"], "2" => ["1", "3"]})
+      subject.should_receive(:backup_nodes_pgsql).exactly(1).times.with([["1", point], ["2", point]], {"1" => ["1", "2"], "2" => ["1", "3"]})
       subject.iterate_nodes(subject.database)
     end
   end
   
-  describe "#save_junctions" do
-
+  describe "#backup_nodes_pgsql" do
     let!(:physical_road) { create(:physical_road, :objectid => "1") }
     let!(:point) { GeoRuby::SimpleFeatures::Point.from_x_y( 0, 0, 4326) }
 
@@ -122,8 +101,7 @@ describe ActiveRoad::OsmPbfImporter do
       junctions_values = [["1", point], ["2", point]]
       junctions_ways = {"1" => ["1"], "2" => ["1"]}
 
-      subject.save_junctions(junctions_values, junctions_ways)
-
+      subject.backup_nodes_pgsql(junctions_values, junctions_ways)
       ActiveRoad::Junction.all.size.should == 2
       first_junction = ActiveRoad::Junction.first
       first_junction.objectid.should == "1"

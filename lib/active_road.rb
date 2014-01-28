@@ -4,7 +4,7 @@ require 'saxerator'
 require "activerecord-postgres-hstore"
 require "activerecord-import"
 require "enumerize"
-require "pbf_parser"
+#require "pbf_parser"
 require "postgis_adapter"
 require "georuby-ext"
 require "ruby-progressbar"

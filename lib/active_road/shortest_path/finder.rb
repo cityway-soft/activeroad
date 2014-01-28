@@ -81,14 +81,6 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
     @geometry ||= GeoRuby::SimpleFeatures::LineString.merge path.collect { |n| n.to_geometry }.select { |g| GeoRuby::SimpleFeatures::LineString === g }
   end
 
-  # Use to profile code
-  def self.example
-    from = (ENV['FROM'] or "30.030238,-90.061541")
-    to = (ENV['TO'] or "29.991739,-90.06918")
-
-    ActiveRoad::ShortestPath::Finder.new GeoRuby::SimpleFeatures::Point.from_lat_lng(from), GeoRuby::SimpleFeatures::Point.from_lat_lng(to)
-  end
-
   #-----------------------------------------
   # Overwrite ShortestPath::Finder methods
   #-----------------------------------------
