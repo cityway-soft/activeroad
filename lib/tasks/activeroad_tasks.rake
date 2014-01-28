@@ -42,6 +42,20 @@ namespace :active_road do
       end    
     end
 
+    # bundle exec rake "app:active_road:import:osm_pbf_data[/home/user/test.osm.pbf]"
+    desc "Import osm data from a pbf file"
+    task :osm_pbf_data2, [:file] => [:environment] do |task, args|      
+      begin
+        puts "Import data from osm pbf file #{args.file}"
+        raise "You should provide a valid osm file" if args.file.blank?
+        ActiveRoad::OsmPbfImporter2.new(args.file).import
+        puts "Completed import successfully."    
+      rescue => e
+        puts("Failed to import osm data : " + e.message)
+        puts e.backtrace.join("\n")
+      end    
+    end    
+
     desc "Import terra data from a terra file"
     task :terra_data, [:file] => [:environment] do |task, args|      
       begin

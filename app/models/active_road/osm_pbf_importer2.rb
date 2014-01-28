@@ -1,10 +1,9 @@
-require "kyotocabinet"
+require 'leveldb-native'
 
 module ActiveRoad
-  class OsmPbfImporter
-    include KyotoCabinet
+  class OsmPbfImporter2
 
-    attr_reader :parser, :database_path, :pbf_file, :progress_bar 
+    attr_reader :database_path, :pbf_file
     
     # See for more details :  
     # http://wiki.openstreetmap.org/wiki/FR:France_roads_tagging
@@ -16,7 +15,7 @@ module ActiveRoad
     @@tag_for_pedestrian_values = %w{pedestrian footway path steps}
     cattr_reader :tag_for_pedestrian_values
 
-    @@tag_for_bike_values = ActiveRoad::OsmPbfImporter.tag_for_pedestrian_values + ["cycleway"]
+    @@tag_for_bike_values = ActiveRoad::OsmPbfImporter2.tag_for_pedestrian_values + ["cycleway"]
     cattr_reader :tag_for_bike_values
 
     @@tag_for_train_values = %w{rail tram funicular light_rail subway}
@@ -27,31 +26,23 @@ module ActiveRoad
     @@pg_batch_size = 100000 # Not puts a high value because postgres failed to allocate memory 
     cattr_reader :pg_batch_size
 
-    def initialize(pbf_file, database_path = "/home/luc/osm_pbf.kch")
+    def initialize(pbf_file, database_path = "/home/luc/osm_pbf_leveldb")
       @pbf_file = pbf_file
       @database_path = database_path
     end
 
-    def parser
-      @parser ||= ::PbfParser.new(pbf_file)
-    end   
-
-    def progress_bar
-      @progress_bar ||= ::ProgressBar.create(:format => '%a |%b>>%i| %p%% %t', :total => 100)
-    end
-
     def database
-      @database ||= DB::new
-    end
-    
-    def open_database(path)
-      database.open(path + "#apow=8#opts=l#bnum=2000000#msiz=50000000", DB::OWRITER | DB::OCREATE | DB::OTRUNCATE)
-    end
-    
-    def close_database
-      database.close   
+      @database ||= LevelDBNative::DB.make database_path, :create_if_missing => true
     end
 
+    def close_database
+      database.close!
+    end
+
+    def delete_database
+      FileUtils.remove_entry database_path if File.exists?(database_path)
+    end
+      
     def authorized_tags
       @authorized_tags ||= ["highway", "railway"]
     end
@@ -80,7 +71,7 @@ module ActiveRoad
       end
     end     
 
-    def way_geometry(way, database)
+    def way_geometry(way)
       # Get node ids for each way
       node_ids = []
       nodes = way.key?(:refs) ? way[:refs] : [] 
@@ -99,7 +90,7 @@ module ActiveRoad
       GeoRuby::SimpleFeatures::LineString.from_points(nodes_geometry, 4326) if nodes_geometry.present? &&  1 < nodes_geometry.count     
     end
     
-    def iterate_nodes(database)
+    def iterate_nodes
       p "Begin to backup nodes in PostgreSql"
 
       start = Time.now
@@ -113,7 +104,7 @@ module ActiveRoad
         nodes_counter += 1
         node = Marshal.load(value)
         geometry = GeoRuby::SimpleFeatures::Point.from_x_y( node.lon, node.lat, 4326) if( node.lon && node.lat )
-
+        
         if node.ways.present? && (node.ways.count >= 2 || node.end_of_way == true )  # Take node with at least two ways or at the end of a way
           junctions_values << [ node.id, geometry ]
           junctions_ways[ node.id ] = node.ways
@@ -147,18 +138,17 @@ module ActiveRoad
     end
 
     
-    def import      
-      # process the database by iterator
-      DB::process(database_path + "#apow=8#opts=l#bnum=2000000#msiz=50000000", DB::OWRITER | DB::OCREATE | DB::OTRUNCATE) { |database|        
-        backup_nodes_kc(database)        
-        backup_ways_kc(database)
-        backup_ways_pgsql(database)
-        iterate_nodes(database)     
-      }      
+    def import
+      delete_database
+      backup_nodes_kc
+      backup_ways_kc
+      backup_ways_pgsql
+      iterate_nodes
+      close_database
     end
 
-    def backup_nodes_kc(database)
-      p "Begin to backup nodes in KyotoCabinet database in #{database_path}"
+    def backup_nodes_kc
+      p "Begin to backup nodes in LevelDB database in #{database_path}"
       start = Time.now
       nodes_parser = ::PbfParser.new(pbf_file)
       nodes_counter = 0
@@ -168,24 +158,23 @@ module ActiveRoad
       nodes_parser.next until nodes_parser.nodes.any?
       
       until nodes_parser.nodes.empty?
-        database.transaction {
+        database.batch do |batch|
           last_node = nodes_parser.nodes.last
           nodes_parser.nodes.each do |node|
             nodes_counter+= 1
           
-            database[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat]))
+            database[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat]))        
           end
-        }
-
+end
         # When there's no more fileblocks to parse, #next returns false
         # This avoids an infinit loop when the last fileblock still contains ways
         break unless nodes_parser.next
       end
-      p "Finish to backup #{nodes_counter} nodes in KyotoCabinet database in #{(Time.now - start)} seconds"
+      p "Finish to backup #{nodes_counter} nodes in LevelDB database in #{(Time.now - start)} seconds"
     end  
 
-    def backup_ways_kc(database)
-      puts "Begin to backup ways in nodes in KyotoCabinet"
+    def backup_ways_kc
+      puts "Begin to backup ways in nodes in LevelDB"
       start = Time.now
       ways_parser = ::PbfParser.new(pbf_file)
       ways_counter = 0 
@@ -195,49 +184,47 @@ module ActiveRoad
       
       # Once it found at least one way, iterate to find the remaining ways.     
       until ways_parser.ways.empty?
-        database.transaction {
-          ways_parser.ways.each do |way|
-            ways_counter+= 1
-            way_id = way[:id].to_s
+        ways_parser.ways.each do |way|
+          ways_counter+= 1
+          way_id = way[:id].to_s
+          
+          if way.key?(:tags)
+            tags = extracted_tags(way[:tags])
+            geometry = way_geometry(way)
             
-            if way.key?(:tags)
-              tags = extracted_tags(way[:tags])
-              geometry = way_geometry(way, database)
-              
-              if tags.present? && geometry.present?
-                update_node_with_way(way, database)                    
-              end
-            end            
-          end        
-        }
+            if tags.present? && geometry.present?
+              update_node_with_way(way)               
+            end
+          end            
+        end        
         
         # When there's no more fileblocks to parse, #next returns false
         # This avoids an infinit loop when the last fileblock still contains ways
         break unless ways_parser.next        
       end
 
-      p "Finish to backup #{ways_counter} ways in nodes in KyotoCabinet  in #{(Time.now - start)} seconds"
+      p "Finish to backup #{ways_counter} ways in nodes in LevelDB  in #{(Time.now - start)} seconds"
     end
 
-    def update_node_with_way(way, database)
+    def update_node_with_way(way)
       way_id = way[:id].to_s
       # Get node ids for each way
       nodes = way.key?(:refs) ? way[:refs] : []
       node_ids = nodes.collect(&:to_s)  
 
       # Update node data with way id
-      database.accept_bulk(node_ids) { |key, value|
-        node = Marshal.load(value)
+      node_ids.each do |node_id|
+        node = Marshal.load(database[node_id])
         node.add_way(way_id)
         node.end_of_way = true if [nodes.first.to_s, nodes.last.to_s].include?(node.id)
-        Marshal.dump(node)
-      }
+        database[node_id] = Marshal.dump(node)
+      end
     end
 
     # Make the choice to separate postgres backup and kc backup to :
     # - separate treatments
     # - use transaction with kc
-    def backup_ways_pgsql(database)
+    def backup_ways_pgsql
       puts "Begin to backup ways in PostgreSql"
       start = Time.now
       ways_parser = ::PbfParser.new(pbf_file)
@@ -258,7 +245,7 @@ module ActiveRoad
           if way.key?(:tags)
             tags = extracted_tags(way[:tags])
             spherical_factory = ::RGeo::Geographic.spherical_factory
-            geometry = way_geometry(way, database)
+            geometry = way_geometry(way)
             
             if tags.present? && geometry.present?                         
               length_in_meter = spherical_factory.line_string(geometry.points.collect(&:to_rgeo)).length
