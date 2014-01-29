@@ -17,7 +17,7 @@ module ActiveRoad
     @@tag_for_train_values = %w{rail tram funicular light_rail subway}
     mattr_reader :tag_for_train_values
     
-    @@pg_batch_size = 100000 # Not puts a high value because postgres failed to allocate memory
+    @@pg_batch_size = 10000 # Not puts a high value because postgres failed to allocate memory
     mattr_reader :pg_batch_size
     
     def self.included(base)
