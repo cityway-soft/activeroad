@@ -1,9 +1,9 @@
 require 'spec_helper'
 
-describe ActiveRoad::OsmPbfImporter do
+describe ActiveRoad::OsmPbfImporterLevelDb do
   let(:pbf_file) { File.expand_path("../../../fixtures/test.osm.pbf", __FILE__) }
 
-  subject { ActiveRoad::OsmPbfImporter.new( pbf_file, "/tmp/osm_pbf_test.kch" ) } 
+  subject { ActiveRoad::OsmPbfImporterLevelDb.new( pbf_file, "/tmp/osm_pbf_test_leveldb" ) }
   
   describe "#extracted_tags" do
     it "should return an hash with tag_key => tag_value if tags size == 1" do 
@@ -38,33 +38,34 @@ describe ActiveRoad::OsmPbfImporter do
     let(:way) { { :id => 1, :refs => [1,2,3] } }
     
     before :each do 
-      subject.open_database(subject.database_path)
-      subject.database.set("1", Marshal.dump(ActiveRoad::OsmPbfImporter::Node.new("1", 2.0, 2.0)) )
-      subject.database.set("2", Marshal.dump(ActiveRoad::OsmPbfImporter::Node.new("2", 2.0, 2.0)) )
-      subject.database.set("3", Marshal.dump(ActiveRoad::OsmPbfImporter::Node.new("3", 2.0, 2.0)) )
+      subject.database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 2.0, 2.0)) )
+      subject.database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 2.0, 2.0)) )
+      subject.database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 2.0, 2.0)) )
     end
 
-    after :each  do
+    after :each do
       subject.close_database
+      subject.delete_database
     end
 
-    it "should have update all nodes with way in the temporary database" do   
-      subject.update_node_with_way(way, subject.database)
-      node1 = Marshal.load(subject.database.get(1))
+    it "should have update all nodes with way in the temporary database" do
+      subject.update_node_with_way(way)
+      
+      node1 = Marshal.load(subject.database.get("1"))
       node1.id.should ==  "1"
       node1.lon.should == 2.0
       node1.lat.should == 2.0
       node1.ways.should == ["1"]
       node1.end_of_way.should == true
 
-      node2 = Marshal.load(subject.database.get(2))
+      node2 = Marshal.load(subject.database.get("2"))
       node2.id.should ==  "2"
       node2.lon.should == 2.0
       node2.lat.should == 2.0
       node2.ways.should == ["1"]
       node2.end_of_way.should == false
 
-      node3 = Marshal.load(subject.database.get(3))
+      node3 = Marshal.load(subject.database.get("3"))
       node3.id.should ==  "3"
       node3.lon.should == 2.0
       node3.lat.should == 2.0
@@ -77,19 +78,19 @@ describe ActiveRoad::OsmPbfImporter do
     let!(:point) { GeoRuby::SimpleFeatures::Point.from_x_y( 0, 0, 4326) }
 
     before :each do 
-      subject.open_database(subject.database_path)
-      subject.database.set("1", Marshal.dump(ActiveRoad::OsmPbfImporter::Node.new("1", 2.0, 2.0, ["1", "2"])) )
-      subject.database.set("2", Marshal.dump(ActiveRoad::OsmPbfImporter::Node.new("2", 2.0, 2.0, ["1", "3"])) )
+      subject.database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 2.0, 2.0, ["1", "2"])) )
+      subject.database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 2.0, 2.0, ["1", "3"])) )
     end
 
-    after :each  do
+    after :each do
       subject.close_database
+      subject.delete_database
     end
-
+    
     it "should iterate nodes to save it" do
       GeoRuby::SimpleFeatures::Point.stub :from_x_y => point
       subject.should_receive(:backup_nodes_pgsql).exactly(1).times.with([["1", point], ["2", point]], {"1" => ["1", "2"], "2" => ["1", "3"]})
-      subject.iterate_nodes(subject.database)
+      subject.iterate_nodes
     end
   end
   
@@ -117,18 +118,18 @@ describe ActiveRoad::OsmPbfImporter do
     let(:way) { { :id => 1, :refs => [1,2,3] } }
     
     before :each do 
-      subject.open_database(subject.database_path)
-      subject.database.set("1", Marshal.dump(ActiveRoad::OsmPbfImporter::Node.new("1", 0.0, 0.0)) )
-      subject.database.set("2", Marshal.dump(ActiveRoad::OsmPbfImporter::Node.new("2", 1.0, 1.0)) )
-      subject.database.set("3", Marshal.dump(ActiveRoad::OsmPbfImporter::Node.new("3", 2.0, 2.0)) )
+      subject.database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 0.0, 0.0)) )
+      subject.database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 1.0, 1.0)) )
+      subject.database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 2.0, 2.0)) )
     end
 
-    after :each  do
+    after :each do
       subject.close_database
-    end   
+      subject.delete_database
+    end
 
     it "should update physical road geometry" do        
-      subject.way_geometry(way, subject.database).should ==  GeoRuby::SimpleFeatures::LineString.from_points( [point(0.0,0.0), point(1.0,1.0), point(2.0,2.0) ])
+      subject.way_geometry(way).should ==  GeoRuby::SimpleFeatures::LineString.from_points( [point(0.0,0.0), point(1.0,1.0), point(2.0,2.0) ])
     end
 
   end
@@ -149,7 +150,7 @@ describe ActiveRoad::OsmPbfImporter do
     let(:pr2) { ActiveRoad::PhysicalRoad.new :objectid => "physicalroad::2" }
     let(:physical_roads) { [ pr1, pr2 ] }
     let(:prcc) { [ "car", 0.3 ] }
-    let(:physical_road_conditionnal_costs_by_objectid) { {pr1.objectid => [ [prcc] ]} }
+    let(:physical_road_conditionnal_costs_by_objectid) { { pr1.objectid => [ prcc ] } }
     
     it "should save physical roads in postgresql database" do  
       subject.save_physical_roads_and_children(physical_roads)

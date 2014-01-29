@@ -27,13 +27,13 @@ namespace :active_road do
     end
 
     # bundle exec rake "app:active_road:import:osm_pbf_data[/home/user/test.osm.pbf]"
-    desc "Import osm data from a pbf file"
-    task :osm_pbf_data, [:file] => [:environment] do |task, args|      
+    desc "Import osm data from a pbf file with KyotoCabinet"
+    task :osm_pbf_data_kyoto_cabinet, [:file] => [:environment] do |task, args|      
       begin
-        puts "Import data from osm pbf file #{args.file}"
+        puts "Import data from osm pbf file #{args.file} with KyotoCabinet"
         raise "You should provide a valid osm file" if args.file.blank?
         start = Time.now
-        ActiveRoad::OsmPbfImporter.new(args.file).import
+        ActiveRoad::OsmPbfImporterKyotoCabinet.new(args.file).import
         #puts "OSM import finished in #{(Time.now - start).strftime('%H:%M:%S')} seconds"
         puts "Completed import successfully."    
       rescue => e
@@ -44,11 +44,11 @@ namespace :active_road do
 
     # bundle exec rake "app:active_road:import:osm_pbf_data[/home/user/test.osm.pbf]"
     desc "Import osm data from a pbf file"
-    task :osm_pbf_data2, [:file] => [:environment] do |task, args|      
+    task :osm_pbf_data_level_db, [:file] => [:environment] do |task, args|      
       begin
-        puts "Import data from osm pbf file #{args.file}"
+        puts "Import data from osm pbf file #{args.file} with LevelDB"
         raise "You should provide a valid osm file" if args.file.blank?
-        ActiveRoad::OsmPbfImporter2.new(args.file).import
+        ActiveRoad::OsmPbfImporterLevelDb.new(args.file).import
         puts "Completed import successfully."    
       rescue => e
         puts("Failed to import osm data : " + e.message)
