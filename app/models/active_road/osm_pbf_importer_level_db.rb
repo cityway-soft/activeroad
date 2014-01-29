@@ -9,7 +9,7 @@ module ActiveRoad
 
     attr_reader :database_path, :pbf_file
 
-    def initialize(pbf_file, database_path = "/home/luc/osm_pbf_leveldb")
+    def initialize(pbf_file, database_path = "/tmp/osm_pbf_leveldb")
       @pbf_file = pbf_file
       @database_path = database_path
     end

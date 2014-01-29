@@ -10,7 +10,7 @@ module ActiveRoad
     @@kc_batch_size = 100000
     cattr_reader :kc_batch_size
 
-    def initialize(pbf_file, database_path = "/home/luc/osm_pbf.kch")
+    def initialize(pbf_file, database_path = "/tmp/osm_pbf.kch")
       @pbf_file = pbf_file
       @database_path = database_path
     end
