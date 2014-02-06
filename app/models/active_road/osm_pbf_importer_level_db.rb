@@ -115,11 +115,11 @@ end
           ways_counter+= 1
           way_id = way[:id].to_s
           
-          if way.key?(:tags)
-            tags = extracted_tags(way[:tags])
+          if way.key?(:tags) && required_way?(way[:tags])
+            tags = selected_tags(way[:tags])             
             geometry = way_geometry(way)
             
-            if tags.present? && geometry.present?
+            if geometry.present?
               update_node_with_way(way)               
             end
           end            

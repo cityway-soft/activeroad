@@ -1,21 +1,5 @@
 module ActiveRoad
-  module OsmPbfImporter
-   
-    # See for more details :  
-    # http://wiki.openstreetmap.org/wiki/FR:France_roads_tagging
-    # http://wiki.openstreetmap.org/wiki/FR:Cycleway
-    # http://wiki.openstreetmap.org/wiki/Key:railway
-    @@tag_for_car_values = %w{motorway trunk trunk_link primary secondary tertiary motorway_link primary_link unclassified service road residential track}
-    mattr_reader :tag_for_car_values    
-    
-    @@tag_for_pedestrian_values = %w{pedestrian footway path steps}
-    mattr_reader :tag_for_pedestrian_values
-    
-    @@tag_for_bike_values = tag_for_pedestrian_values + ["cycleway"]
-    mattr_reader :tag_for_bike_values
-    
-    @@tag_for_train_values = %w{rail tram funicular light_rail subway}
-    mattr_reader :tag_for_train_values
+  module OsmPbfImporter           
     
     @@pg_batch_size = 10000 # Not puts a high value because postgres failed to allocate memory
     mattr_reader :pg_batch_size
@@ -25,33 +9,93 @@ module ActiveRoad
     end
 
     module ClassMethods
-    end   
+    end
+
+    def pedestrian?(tags)
+      highway_tag_values = %w{pedestrian footway path steps}
+      if tags["highway"].present? && highway_tag_values.include?(tags["highway"])
+        true
+      else
+        false
+      end
+    end
+    
+    # http://wiki.openstreetmap.org/wiki/FR:Cycleway
+    # http://wiki.openstreetmap.org/wiki/FR:Bicycle
+    def bike?(tags)
+      highway_tag_values = %w{cycleway}
+      bike_tags_keys = ["cycleway:left", "cycleway:right", "cycleway", "cycleway:left"]
+
+      if (tags["highway"].present? && highway_tag_values.include?(tags["highway"])) || (bike_tags_keys & tags.keys).present?
+        true        
+      else
+        false
+      end              
+    end
+
+    # http://wiki.openstreetmap.org/wiki/Key:railway
+    def train?(tags)
+      railway_tag_values = %w{rail tram funicular light_rail subway}
+      if tags["railway"].present? && railway_tag_values.include?(tags["railway"])
+        true
+      else
+        false
+      end
+    end
+
+    # http://wiki.openstreetmap.org/wiki/FR:France_roads_tagging
+    def car?(tags)
+      highway_tag_values = %w{motorway trunk trunk_link primary secondary tertiary motorway_link primary_link unclassified service road residential track}
+      if tags["highway"].present? && highway_tag_values.include?(tags["highway"])
+        true
+      else
+        false
+      end
+    end
       
-    def authorized_tags
-      @authorized_tags ||= ["highway", "railway"]
+    def required_tags_keys
+      @required_tags_keys ||= ["highway", "railway"]
+    end
+
+    def selected_tags_keys
+      @selected_tags_keys = ["highway", "railway", "name", "maxspeed", "bridge", "tunnel", "toll", "cycleway", "cycleway-right", "cycleway-left", "cycleway-right", "oneway:bicycle", "oneway", "maxspeed"]
+    end
+
+    def required_way?(tags)
+      required_tags_keys.each do |require_tag_key|
+        if tags.keys.include?(require_tag_key)
+          return true
+        end
+      end
+      return false      
     end
 
     # Return an hash with tag_key => tag_value for osm attributes
-    def extracted_tags(tags)
-      {}.tap do |extracted_tags|
+    def selected_tags(tags)
+      {}.tap do |selected_tags|
         tags.each do |key, value|
-          if authorized_tags.include?(key)
-            extracted_tags[key] = value
+          if selected_tags_keys.include?(key)
+            selected_tags[key] = value
           end
         end           
       end
     end
 
+    # def extract_tag_value(tag_value)
+    #   case tag_value 
+    #   when "yes" : 1 
+    #   when "no" : 0
+    #   when /[0-9].+/i tag_value.to_f        
+    #   else 0    
+    #   end     
+    # end
+
     def physical_road_conditionnal_costs(tags)
-      [].tap do |prcc|
-        tags.each do |tag_key, tag_value|
-          if ["highway", "railway"].include?(tag_key)
-            prcc << [ "car", Float::MAX] if !self.tag_for_car_values.include?(tag_value)  
-            prcc << [ "pedestrian", Float::MAX] if !self.tag_for_pedestrian_values.include?(tag_value)
-            prcc << [ "bike", Float::MAX] if !self.tag_for_bike_values.include?(tag_value) 
-            prcc << [ "train", Float::MAX] if !self.tag_for_train_values.include?(tag_value)
-          end
-        end
+      [].tap do |prcc|        
+        prcc << [ "car", Float::MAX] if !car?(tags)
+        prcc << [ "pedestrian", Float::MAX] if !pedestrian?(tags)
+        prcc << [ "bike", Float::MAX] if !bike?(tags)
+        prcc << [ "train", Float::MAX] if !train?(tags)
       end
     end     
 
@@ -111,12 +155,12 @@ module ActiveRoad
           ways_counter += 1
           way_id = way[:id].to_s
           
-          if way.key?(:tags)
-            tags = extracted_tags(way[:tags])
-            spherical_factory = ::RGeo::Geographic.spherical_factory
+          if way.key?(:tags) && required_way?(way[:tags])
+            tags = selected_tags(way[:tags])             
             geometry = way_geometry(way)
             
-            if tags.present? && geometry.present?                         
+            if geometry.present?
+              spherical_factory = ::RGeo::Geographic.spherical_factory
               length_in_meter = spherical_factory.line_string(geometry.points.collect(&:to_rgeo)).length
               physical_road_values << [way_id, geometry, length_in_meter]
               attributes_by_objectid[way_id] = physical_road_conditionnal_costs(tags)
