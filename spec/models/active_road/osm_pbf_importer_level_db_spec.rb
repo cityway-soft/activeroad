@@ -20,14 +20,14 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     end
 
     it "should have import all ways in temporary ways_database" do
+      subject.backup_ways
       expect(subject.ways_database.count).to eq(6)
       expect(subject.ways_database.keys).to eq(["3", "5", "6", "7", "8", "9"])
-      subject.backup_ways      
     end
 
     it "should have call update_node_with_way n times" do
-      expect(subject).to receive(:update_node_with_way).exactly(3).times                   
-      subject.backup_ways     
+      expect(subject).to receive(:update_node_with_way).exactly(3).times   
+      subject.backup_ways
     end
                                     
   end
@@ -46,6 +46,8 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     after :each do
       subject.close_nodes_database
       subject.delete_nodes_database
+      subject.close_ways_database
+      subject.delete_ways_database
     end
 
     it "should have update all nodes with way in the temporary nodes_database" do
@@ -85,6 +87,8 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     after :each do
       subject.close_nodes_database
       subject.delete_nodes_database
+      subject.close_ways_database
+      subject.delete_ways_database
     end
     
     it "should iterate nodes to save it" do

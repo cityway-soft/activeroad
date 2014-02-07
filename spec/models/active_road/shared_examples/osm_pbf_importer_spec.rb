@@ -106,6 +106,8 @@ shared_examples "an OsmPbfImporter module" do
     after :each do
       importer.close_nodes_database
       importer.delete_nodes_database
+      subject.close_ways_database
+      subject.delete_ways_database
     end
 
     it "should update physical road geometry" do        

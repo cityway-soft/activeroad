@@ -244,7 +244,7 @@ end
               end
 
               if !broken_geometry
-                boundary_geometry = GeoRuby::SimpleFeatures::Polygon.from_linear_rings(ways_geometry)
+                boundary_geometry = GeoRuby::SimpleFeatures::MultiPolygon.from_polygons([GeoRuby::SimpleFeatures::Polygon.from_linear_rings(ways_geometry)])
               
                 boundaries_values << [ relation[:id], boundary_geometry, tags["name"], tags["admin_level"], tags["addr:postcode"], tags["ref:INSEE"] ]
                 boundaries_values_size = boundaries_values.size

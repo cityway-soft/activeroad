@@ -9749,7 +9749,7 @@ CREATE TABLE boundaries (
     insee_code character varying(255),
     geometry geometry,
     CONSTRAINT enforce_dims_geometry CHECK ((st_ndims(geometry) = 2)),
-    CONSTRAINT enforce_geotype_geometry CHECK (((geometrytype(geometry) = 'POLYGON'::text) OR (geometry IS NULL))),
+    CONSTRAINT enforce_geotype_geometry CHECK (((geometrytype(geometry) = 'MULTIPOLYGON'::text) OR (geometry IS NULL))),
     CONSTRAINT enforce_srid_geometry CHECK ((st_srid(geometry) = 4326))
 );
 
