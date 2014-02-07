@@ -3,7 +3,7 @@ require 'spec_helper'
 shared_examples "an OsmPbfImporter module" do
   
   let(:pbf_file) { File.expand_path("../../../fixtures/test.osm.pbf", __FILE__) }
-  let(:importer) { ActiveRoad::OsmPbfImporterLevelDb.new( pbf_file, "/tmp/osm_pbf_test" ) }
+  let(:importer) { ActiveRoad::OsmPbfImporterLevelDb.new( pbf_file, "/tmp/osm_pbf_nodes_test", "/tmp/osm_pbf_ways_test" ) }
 
   describe "#pedestrian?" do
     it "should return true when tag key is highway and tag value is good" do
@@ -51,7 +51,6 @@ shared_examples "an OsmPbfImporter module" do
     end    
   end
   
-
   describe "#required_way?" do
     it "should return true when tag key is highway or railway" do 
       tags = {"highway" => "primary"} 
@@ -67,7 +66,19 @@ shared_examples "an OsmPbfImporter module" do
   describe "#selected_tags" do
     it "should return true when " do 
       tags = {"highway" => "primary", "name" => "Rue montparnasse", "bridge" => "true", "other_tag" => "other_tag"} 
-      importer.selected_tags(tags).should == {"highway" => "primary", "name" => "Rue montparnasse", "bridge" => "true" }
+      importer.selected_tags(tags, importer.way_selected_tags_keys).should == {"name" => "Rue montparnasse" }
+    end
+  end
+
+  describe "#required_relation?" do
+    it "should return true when tag key is boundary" do 
+      tags = {"boundary" => "administrative"} 
+      importer.required_relation?(tags).should be_true
+    end
+
+    it "should return false when no tag key with highway or railway" do 
+      tags =  {"other" => "100"} 
+      importer.required_relation?(tags).should  be_false
     end
   end
 
@@ -75,50 +86,50 @@ shared_examples "an OsmPbfImporter module" do
     let(:physical_road) { create(:physical_road) }
 
     it "should return conditionnal cost with pedestrian, bike and train to infinity when tag key is car" do
-      importer.physical_road_conditionnal_costs({"highway" => "primary"}).should == [["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]]
+      importer.physical_road_conditionnal_costs( ActiveRoad::OsmPbfImporter::Way.new("", "", [], true) ).should == [["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]]
     end
 
     it "should return conditionnal cost with pedestrian, bike, car and train to infinity when tag key is nothing" do   
-      importer.physical_road_conditionnal_costs({"test" => "test"}).should == [ ["car", Float::MAX], ["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]]
+      importer.physical_road_conditionnal_costs( ActiveRoad::OsmPbfImporter::Way.new("", "", []) ).should == [ ["car", Float::MAX], ["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]]
     end
   end
 
   describe "#way_geometry" do
-    let(:way) { { :id => 1, :refs => [1,2,3] } }
+    let(:node_ids) { ["1","2","3"] }
     
     before :each do 
-      importer.database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 0.0, 0.0)) )
-      importer.database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 1.0, 1.0)) )
-      importer.database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 2.0, 2.0)) )
+      importer.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 0.0, 0.0)) )
+      importer.nodes_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 1.0, 1.0)) )
+      importer.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 2.0, 2.0)) )
     end
 
     after :each do
-      importer.close_database
-      importer.delete_database
+      importer.close_nodes_database
+      importer.delete_nodes_database
     end
 
     it "should update physical road geometry" do        
-      importer.way_geometry(way).should ==  GeoRuby::SimpleFeatures::LineString.from_points( [point(0.0,0.0), point(1.0,1.0), point(2.0,2.0) ])
+      importer.way_geometry(node_ids).should ==  GeoRuby::SimpleFeatures::LineString.from_points( [point(0.0,0.0), point(1.0,1.0), point(2.0,2.0) ])
     end
 
   end
 
-  describe "#save_physical_roads_and_children" do
+  describe "#backup_ways_pgsql" do
     let(:pr1) { ActiveRoad::PhysicalRoad.new :objectid => "physicalroad::1" }
     let(:pr2) { ActiveRoad::PhysicalRoad.new :objectid => "physicalroad::2" }
     let(:physical_roads) { [ pr1, pr2 ] }
     let(:prcc) { [ "car", 0.3 ] }
     let(:physical_road_conditionnal_costs_by_objectid) { { pr1.objectid => [ prcc ] } }
     
-    it "should save physical roads in postgresql database" do  
-      importer.save_physical_roads_and_children(physical_roads)
+    it "should save physical roads in postgresql nodes_database" do  
+      importer.backup_ways_pgsql(physical_roads)
       ActiveRoad::PhysicalRoad.all.size.should == 2
       ActiveRoad::PhysicalRoad.first.objectid.should == "physicalroad::1"
       ActiveRoad::PhysicalRoad.last.objectid.should == "physicalroad::2"
     end
 
-    it "should save physical road conditionnal costs in postgresql database" do   
-      importer.save_physical_roads_and_children(physical_roads, physical_road_conditionnal_costs_by_objectid)
+    it "should save physical road conditionnal costs in postgresql nodes_database" do   
+      importer.backup_ways_pgsql(physical_roads, physical_road_conditionnal_costs_by_objectid)
       ActiveRoad::PhysicalRoadConditionnalCost.all.size.should == 1
       ActiveRoad::PhysicalRoadConditionnalCost.first.physical_road_id.should == ActiveRoad::PhysicalRoad.first.id
     end
@@ -128,7 +139,7 @@ shared_examples "an OsmPbfImporter module" do
     let!(:physical_road) { create(:physical_road, :objectid => "1") }
     let!(:point) { GeoRuby::SimpleFeatures::Point.from_x_y( 0, 0, 4326) }
 
-    it "should save junctions in postgresql database" do         
+    it "should save junctions in postgresql nodes_database" do         
       junctions_values = [["1", point], ["2", point]]
       junctions_ways = {"1" => ["1"], "2" => ["1"]}
 

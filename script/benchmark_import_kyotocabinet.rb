@@ -89,7 +89,7 @@ class KCImport
       end
 
       database.transaction {
-        (0...100000).each do |way|
+        (0...4000000).each do |way|
           update_node_with_way(way, database)
         end
       }
@@ -136,13 +136,13 @@ puts "Import without options"
 KCImport.new(rnum, "/home/luc/import_without_options.kch").import
 
 # import in KC with options apow=8, opts=l, bnum=2000000 and msiz=50000000
-puts "\n Import with options apow=8, opts=l, bnum=2000000 and msiz=50000000"
+puts "\nImport with options apow=8, opts=l, bnum=2000000 and msiz=50000000"
 KCImport.new(rnum, "/home/luc/import_with_options.kch", "#apow=8#opts=l#bnum=2000000#msiz=50000000").import
 
 # import in KC without options
-puts "Import and update without options"
+puts "\nImport and update without options"
 KCImport.new(rnum, "/home/luc/import_without_options.kch").import_and_update
 
 # import in KC with options apow=8, opts=l, bnum=2000000 and msiz=50000000
-puts "\n Import and update with options apow=8, opts=l, bnum=2000000 and msiz=50000000"
-KCImport.new(rnum, "/home/luc/import_with_options.kch", "#apow=8#opts=l#bnum=2000000#msiz=50000000").import_and_update
+# puts "\nImport and update with options apow=8, opts=l, bnum=2000000 and msiz=50000000"
+# KCImport.new(rnum, "/home/luc/import_with_options.kch", "#apow=8#opts=l#bnum=2000000#msiz=50000000").import_and_update

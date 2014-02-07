@@ -9732,6 +9732,47 @@ CREATE CAST (text AS public.geometry) WITH FUNCTION public.geometry(text) AS IMP
 
 SET search_path = public, pg_catalog;
 
+SET default_tablespace = '';
+
+SET default_with_oids = false;
+
+--
+-- Name: boundaries; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE boundaries (
+    id integer NOT NULL,
+    objectid character varying(255),
+    name character varying(255),
+    admin_level integer,
+    postal_code character varying(255),
+    insee_code character varying(255),
+    geometry geometry,
+    CONSTRAINT enforce_dims_geometry CHECK ((st_ndims(geometry) = 2)),
+    CONSTRAINT enforce_geotype_geometry CHECK (((geometrytype(geometry) = 'POLYGON'::text) OR (geometry IS NULL))),
+    CONSTRAINT enforce_srid_geometry CHECK ((st_srid(geometry) = 4326))
+);
+
+
+--
+-- Name: boundaries_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE boundaries_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: boundaries_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE boundaries_id_seq OWNED BY boundaries.id;
+
+
 --
 -- Name: geography_columns; Type: VIEW; Schema: public; Owner: -
 --
@@ -9739,8 +9780,6 @@ SET search_path = public, pg_catalog;
 CREATE VIEW geography_columns AS
     SELECT current_database() AS f_table_catalog, n.nspname AS f_table_schema, c.relname AS f_table_name, a.attname AS f_geography_column, geography_typmod_dims(a.atttypmod) AS coord_dimension, geography_typmod_srid(a.atttypmod) AS srid, geography_typmod_type(a.atttypmod) AS type FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n WHERE ((((((t.typname = 'geography'::name) AND (a.attisdropped = false)) AND (a.atttypid = t.oid)) AND (a.attrelid = c.oid)) AND (c.relnamespace = n.oid)) AND (NOT pg_is_other_temp_schema(c.relnamespace)));
 
-
-SET default_tablespace = '';
 
 SET default_with_oids = true;
 
@@ -10018,6 +10057,13 @@ ALTER SEQUENCE street_numbers_id_seq OWNED BY street_numbers.id;
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
+ALTER TABLE ONLY boundaries ALTER COLUMN id SET DEFAULT nextval('boundaries_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
 ALTER TABLE ONLY junction_conditionnal_costs ALTER COLUMN id SET DEFAULT nextval('junction_conditionnal_costs_id_seq'::regclass);
 
 
@@ -10054,6 +10100,14 @@ ALTER TABLE ONLY physical_roads ALTER COLUMN id SET DEFAULT nextval('physical_ro
 --
 
 ALTER TABLE ONLY street_numbers ALTER COLUMN id SET DEFAULT nextval('street_numbers_id_seq'::regclass);
+
+
+--
+-- Name: boundaries_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY boundaries
+    ADD CONSTRAINT boundaries_pkey PRIMARY KEY (id);
 
 
 --
@@ -10118,6 +10172,13 @@ ALTER TABLE ONLY spatial_ref_sys
 
 ALTER TABLE ONLY street_numbers
     ADD CONSTRAINT street_numbers_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: index_boundaries_on_geometry; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_boundaries_on_geometry ON boundaries USING gist (geometry);
 
 
 --
@@ -10267,3 +10328,5 @@ INSERT INTO schema_migrations (version) VALUES ('20130801151637');
 INSERT INTO schema_migrations (version) VALUES ('20130809155019');
 
 INSERT INTO schema_migrations (version) VALUES ('20130812143049');
+
+INSERT INTO schema_migrations (version) VALUES ('20140206091734');

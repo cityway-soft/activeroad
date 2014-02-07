@@ -16,4 +16,5 @@ end
 
 group :development, :test do
   gem "ruby-prof"
+  gem "bullet"
 end

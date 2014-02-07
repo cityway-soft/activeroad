@@ -53,5 +53,44 @@
 		<tag k="highway" v="secondary"/>
 		<tag k="name" v="Rue J. Symphorien"/>
 	</way>
-    
+  <node id="277048539" lat="0" lon="0" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+  <node id="277048540" lat="1" lon="1" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+  <node id="277048541" lat="1" lon="2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+  <node id="277048542" lat="0.5" lon="2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/> 
+  <way id="7" version="11" timestamp="2013-03-20T19:17:44Z" changeset="15435383" uid="11068" user="windu2b">
+		<nd ref="277048539"/>
+		<nd ref="277048540"/>
+		<tag k="admin_level" v="8"/>
+		<tag k="boundary" v="administrative"/>
+		<tag k="source" v="cadastre-dgi-fr source : Direction Générale des Impôts - Cadastre. Mise à jour : 2013"/>
+  </way>
+  <way id="8" version="11" timestamp="2013-03-20T19:17:44Z" changeset="15435383" uid="11068" user="windu2b">
+		<nd ref="277048540"/>
+		<nd ref="277048541"/>
+		<tag k="admin_level" v="8"/>
+		<tag k="boundary" v="administrative"/>
+		<tag k="source" v="cadastre-dgi-fr source : Direction Générale des Impôts - Cadastre. Mise à jour : 2013"/>
+  </way>
+  <way id="9" version="11" timestamp="2013-03-20T19:17:44Z" changeset="15435383" uid="11068" user="windu2b">
+		<nd ref="277048541"/>
+		<nd ref="277048539"/>
+		<tag k="admin_level" v="8"/>
+		<tag k="boundary" v="administrative"/>
+		<tag k="source" v="cadastre-dgi-fr source : Direction Générale des Impôts - Cadastre. Mise à jour : 2013"/>
+  </way>
+  <relation id="73464" version="12" timestamp="2013-09-24T19:38:24Z" changeset="18014700" uid="37548" user="Marcussacapuces91">
+		<member type="way" ref="7" role="outer"/>
+		<member type="way" ref="8" role="outer"/>
+		<member type="way" ref="9" role="outer"/>
+		<member type="node" ref="277048542" role="admin_centre"/>
+		<tag k="addr:postcode" v="20200"/>
+		<tag k="admin_level" v="8"/>
+		<tag k="boundary" v="administrative"/>
+		<tag k="name" v="Santa-Maria-di-Lota"/>
+		<tag k="ref:INSEE" v="2B309"/>
+		<tag k="source:addr:postcode" v="source of postcode is from galichon.com/INSEE"/>
+		<tag k="source:ref:INSEE" v="source of ref is from ref_INSEE in relation"/>
+		<tag k="type" v="boundary"/>
+		<tag k="wikipedia" v="fr:Santa-Maria-di-Lota"/>
+	</relation>
 </osm>
