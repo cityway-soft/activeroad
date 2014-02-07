@@ -7,7 +7,7 @@ class CreateBoundaries < ActiveRecord::Migration
       t.integer :admin_level
       t.string :postal_code
       t.string :insee_code
-      t.polygon :geometry, :srid => ActiveRoad.srid
+      t.multi_polygon :geometry, :srid => ActiveRoad.srid
     end
     
     add_index :boundaries, :geometry, :spatial => true
