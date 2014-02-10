@@ -117,21 +117,19 @@ shared_examples "an OsmPbfImporter module" do
   end
 
   describe "#backup_ways_pgsql" do
-    let(:pr1) { ActiveRoad::PhysicalRoad.new :objectid => "physicalroad::1" }
-    let(:pr2) { ActiveRoad::PhysicalRoad.new :objectid => "physicalroad::2" }
-    let(:physical_roads) { [ pr1, pr2 ] }
+    let!(:line) { line_string( "0 0,1 0" ) }
+    let(:physical_road_values) { [ [ "1", line, 1, {} ], ["2", line, 2, {"oneway" => "true"}] ] }
     let(:prcc) { [ "car", 0.3 ] }
-    let(:physical_road_conditionnal_costs_by_objectid) { { pr1.objectid => [ prcc ] } }
+    let(:physical_road_conditionnal_costs_by_objectid) { { "1" => [ prcc ] } }
     
-    it "should save physical roads in postgresql nodes_database" do  
-      importer.backup_ways_pgsql(physical_roads)
+    it "should save physical roads in postgresql database" do  
+      importer.backup_ways_pgsql(physical_road_values)
       ActiveRoad::PhysicalRoad.all.size.should == 2
-      ActiveRoad::PhysicalRoad.first.objectid.should == "physicalroad::1"
-      ActiveRoad::PhysicalRoad.last.objectid.should == "physicalroad::2"
+      ActiveRoad::PhysicalRoad.all.collect(&:objectid).should == ["1", "2"]
     end
 
-    it "should save physical road conditionnal costs in postgresql nodes_database" do   
-      importer.backup_ways_pgsql(physical_roads, physical_road_conditionnal_costs_by_objectid)
+    it "should save physical road conditionnal costs in postgresql database" do   
+      importer.backup_ways_pgsql(physical_road_values, physical_road_conditionnal_costs_by_objectid)
       ActiveRoad::PhysicalRoadConditionnalCost.all.size.should == 1
       ActiveRoad::PhysicalRoadConditionnalCost.first.physical_road_id.should == ActiveRoad::PhysicalRoad.first.id
     end

@@ -105,10 +105,11 @@ module ActiveRoad
           last_node = nodes_parser.nodes.last
           nodes_parser.nodes.each do |node|
             nodes_counter+= 1
-          
-            nodes_database[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat]))        
+
+            select_tags = selected_tags(node[:tags], nodes_selected_tags_keys)         
+            nodes_database[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat], [], select_tags [:addr_housenumber]))      
           end
-end
+        end
         # When there's no more fileblocks to parse, #next returns false
         # This avoids an infinit loop when the last fileblock still contains ways
         break unless nodes_parser.next
@@ -180,13 +181,13 @@ end
         ways_counter += 1        
         way = Marshal.load(value)
 
-        unless way.boundary                                     
+        unless way.boundary.present?
           spherical_factory = ::RGeo::Geographic.spherical_factory
           length_in_meter = spherical_factory.line_string(way.geometry.points.collect(&:to_rgeo)).length
-          physical_road_values << [way.id, way.geometry, length_in_meter]
+          physical_road_values << [way.id, way.geometry, length_in_meter, way.options]
           attributes_by_objectid[way.id] = physical_road_conditionnal_costs(way)
         end
-        
+
         if (physical_road_values.count == @@pg_batch_size || (ways_database_size == ways_counter && physical_road_values.present?) )
           backup_ways_pgsql(physical_road_values, attributes_by_objectid)
           

@@ -98,6 +98,28 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     end
   end
 
+  describe "#iterate_ways" do
+    let!(:line) { line_string( "0 0,1 0" ) }
+    
+    before :each do 
+      subject.ways_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("1", line, ["1", "2"], true, false, false, false, "Test", "100", true, "", "", {"cycleway" => "lane"}) ) )
+      subject.ways_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("2", line, ["1", "2"], true, false, false, false, "Test", "100", true, "", "", {"toll" => "true"}) ) )
+      subject.ways_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("3", line, ["1", "2"], true, false, false, false, "Test", "100", true, "", "", {}) ) )
+    end
+
+    after :each do
+      subject.close_nodes_database
+      subject.delete_nodes_database
+      subject.close_ways_database
+      subject.delete_ways_database
+    end
+    
+    it "should iterate ways to save it" do
+      subject.should_receive(:backup_ways_pgsql).exactly(1).times.with( [["1", line, 111319.49079327357, {"cycleway"=>"lane"}], ["2", line, 111319.49079327357, {"toll"=>"true"}], ["3", line, 111319.49079327357, {}]], {"1"=>[["pedestrian", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308], ["train", 1.7976931348623157e+308]], "2"=>[["pedestrian", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308], ["train", 1.7976931348623157e+308]], "3"=>[["pedestrian", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308], ["train", 1.7976931348623157e+308]]} )
+      subject.iterate_ways
+    end
+  end
+
   describe "#import" do
     it "should have import all nodes in a temporary nodes_database" do  
       subject.import
