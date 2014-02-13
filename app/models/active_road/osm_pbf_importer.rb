@@ -1,5 +1,21 @@
 module ActiveRoad
-  module OsmPbfImporter           
+  module OsmPbfImporter   
+    
+    @@relation_required_tags_keys = ["boundary", "admin_level"]      
+    @@relation_selected_tags_keys = ["boundary", "admin_level", "ref:INSEE", "name", "addr:postcode", "type"]
+    mattr_reader :relation_required_tags_keys
+    mattr_reader :relation_selected_tags_keys
+    
+    @@way_required_tags_keys = ["highway", "railway", "boundary", "admin_level"]    
+    @@way_selected_tags_keys = [ "name", "maxspeed", "oneway", "boundary", "admin_level" ]
+    # Add first_node_id and last_node_id
+    @@way_optionnal_tags_keys = ["highway", "bridge", "tunnel", "toll", "cycleway", "cycleway-right", "cycleway-left", "cycleway-both", "oneway:bicycle", "oneway", "bicycle", "segregated", "foot", "lanes", "lanes:forward", "lanes:forward:bus", "busway:right", "busway:left", "oneway_bus", "boundary", "admin_level"]
+    mattr_reader :way_required_tags_keys
+    mattr_reader :way_selected_tags_keys
+    mattr_reader :way_optionnal_tags_keys
+
+    @@nodes_selected_tags_keys = [ "addr_housenumber" ]
+    mattr_reader :nodes_selected_tags_keys
     
     @@pg_batch_size = 10000 # Not puts a high value because postgres failed to allocate memory
     mattr_reader :pg_batch_size
@@ -53,32 +69,8 @@ module ActiveRoad
       end
     end      
 
-    def relation_required_tags_keys
-      @relation_required_tags_keys ||= ["boundary", "admin_level"]
-    end
-
-    def relation_selected_tags_keys
-      @relation_selected_tags_keys ||= ["boundary", "admin_level", "ref:INSEE", "name", "addr:postcode", "type"]
-    end
-    
-    def way_required_tags_keys
-      @way_required_tags_keys ||= ["highway", "railway", "boundary", "admin_level"]
-    end
-    
-    def way_selected_tags_keys
-      @way_selected_tags_keys ||= [ "name", "maxspeed", "oneway", "boundary", "admin_level" ]
-    end
-    
-    def way_optionnal_tags_keys
-      @way_optionnal_tags_keys ||= ["highway", "bridge", "tunnel", "toll", "cycleway", "cycleway-right", "cycleway-left", "cycleway-both", "oneway:bicycle", "oneway", "bicycle", "segregated", "foot", "lanes", "lanes:forward", "lanes:forward:bus", "busway:right", "busway:left", "oneway_bus", "boundary", "admin_level"]
-    end
-
-    def nodes_selected_tags_keys
-      @nodes_selected_tags_keys ||= [ "addr_housenumber" ]
-    end
-
     def required_way?(tags)
-      way_required_tags_keys.each do |require_tag_key|
+      @@way_required_tags_keys.each do |require_tag_key|
         if tags.keys.include?(require_tag_key)
           return true
         end
@@ -87,7 +79,7 @@ module ActiveRoad
     end
     
     def required_relation?(tags)
-      relation_required_tags_keys.each do |require_tag_key|
+      @@relation_required_tags_keys.each do |require_tag_key|
         if tags.keys.include?(require_tag_key)
           return true
         end

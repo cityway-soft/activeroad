@@ -66,7 +66,7 @@ shared_examples "an OsmPbfImporter module" do
   describe "#selected_tags" do
     it "should return true when " do 
       tags = {"highway" => "primary", "name" => "Rue montparnasse", "bridge" => "true", "other_tag" => "other_tag"} 
-      importer.selected_tags(tags, importer.way_selected_tags_keys).should == {"name" => "Rue montparnasse" }
+      importer.selected_tags(tags, ActiveRoad::OsmPbfImporter.way_selected_tags_keys).should == {"name" => "Rue montparnasse" }
     end
   end
 

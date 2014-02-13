@@ -107,7 +107,7 @@ module ActiveRoad
           nodes_parser.nodes.each do |node|
             nodes_counter+= 1
 
-            select_tags = selected_tags(node[:tags], nodes_selected_tags_keys)         
+            select_tags = selected_tags(node[:tags], @@nodes_selected_tags_keys)         
             nodes_database[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat], [], select_tags [:addr_housenumber]))      
           end
         end
@@ -134,9 +134,13 @@ module ActiveRoad
           way_id = way[:id].to_s
           
           if way.key?(:tags) && required_way?(way[:tags])
-            select_tags = selected_tags(way[:tags], way_selected_tags_keys)
-            opt_tags = selected_tags(way[:tags], way_optionnal_tags_keys)
-            node_ids = way.key?(:refs) ? way[:refs].collect(&:to_s) : []            
+            select_tags = selected_tags(way[:tags], @@way_selected_tags_keys)
+            opt_tags = selected_tags(way[:tags], @@way_optionnal_tags_keys)
+            node_ids = way.key?(:refs) ? way[:refs].collect(&:to_s) : []
+
+            # Add  node_id_first and node_id_last to opt_tags
+            opt_tags.merge!( { "first_node_id" => node_ids.first.to_s, "last_node_id" => node_ids.last.to_s } ) if node_ids.present?
+            
             geometry = way_geometry(node_ids)
 
             # Don't add way if no geometry
@@ -217,7 +221,7 @@ module ActiveRoad
           relations_counter+= 1
           
           if relation.key?(:tags) && required_relation?(relation[:tags])
-            tags = selected_tags(relation[:tags], relation_selected_tags_keys)
+            tags = selected_tags(relation[:tags], @@relation_selected_tags_keys)
 
             # relation_members = {}.tap do |relation_members|
             #   relation_members[:outer_ways] = []
