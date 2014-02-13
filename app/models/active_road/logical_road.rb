@@ -3,7 +3,7 @@ module ActiveRoad
     extend ActiveSupport::Memoizable
     attr_accessible :objectid, :name
 
-    validates_uniqueness_of :objectid
+    #validates_uniqueness_of :objectid
 
     has_many :physical_roads, :class_name => "ActiveRoad::PhysicalRoad", :inverse_of => :logical_road
 

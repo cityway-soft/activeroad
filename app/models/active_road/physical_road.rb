@@ -33,11 +33,9 @@ module ActiveRoad
       end
     end
     
-    def name
+    def street_name
       logical_road.try(:name) or objectid
     end
-
-    alias_method :to_s, :name
 
     def self.nearest_to(location, distance = 100)
       # FIX Limit to 2 physical roads for perf, must be extended

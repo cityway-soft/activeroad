@@ -9968,6 +9968,11 @@ CREATE TABLE physical_roads (
     banisters_available boolean,
     tactile_band boolean,
     physical_road_type character varying(255),
+    car boolean,
+    bike boolean,
+    train boolean,
+    pedestrian boolean,
+    name character varying(255),
     CONSTRAINT enforce_dims_geometry CHECK ((st_ndims(geometry) = 2)),
     CONSTRAINT enforce_geotype_geometry CHECK (((geometrytype(geometry) = 'LINESTRING'::text) OR (geometry IS NULL))),
     CONSTRAINT enforce_srid_geometry CHECK ((st_srid(geometry) = 4326))
@@ -10330,3 +10335,5 @@ INSERT INTO schema_migrations (version) VALUES ('20130809155019');
 INSERT INTO schema_migrations (version) VALUES ('20130812143049');
 
 INSERT INTO schema_migrations (version) VALUES ('20140206091734');
+
+INSERT INTO schema_migrations (version) VALUES ('20140210132933');

@@ -118,7 +118,7 @@ shared_examples "an OsmPbfImporter module" do
 
   describe "#backup_ways_pgsql" do
     let!(:line) { line_string( "0 0,1 0" ) }
-    let(:physical_road_values) { [ [ "1", line, 1, {} ], ["2", line, 2, {"oneway" => "true"}] ] }
+    let(:physical_road_values) { [ [ "1", true, false, false, false, "", 1, line, {} ], ["2", true, false, false, false, "", 2, line, {"oneway" => "true"}] ] }
     let(:prcc) { [ "car", 0.3 ] }
     let(:physical_road_conditionnal_costs_by_objectid) { { "1" => [ prcc ] } }
     
@@ -152,6 +152,19 @@ shared_examples "an OsmPbfImporter module" do
       last_junction = ActiveRoad::Junction.last
       last_junction.objectid.should == "2"
       last_junction.physical_roads.should == [physical_road]
+    end
+  end
+
+  describe "#backup_logical_roads_pgsql" do
+    let!(:physical_road1) { create(:physical_road, :objectid => "1", :name => "physical_road1") }
+    let!(:physical_road2) { create(:physical_road, :objectid => "2", :name => "physical_road1") }
+    let!(:physical_road3) { create(:physical_road, :objectid => "3", :name => "physical_road3") }
+
+    it "should save logical roads in postgresql database" do
+      subject.backup_logical_roads_pgsql
+      puts ActiveRoad::LogicalRoad.all.inspect
+      expect(ActiveRoad::LogicalRoad.all.size).to eql(2)
+      expect(ActiveRoad::LogicalRoad.all.collect(&:name)).to eql(["physical_road1", "physical_road3"])
     end
   end  
 

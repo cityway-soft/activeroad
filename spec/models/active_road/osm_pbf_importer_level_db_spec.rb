@@ -115,7 +115,7 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     end
     
     it "should iterate ways to save it" do
-      subject.should_receive(:backup_ways_pgsql).exactly(1).times.with( [["1", line, 111319.49079327357, {"cycleway"=>"lane"}], ["2", line, 111319.49079327357, {"toll"=>"true"}], ["3", line, 111319.49079327357, {}]], {"1"=>[["pedestrian", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308], ["train", 1.7976931348623157e+308]], "2"=>[["pedestrian", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308], ["train", 1.7976931348623157e+308]], "3"=>[["pedestrian", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308], ["train", 1.7976931348623157e+308]]} )
+      subject.should_receive(:backup_ways_pgsql).exactly(1).times.with( [["1", true, false, false, false, "Test", 111319.49079327357, line, {"cycleway"=>"lane"}], ["2", true, false, false, false, "Test", 111319.49079327357, line, {"toll"=>"true"}], ["3", true, false, false, false, "Test", 111319.49079327357, line, {}]], {"1"=>[["pedestrian", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308], ["train", 1.7976931348623157e+308]], "2"=>[["pedestrian", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308], ["train", 1.7976931348623157e+308]], "3"=>[["pedestrian", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308], ["train", 1.7976931348623157e+308]]} )
       subject.iterate_ways
     end
   end
@@ -124,9 +124,9 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     it "should have import all nodes in a temporary nodes_database" do  
       subject.import
       ActiveRoad::PhysicalRoad.all.size.should == 3
-      ActiveRoad::PhysicalRoad.all.collect(&:objectid).should == ["3", "5", "6"]
+      ActiveRoad::PhysicalRoad.all.collect(&:objectid).should =~ ["3", "5", "6"]
       ActiveRoad::Boundary.all.size.should == 1
-      ActiveRoad::Boundary.all.collect(&:objectid).should == ["73464"]
+      ActiveRoad::Boundary.all.collect(&:objectid).should =~ ["73464"]
       ActiveRoad::PhysicalRoadConditionnalCost.all.size.should == 9
       ActiveRoad::Junction.all.size.should == 6
       ActiveRoad::Junction.all.collect(&:objectid).should =~ ["1", "2", "5", "8", "9", "10"]

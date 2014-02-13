@@ -168,11 +168,10 @@ module ActiveRoad
 
     def backup_ways_pgsql(physical_road_values, attributes_by_objectid = {})
       # Save physical roads
-      physical_road_columns = [:objectid, :geometry, :length_in_meter, :tags]
-      ActiveRoad::PhysicalRoad.import(physical_road_columns, physical_road_values, :validate => false)
-
-      # Save physical road conditionnal costs
-      prcc = []
+      physical_road_columns = [:objectid, :car, :bike, :train, :pedestrian, :name, :length_in_meter, :geometry, :tags]
+      ActiveRoad::PhysicalRoad.import(physical_road_columns, physical_road_values, :validate => false)      
+      
+      prcc = logical_roads = []
       attributes_by_objectid.each do |objectid, physical_road_conditionnal_costs|
         pr = ActiveRoad::PhysicalRoad.where(:objectid => objectid).first
 
@@ -182,8 +181,27 @@ module ActiveRoad
         end
       end        
 
+      # Save physical road conditionnal costs
       physical_road_conditionnal_cost_columns = [:tags, :cost, :physical_road_id]
-      ActiveRoad::PhysicalRoadConditionnalCost.import(physical_road_conditionnal_cost_columns, prcc, :validate => false)               
+      ActiveRoad::PhysicalRoadConditionnalCost.import(physical_road_conditionnal_cost_columns, prcc, :validate => false)      
+    end
+
+    def backup_logical_roads_pgsql
+      puts "Begin to backup logical roads in PostgreSql"
+      start = Time.now
+
+      ActiveRoad::PhysicalRoad.find_in_batches(batch_size: 2000) do |group|
+        ActiveRoad::LogicalRoad.transaction do 
+          group.each do |physical_road|
+            # TODO : use geographical data to know if it's the same logical road or not        
+            logical_road = ActiveRoad::LogicalRoad.where(:name => physical_road.name).first_or_create! do |logical_road|
+              logical_road.name = physical_road.name          
+              logical_road.physical_roads << physical_road
+            end if physical_road.name.present?
+          end
+        end
+      end
+      p "Finish to backup logical roads in PostgreSql in #{(Time.now - start)} seconds"      
     end
     
     class Node
