@@ -93,4 +93,10 @@
 		<tag k="type" v="boundary"/>
 		<tag k="wikipedia" v="fr:Santa-Maria-di-Lota"/>
 	</relation>
+  <node id="2646260105" visible="true" version="1" changeset="20308566" timestamp="2014-01-31T22:19:31Z" user="Denis_Helfer" uid="22165" lat="47.7378654" lon="7.3908514">
+    <tag k="addr:housenumber" v="4"/>
+  </node>
+  <node id="2646260106" visible="true" version="1" changeset="20308566" timestamp="2014-01-31T22:19:31Z" user="Denis_Helfer" uid="22165" lat="47.7388654" lon="7.3908514">
+    <tag k="addr:housenumber" v="7"/>
+  </node>
 </osm>

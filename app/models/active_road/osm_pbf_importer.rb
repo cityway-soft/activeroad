@@ -14,7 +14,7 @@ module ActiveRoad
     mattr_reader :way_selected_tags_keys
     mattr_reader :way_optionnal_tags_keys
 
-    @@nodes_selected_tags_keys = [ "addr_housenumber" ]
+    @@nodes_selected_tags_keys = [ "addr:housenumber" ]
     mattr_reader :nodes_selected_tags_keys
     
     @@pg_batch_size = 10000 # Not puts a high value because postgres failed to allocate memory
@@ -126,7 +126,7 @@ module ActiveRoad
       GeoRuby::SimpleFeatures::LineString.from_points(nodes_geometry, 4326) if nodes_geometry.present? &&  1 < nodes_geometry.count     
     end   
 
-    def backup_nodes_pgsql(junctions_values = [], junctions_ways = [])    
+    def backup_nodes_pgsql(junctions_values = [], junctions_ways = {})    
       junction_columns = [:objectid, :geometry]
       # Save junctions in the stack
       ActiveRoad::Junction.import(junction_columns, junctions_values, :validate => false) if junctions_values.present?
@@ -142,20 +142,20 @@ module ActiveRoad
       end
     end
 
-    def backup_street_number_pgsql(street_numbers_values = [], street_numbers_ways = [])    
-      street_number_columns = [:objectid, :geometry]
+    def backup_street_numbers_pgsql(street_number_values = [], street_number_ways = {})    
+      street_number_columns = [:objectid, :geometry, :number]
       # Save street_numbers in the stack
-      ActiveRoad::Street_Number.import(street_number_columns, street_numbers_values, :validate => false) if street_numbers_values.present?
+      ActiveRoad::StreetNumber.import(street_number_columns, street_number_values, :validate => false) if street_number_values.present?
       
       # Link the street_number with physical roads
-      ActiveRoad::Street_Number.transaction do 
-        street_numbers_ways.each do |street_number_objectid, way_objectids|
-          street_number = ActiveRoad::Street_Number.find_by_objectid(street_number_objectid)
+      # ActiveRoad::Street_Number.transaction do 
+      #   street_numbers_ways.each do |street_number_objectid, way_objectids|
+      #     street_number = ActiveRoad::Street_Number.find_by_objectid(street_number_objectid)
           
-          physical_roads = ActiveRoad::PhysicalRoad.find_all_by_objectid(way_objectids)
-          street_number.physical_roads << physical_roads if physical_roads      
-        end
-      end
+      #     physical_roads = ActiveRoad::PhysicalRoad.find_all_by_objectid(way_objectids)
+      #     street_number.physical_roads << physical_roads if physical_roads      
+      #   end
+      # end
     end   
 
     def backup_ways_pgsql(physical_road_values, attributes_by_objectid = {})
@@ -199,13 +199,13 @@ module ActiveRoad
     class Node
       attr_accessor :id, :lon, :lat, :ways, :end_of_way, :addr_housenumber
 
-      def initialize(id, lon, lat, ways = [], end_of_way = false, addr_housenumber = "" )
+      def initialize(id, lon, lat, addr_housenumber = "", ways = [], end_of_way = false )
         @id = id
         @lon = lon
         @lat = lat
+        @addr_housenumber = addr_housenumber
         @ways = ways
         @end_of_way = end_of_way
-        @addr_housenumber = addr_housenumber
       end
 
       def add_way(id)
@@ -213,11 +213,11 @@ module ActiveRoad
       end
 
       def marshal_dump
-        [@id, @lon, @lat, @ways, @end_of_way, @addr_housenumber]
+        [@id, @lon, @lat, @addr_housenumber, @ways, @end_of_way]
       end
       
       def marshal_load array
-        @id, @lon, @lat, @ways, @end_of_way, @addr_housenumber = array
+        @id, @lon, @lat, @addr_housenumber, @ways, @end_of_way = array
       end
     end
 

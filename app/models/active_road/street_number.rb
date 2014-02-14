@@ -12,7 +12,7 @@ class ActiveRoad::StreetNumber < ActiveRoad::Base
     @road ||= road
   end
 
-  before_validation :compute_locate_on_road, :on => :create
+  #before_validation :compute_locate_on_road, :on => :create
 
   def stored_geometry
     read_attribute :geometry

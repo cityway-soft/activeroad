@@ -80,8 +80,9 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     let!(:point) { GeoRuby::SimpleFeatures::Point.from_x_y( 0, 0, 4326) }
 
     before :each do 
-      subject.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 2.0, 2.0, ["1", "2"])) )
-      subject.nodes_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 2.0, 2.0, ["1", "3"])) )
+      subject.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 2.0, 2.0, "", ["1", "2"])) )
+      subject.nodes_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 2.0, 2.0, "", ["1", "3"])) )
+      subject.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 2.0, 2.0, "7,8", [])) )
     end
 
     after :each do
@@ -94,6 +95,7 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     it "should iterate nodes to save it" do
       GeoRuby::SimpleFeatures::Point.stub :from_x_y => point
       subject.should_receive(:backup_nodes_pgsql).exactly(1).times.with([["1", point], ["2", point]], {"1" => ["1", "2"], "2" => ["1", "3"]})
+      subject.should_receive(:backup_street_numbers_pgsql).exactly(1).times.with([ ["3", point, "7,8"] ], {})
       subject.iterate_nodes
     end
   end
@@ -130,6 +132,10 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
       ActiveRoad::PhysicalRoadConditionnalCost.all.size.should == 9
       ActiveRoad::Junction.all.size.should == 6
       ActiveRoad::Junction.all.collect(&:objectid).should =~ ["1", "2", "5", "8", "9", "10"]
+      ActiveRoad::LogicalRoad.all.size.should == 1
+      ActiveRoad::LogicalRoad.all.collect(&:name).should =~ ["Rue J. Symphorien"]      
+      ActiveRoad::StreetNumber.all.size.should == 2
+      ActiveRoad::StreetNumber.all.collect(&:objectid).should =~ ["2646260105", "2646260106"]
     end
   end
 

@@ -155,16 +155,38 @@ shared_examples "an OsmPbfImporter module" do
     end
   end
 
-  describe "#backup_logical_roads_pgsql" do
-    let!(:physical_road1) { create(:physical_road, :objectid => "1", :name => "physical_road1") }
-    let!(:physical_road2) { create(:physical_road, :objectid => "2", :name => "physical_road1") }
-    let!(:physical_road3) { create(:physical_road, :objectid => "3", :name => "physical_road3") }
+describe "#backup_nodes_pgsql" do
+    let!(:physical_road) { create(:physical_road, :objectid => "1") }
+    let!(:point) { GeoRuby::SimpleFeatures::Point.from_x_y( 0, 0, 4326) }
 
-    it "should save logical roads in postgresql database" do
-      subject.backup_logical_roads_pgsql
-      puts ActiveRoad::LogicalRoad.all.inspect
-      expect(ActiveRoad::LogicalRoad.all.size).to eql(2)
-      expect(ActiveRoad::LogicalRoad.all.collect(&:name)).to eql(["physical_road1", "physical_road3"])
+    it "should save junctions in postgresql nodes_database" do         
+      junctions_values = [["1", point], ["2", point]]
+      junctions_ways = {"1" => ["1"], "2" => ["1"]}
+
+      importer.backup_nodes_pgsql(junctions_values, junctions_ways)
+      ActiveRoad::Junction.all.size.should == 2
+      first_junction = ActiveRoad::Junction.first
+      first_junction.objectid.should == "1"
+      first_junction.physical_roads.should == [physical_road]
+
+      last_junction = ActiveRoad::Junction.last
+      last_junction.objectid.should == "2"
+      last_junction.physical_roads.should == [physical_road]
+    end
+  end
+
+  describe "#backup_street_numbers_pgsql" do
+    let!(:physical_road) { create(:physical_road, :objectid => "1") }
+    let!(:point) { GeoRuby::SimpleFeatures::Point.from_x_y( 0, 0, 4326) }
+
+    it "should save junctions in postgresql nodes_database" do         
+      street_number_values = [["1", point, "7"], ["2", point, "7,8,9A" ]]
+      street_number_ways = {}
+
+      importer.backup_street_numbers_pgsql(street_number_values, street_number_ways)
+      street_numbers = ActiveRoad::StreetNumber.all
+      expect(street_numbers.size).to eq(2)
+      expect(street_numbers.collect(&:objectid)).to match_array(["1", "2"])
     end
   end  
 

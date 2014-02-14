@@ -4,8 +4,8 @@ module ActiveRoad
   class OsmPbfImporterLevelDb
     include OsmPbfImporter
 
-    @@kc_batch_size = 100000
-    cattr_reader :kc_batch_size
+    @@leveldb_batch_size = 100000
+    cattr_reader :leveldb_batch_size
 
     attr_reader :ways_database_path, :nodes_database_path, :pbf_file
 
@@ -37,19 +37,17 @@ module ActiveRoad
 
     def delete_ways_database
       FileUtils.remove_entry ways_database_path if File.exists?(ways_database_path)
-    end
-      
-    def authorized_tags
-      @authorized_tags ||= ["highway", "railway"]
-    end
+    end     
     
     def iterate_nodes
       p "Begin to backup nodes in PostgreSql"
 
       start = Time.now
       nodes_counter = 0
-      junctions_values = []    
+      junctions_values = []
+      street_number_values = []    
       junctions_ways = {}
+      street_number_ways = {}
       nodes_database_size = nodes_database.count
       
       # traverse records by iterator      
@@ -61,7 +59,7 @@ module ActiveRoad
         if node.ways.present? && (node.ways.count >= 2 || node.end_of_way == true )  # Take node with at least two ways or at the end of a way
           junctions_values << [ node.id, geometry ]
           junctions_ways[ node.id ] = node.ways
-        end        
+        end
         
         junction_values_size = junctions_values.size
         if junction_values_size > 0 && (junction_values_size == @@pg_batch_size || nodes_counter == nodes_database_size)
@@ -71,7 +69,21 @@ module ActiveRoad
           junctions_values = []    
           junctions_ways = {}
         end
-      }    
+
+        if node.addr_housenumber.present?
+          street_number_values << [ node.id, geometry, node.addr_housenumber ]
+          #street_number_ways[ node.id ] = node.ways
+        end
+
+        street_number_values_size = street_number_values.size
+        if street_number_values_size > 0 && (street_number_values_size == @@pg_batch_size || nodes_counter == nodes_database_size)
+          backup_street_numbers_pgsql(street_number_values, street_number_ways)
+          
+          #Reset
+          street_number_values = []    
+          street_number_ways = {}
+        end
+      }
       
       p "Finish to backup #{nodes_counter} nodes in PostgreSql in #{(Time.now - start)} seconds"         
     end
@@ -108,7 +120,7 @@ module ActiveRoad
             nodes_counter+= 1
 
             select_tags = selected_tags(node[:tags], @@nodes_selected_tags_keys)         
-            nodes_database[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat], [], select_tags [:addr_housenumber]))      
+            nodes_database[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat], select_tags["addr:housenumber"]))      
           end
         end
         # When there's no more fileblocks to parse, #next returns false
