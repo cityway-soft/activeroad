@@ -16,12 +16,12 @@ describe ActiveRoad::PhysicalRoad do
 
   describe ".nearest_to" do 
     let(:departure) { point(0, 0) }
-    let(:ab) { create(:physical_road, :geometry => line_string( "0.01 0.01,1 1" ) ) }
-    let(:ac) { create(:physical_road, :geometry => line_string( "-0.02 -0.02,-1 -1" ) )  }
-    let(:ad) { create(:physical_road, :geometry => line_string( "-0.011 -0.011,-1 -1" ) )  }
+    let(:ab) { create(:physical_road, :geometry => line_string( "0.0001 0.0001,1 1" ) ) }
+    let(:ac) { create(:physical_road, :geometry => line_string( "-0.0001 -0.0001,-1 -1" ) )  }
+    let(:ad) { create(:physical_road, :geometry => line_string( "-0.001 -0.001,-1 -1" ) )  }
     
     it "should return physical roads in an area ordered from closest to farthest from a departure" do
-      ActiveRoad::PhysicalRoad.nearest_to(departure).should == [ab, ad]
+      ActiveRoad::PhysicalRoad.nearest_to(departure).should == [ab, ac]
     end
   end
 

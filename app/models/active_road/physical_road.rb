@@ -37,7 +37,7 @@ module ActiveRoad
       logical_road.try(:name) or objectid
     end
 
-    def self.nearest_to(location, distance = 100)
+    def self.nearest_to(location, distance = 0.001)
       # FIX Limit to 2 physical roads for perf, must be extended
       with_in(location, distance).closest_to(location).limit(2).includes(:junctions, :physical_road_conditionnal_costs)
     end
@@ -47,10 +47,7 @@ module ActiveRoad
       order("ST_Distance(geometry, ST_GeomFromText('#{location_as_text}', 4326))")
     end
 
-    def self.with_in(location, distance = 100)
-      # FIXME why ST_DWithin doesn't use meters ??
-      distance = distance / 1000.0
-
+    def self.with_in(location, distance = 0.001)
       location_as_text = location.to_ewkt(false)
       where "ST_DWithin(ST_GeomFromText(?, 4326), geometry, ?)", location_as_text, distance
     end

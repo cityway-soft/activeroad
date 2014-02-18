@@ -14,14 +14,14 @@ class ActiveRoad::AccessPoint
 
   # Find access points from a location
   def self.from(location)
-    ActiveRoad::PhysicalRoad.nearest_to(location, 100).collect do |physical_road|
+    ActiveRoad::PhysicalRoad.nearest_to(location).collect do |physical_road|
       new :location => location, :physical_road => physical_road
     end
   end
   
   # Find access points to go to a location
   def self.to(location)   
-    ActiveRoad::PhysicalRoad.nearest_to(location, 100).collect do |physical_road|
+    ActiveRoad::PhysicalRoad.nearest_to(location).collect do |physical_road|
       new :location => location, :physical_road => physical_road, :exit => true
     end
   end
