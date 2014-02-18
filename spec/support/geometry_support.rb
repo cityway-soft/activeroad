@@ -13,3 +13,24 @@ def line_string(*points)
     GeoRuby::SimpleFeatures::LineString.from_points(points, points.first.srid)
   end
 end
+
+def linear_ring(*points)
+  if points.one? and String === points.first
+    geometry_from_text("LINESTRING(#{points.first})")
+  else
+    GeoRuby::SimpleFeatures::LinearRing.from_points(points, points.first.srid)
+  end
+end
+
+def polygon(*points)
+  if points.one? and String === points.first
+    geometry_from_text("POLYGON(#{points})")
+  else
+    GeoRuby::SimpleFeatures::Polygon.from_points([points], points.first.srid)
+  end
+end
+
+def multi_polygon(*polygons)
+  GeoRuby::SimpleFeatures::MultiPolygon.from_polygons([polygons], polygons.first.srid)
+end
+

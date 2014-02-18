@@ -1,9 +1,4 @@
-require 'spec_helper'
-
-shared_examples "an OsmPbfImporter module" do
-  
-  let(:pbf_file) { File.expand_path("../../../fixtures/test.osm.pbf", __FILE__) }
-  let(:importer) { ActiveRoad::OsmPbfImporterLevelDb.new( pbf_file, "/tmp/osm_pbf_nodes_test", "/tmp/osm_pbf_ways_test" ) }
+shared_examples "an OsmPbfImporter module" do 
 
   describe "#pedestrian?" do
     it "should return true when tag key is highway and tag value is good" do
@@ -136,12 +131,12 @@ shared_examples "an OsmPbfImporter module" do
   end
 
   describe "#backup_nodes_pgsql" do
-    let!(:physical_road) { create(:physical_road, :objectid => "1") }
+    let!(:physical_road) { create(:physical_road) }
     let!(:point) { GeoRuby::SimpleFeatures::Point.from_x_y( 0, 0, 4326) }
 
     it "should save junctions in postgresql nodes_database" do         
       junctions_values = [["1", point], ["2", point]]
-      junctions_ways = {"1" => ["1"], "2" => ["1"]}
+      junctions_ways = {"1" => [ physical_road.objectid ], "2" => [ physical_road.objectid ]}
 
       importer.backup_nodes_pgsql(junctions_values, junctions_ways)
       ActiveRoad::Junction.all.size.should == 2
@@ -150,33 +145,13 @@ shared_examples "an OsmPbfImporter module" do
       first_junction.physical_roads.should == [physical_road]
 
       last_junction = ActiveRoad::Junction.last
-      last_junction.objectid.should == "2"
-      last_junction.physical_roads.should == [physical_road]
-    end
-  end
-
-describe "#backup_nodes_pgsql" do
-    let!(:physical_road) { create(:physical_road, :objectid => "1") }
-    let!(:point) { GeoRuby::SimpleFeatures::Point.from_x_y( 0, 0, 4326) }
-
-    it "should save junctions in postgresql nodes_database" do         
-      junctions_values = [["1", point], ["2", point]]
-      junctions_ways = {"1" => ["1"], "2" => ["1"]}
-
-      importer.backup_nodes_pgsql(junctions_values, junctions_ways)
-      ActiveRoad::Junction.all.size.should == 2
-      first_junction = ActiveRoad::Junction.first
-      first_junction.objectid.should == "1"
-      first_junction.physical_roads.should == [physical_road]
-
-      last_junction = ActiveRoad::Junction.last
-      last_junction.objectid.should == "2"
+      last_junction.objectid.should ==  "2"
       last_junction.physical_roads.should == [physical_road]
     end
   end
 
   describe "#backup_street_numbers_pgsql" do
-    let!(:physical_road) { create(:physical_road, :objectid => "1") }
+    let!(:physical_road) { create(:physical_road) }
     let!(:point) { GeoRuby::SimpleFeatures::Point.from_x_y( 0, 0, 4326) }
 
     it "should save junctions in postgresql nodes_database" do         
@@ -188,8 +163,37 @@ describe "#backup_nodes_pgsql" do
       expect(street_numbers.size).to eq(2)
       expect(street_numbers.collect(&:objectid)).to match_array(["1", "2"])
     end
-  end  
+  end
 
+  describe "#extract_relation_polygon" do
+    let!(:first_way_geom) { line_string( "0 0,1 1" ) }
+    let!(:second_way_geom) { line_string( "1 1,2 2" ) }
+    let!(:third_way_geom) { line_string( "2 2,0 0" ) }
+
+    it "should return an exception if way geometries are not connected" do
+      second_way_geom_not_connected = line_string( "1 1,3 3" )
+      expect { importer.extract_relation_polygon([first_way_geom, second_way_geom_not_connected, third_way_geom]) }.to raise_error
+    end
+
+    it "should return polygon if way geometries are connected" do
+      expect(importer.extract_relation_polygon([first_way_geom, second_way_geom, third_way_geom])).to eq( polygon(point(0.0,0.0), point(1.0,1.0), point(2.0,2.0)) )
+    end
+
+    it "should return polygon if way geometries are connected and some of them have points in the reverse order" do
+      second_way_geom_reversed = line_string( "2 2,1 1" ) 
+      expect(importer.extract_relation_polygon([first_way_geom, second_way_geom_reversed, third_way_geom])).to eq( polygon(point(0.0,0.0), point(1.0,1.0), point(2.0,2.0)) )
+    end
+      
+  end
+
+  describe "#join_ways"
+
+  describe "#join_way"
+
+  describe ActiveRoad::OsmPbfImporter::EndpointToWayMap
+  
+  describe ActiveRoad::OsmPbfImporter::Way
+  
   describe ActiveRoad::OsmPbfImporter::Node do
     
     let(:node) { ActiveRoad::OsmPbfImporter::Node.new("122323131", 34.2, 12.5) } 

@@ -56,7 +56,6 @@
   <node id="277048539" lat="0" lon="0" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
   <node id="277048540" lat="1" lon="1" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
   <node id="277048541" lat="1" lon="2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
-  <node id="277048542" lat="0.5" lon="2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/> 
   <way id="7" version="11" timestamp="2013-03-20T19:17:44Z" changeset="15435383" uid="11068" user="windu2b">
 		<nd ref="277048539"/>
 		<nd ref="277048540"/>

@@ -17,7 +17,7 @@ module ActiveRoad
     @@nodes_selected_tags_keys = [ "addr:housenumber" ]
     mattr_reader :nodes_selected_tags_keys
     
-    @@pg_batch_size = 10000 # Not puts a high value because postgres failed to allocate memory
+    @@pg_batch_size = 10000 # Not Rails.logger.debug a high value because postgres failed to allocate memory
     mattr_reader :pg_batch_size
     
     def self.included(base)
@@ -179,7 +179,7 @@ module ActiveRoad
     end
 
     def backup_logical_roads_pgsql
-      puts "Begin to backup logical roads in PostgreSql"
+      Rails.logger.debug "Begin to backup logical roads in PostgreSql"
       start = Time.now
 
       ActiveRoad::PhysicalRoad.find_in_batches(batch_size: 2000) do |group|
@@ -193,7 +193,106 @@ module ActiveRoad
           end
         end
       end
-      p "Finish to backup logical roads in PostgreSql in #{(Time.now - start)} seconds"      
+      Rails.logger.debug "Finish to backup logical roads in PostgreSql in #{(Time.now - start)} seconds"      
+    end
+
+    def extract_relation_polygon(outer_geometries, inner_geometries = [])      
+      outer_rings = join_ways(outer_geometries)
+      inner_rings = join_ways(inner_geometries)      
+      GeoRuby::SimpleFeatures::Polygon.from_linear_rings( outer_rings + inner_rings )
+    end
+
+    def join_ways(ways)
+      closed_ways = []
+      endpoints_to_ways = EndpointToWayMap.new
+      for way in ways
+        if way.closed?
+          closed_ways << way
+          next
+        end
+        
+        # Are there any existing ways we can join this to?
+        to_join_to = endpoints_to_ways.get_from_either_end(way)
+        if to_join_to.present?
+          joined = way
+          for existing_way in to_join_to
+            joined = join_way(joined, existing_way)
+            endpoints_to_ways.remove_way(existing_way)
+            if joined.closed?
+              closed_ways << joined
+              break
+            end
+          end
+
+          if !joined.closed?
+            endpoints_to_ways.add_way(joined)
+          end
+        else
+          endpoints_to_ways.add_way(way)
+        end
+      end
+
+      if endpoints_to_ways.number_of_endpoints != 0
+        raise StandardError, "Unclosed boundaries"
+      end
+      
+      closed_ways         
+    end
+
+    class EndpointToWayMap
+      attr_accessor :endpoints
+
+      def initialize
+        @endpoints = {}
+      end
+
+      def add_way(way)
+        if get_from_either_end(way).present?
+          raise StandardError, "Call to add_way would overwrite existing way(s)"
+        end
+        self.endpoints[way.points.first] = way
+        self.endpoints[way.points.last] = way
+      end
+
+      def remove_way(way)
+        endpoints.delete(way.points.first)
+        endpoints.delete(way.points.last)
+      end      
+
+      def get_from_either_end(way)        
+        [].tap do |selected_end_points|
+          selected_end_points << endpoints[way.points.first] if endpoints.include?(way.points.first)
+          selected_end_points << endpoints[way.points.last] if endpoints.include?(way.points.last)
+        end
+      end
+      
+      def number_of_endpoints
+        return endpoints.size
+      end
+      
+    end
+    
+    def join_way(way, other)
+      if way.closed?
+        raise StandardError, "Trying to join a closed way to another"
+      end
+      if other.closed?
+        raise StandardError, "Trying to join a way to a closed way"
+      end
+      
+      if way.points.first == other.points.first
+        new_points = other.reverse.points[0..-2] + way.points
+      elsif way.points.first == other.points.last
+        new_points = other.points[0..-2] + way.points
+      elsif way.points.last == other.points.first
+        new_points = way.points[0..-2] + other.points
+      elsif way.points.last == other.points.last
+        new_points = way.points[0..-2] + other.reverse.points
+      else
+        raise StandardError, "Trying to join two ways with no end point in common"
+      end
+
+      GeoRuby::SimpleFeatures::LineString.from_points(new_points)
     end
     
     class Node

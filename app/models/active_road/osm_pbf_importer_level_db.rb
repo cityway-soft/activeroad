@@ -40,7 +40,7 @@ module ActiveRoad
     end     
     
     def iterate_nodes
-      p "Begin to backup nodes in PostgreSql"
+      Rails.logger.debug "Begin to backup nodes in PostgreSql"
 
       start = Time.now
       nodes_counter = 0
@@ -85,7 +85,7 @@ module ActiveRoad
         end
       }
       
-      p "Finish to backup #{nodes_counter} nodes in PostgreSql in #{(Time.now - start)} seconds"         
+      Rails.logger.debug "Finish to backup #{nodes_counter} nodes in PostgreSql in #{(Time.now - start)} seconds"         
     end
     
     def import
@@ -104,7 +104,7 @@ module ActiveRoad
     end
 
     def backup_nodes
-      p "Begin to backup nodes in LevelDB nodes_database in #{nodes_database_path}"
+      Rails.logger.debug "Begin to backup nodes in LevelDB nodes_database in #{nodes_database_path}"
       start = Time.now
       nodes_parser = ::PbfParser.new(pbf_file)
       nodes_counter = 0
@@ -127,11 +127,11 @@ module ActiveRoad
         # This avoids an infinit loop when the last fileblock still contains ways
         break unless nodes_parser.next
       end
-      p "Finish to backup #{nodes_counter} nodes in LevelDB nodes_database in #{(Time.now - start)} seconds"
+      Rails.logger.debug "Finish to backup #{nodes_counter} nodes in LevelDB nodes_database in #{(Time.now - start)} seconds"
     end  
 
     def backup_ways
-      puts "Begin to backup ways and update way in nodes in LevelDB"
+      Rails.logger.debug "Begin to backup ways and update way in nodes in LevelDB"
       start = Time.now
       ways_parser = ::PbfParser.new(pbf_file)
       ways_counter = 0 
@@ -171,7 +171,7 @@ module ActiveRoad
         break unless ways_parser.next        
       end
 
-      p "Finish to backup #{ways_counter} ways and update way in nodes in LevelDB  in #{(Time.now - start)} seconds"
+      Rails.logger.debug "Finish to backup #{ways_counter} ways and update way in nodes in LevelDB  in #{(Time.now - start)} seconds"
     end
 
     def update_node_with_way(way_id, node_ids)
@@ -185,7 +185,7 @@ module ActiveRoad
     end
 
     def iterate_ways
-      puts "Begin to backup ways in PostgreSql"
+      Rails.logger.debug "Begin to backup ways in PostgreSql"
       start = Time.now
    
       ways_counter = 0 
@@ -213,11 +213,11 @@ module ActiveRoad
           attributes_by_objectid = {}
         end
       }
-      p "Finish to backup #{ways_counter} ways in PostgreSql in #{(Time.now - start)} seconds"      
+      Rails.logger.debug "Finish to backup #{ways_counter} ways in PostgreSql in #{(Time.now - start)} seconds"      
     end
 
     def backup_relations_pgsql
-      puts "Begin to backup relations in PostgreSql"
+      Rails.logger.debug "Begin to backup relations in PostgreSql"
       start = Time.now
       relations_parser = ::PbfParser.new(pbf_file)
       relations_counter = 0
@@ -226,65 +226,64 @@ module ActiveRoad
       
       # Process the file until it finds any relation.
       relations_parser.next until relations_parser.relations.any?
-      
-      # Once it found at least one relation, iterate to find the remaining relations.     
-      until relations_parser.relations.empty?
-        relations_parser.relations.each do |relation|
-          relations_counter+= 1
-          
-          if relation.key?(:tags) && required_relation?(relation[:tags])
-            tags = selected_tags(relation[:tags], @@relation_selected_tags_keys)
 
-            # relation_members = {}.tap do |relation_members|
-            #   relation_members[:outer_ways] = []
-            #   relation_members[:inner_ways] = []
-            #   relation[:members][:ways].each do |way|
-            #     relation_members[:outer_ways] << way[:id] if way[:role] == "outer"
-            #     relation_members[:inner_ways] << way[:id] if way[:role] == "inner"
-            #   end
-            # end
+      ActiveRoad::Boundary.transaction do 
+        # Once it found at least one relation, iterate to find the remaining relations.     
+        until relations_parser.relations.empty?
+          relations_parser.relations.each do |relation|
+            relations_counter+= 1
+            
+            if relation.key?(:tags) && required_relation?(relation[:tags])
+              tags = selected_tags(relation[:tags], @@relation_selected_tags_keys)
 
-            if tags["admin_level"] == "8"
-              broken_geometry = false
-              
-              ways_geometry = [].tap do |ways_geometry|
-                relation[:members][:ways].each do |member_way|
-                  way = ways_database[ member_way[:id].to_s ]
-                  if way.present?
-                    way_values = Marshal.load(way)
-                  else
-                    p "Geometry error : impossible to find way #{member_way[:id]} for relation #{relation[:id]}"
-                    broken_geometry = true
-                    break
+              if tags["admin_level"] == "8"
+                outer_ways = {}
+                inner_ways = {}
+
+                begin 
+                  relation[:members][:ways].each do |member_way|                  
+                    way = ways_database[ member_way[:id].to_s ]
+                    if way.present?
+                      way_values = Marshal.load(way)
+                    else
+                      raise StandardError, "Geometry error : impossible to find way #{member_way[:id]} for relation #{tags["name"]} with id #{relation[:id]}"                      
+                    end
+                    
+                    if  member_way[:role] == "inner"
+                      inner_ways[ member_way[:id] ] = way_values.geometry
+                    elsif member_way[:role] == "outer"
+                      outer_ways[ member_way[:id] ] = way_values.geometry
+                    else # Fix : lot of boundaries have no tags role
+                      outer_ways[ member_way[:id] ] = way_values.geometry
+                    end
                   end
-                  ways_geometry <<  way_values.geometry if  way_values.geometry.present?
-                end
-              end
-
-              if !broken_geometry
-                boundary_geometry = GeoRuby::SimpleFeatures::MultiPolygon.from_polygons([GeoRuby::SimpleFeatures::Polygon.from_linear_rings(ways_geometry)])
-              
-                boundaries_values << [ relation[:id], boundary_geometry, tags["name"], tags["admin_level"], tags["addr:postcode"], tags["ref:INSEE"] ]
-                boundaries_values_size = boundaries_values.size
-              
-                if boundaries_values_size > 0 && (boundaries_values_size == @@pg_batch_size || relations_counter == boundaries_values_size)
-                  ActiveRoad::Boundary.import(boundaries_columns, boundaries_values, :validate => false)
                 
-                # Reset  
-                  boundaries_values = []
-                end
+                  boundary_polygon = extract_relation_polygon(outer_ways.values, inner_ways.values)
+
+                  if boundary_polygon.present?
+                    boundary_geometry = GeoRuby::SimpleFeatures::MultiPolygon.from_polygons( [boundary_polygon] )
+                  
+                    boundaries_values << [ relation[:id], boundary_geometry, tags["name"], tags["admin_level"], tags["addr:postcode"], tags["ref:INSEE"] ]
+                    boundaries_values_size = boundaries_values.size                  
+                  
+                    #ActiveRoad::Boundary.import(boundaries_columns, boundaries_values, :validate => false)                
+                    ActiveRoad::Boundary.create! :objectid => relation[:id], :geometry => boundary_geometry, :name => tags["name"], :admin_level => tags["admin_level"], :postal_code => tags["addr:postcode"], :insee_code => tags["ref:INSEE"]
+                  end
+                rescue StandardError => e
+                  p "Geometry error : impossible to build polygon for relation #{tags["name"]} with id #{relation[:id]} : #{e.message}"
+                end                
               end
-            end
-          end            
-        end        
-        
-        # When there's no more fileblocks to parse, #next returns false
-        # This avoids an infinit loop when the last fileblock still contains relations
-        break unless relations_parser.next        
+            end            
+          end        
+          
+          # When there's no more fileblocks to parse, #next returns false
+          # This avoids an infinit loop when the last fileblock still contains relations
+          break unless relations_parser.next        
       end
 
-      p "Finish to backup #{relations_counter} relations in PostgreSql  in #{(Time.now - start)} seconds"
+      end   
+      Rails.logger.debug  "Finish to backup #{relations_counter} relations in PostgreSql  in #{(Time.now - start)} seconds"
     end
-    
+
   end
 end

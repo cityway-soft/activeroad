@@ -5,7 +5,9 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
 
   subject { ActiveRoad::OsmPbfImporterLevelDb.new( pbf_file, "/tmp/osm_pbf_nodes_test_leveldb", "/tmp/osm_pbf_ways_test_leveldb" ) }
 
-  it_behaves_like "an OsmPbfImporter module"
+  it_behaves_like "an OsmPbfImporter module" do
+    let(:importer) { subject }
+  end
 
   describe "#backup_ways" do
     before :each do
@@ -137,6 +139,25 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
       ActiveRoad::StreetNumber.all.size.should == 2
       ActiveRoad::StreetNumber.all.collect(&:objectid).should =~ ["2646260105", "2646260106"]
     end
+  end
+
+  describe "#backup_relations_pgsql" do
+    
+    it "should backup boundary" do      
+      subject.backup_relations_pgsql
+      ActiveRoad::Boundary.all.size.should == 1
+      ActiveRoad::Boundary.first.objectid.should == "73464"
+      ActiveRoad::Boundary.first.geometry.should == GeoRuby::SimpleFeatures::MultiPolygon.from_polygons( [GeoRuby::SimpleFeatures::Polygon.from_points( [[ point(0.0, 0.0), point(1.0, 1.0), point(2.0, 1.0), point(0.0, 0.0)]] )])
+    end
+
+    # it "should order ways geometry" do
+    #   let(:first) { line_string( "0 0,1 1" ) }
+    #   let(:second) { line_string( "2 2,1 1" ) }
+    #   let(:second_ordered) { line_string( "2 2,1 1" ) }
+    #   let(:third) { line_string( "2 2,3 3" ) }
+    #   expect(subject.order_ways_geometry( [first, second, last] )).to match_array( [first, second_ordered, third] )
+    # end
+    
   end
 
 end
