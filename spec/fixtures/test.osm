@@ -1,14 +1,14 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <osm version="0.6" generator="osmconvert 0.7P" timestamp="2013-05-08T18:59:04Z">
 	<bounds minlat="2.10568" minlon="-54.61269" maxlat="6.370288" maxlon="-51.49161"/>
-	<node id="1" lat="0" lon="0" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
-  <node id="2" lat="5.308056" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
-	<node id="3" lat="5.308056" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
-  <node id="4" lat="5.308056" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
-	<node id="5" lat="5.308056" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
-	<node id="6" lat="5.308056" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
-	<node id="7" lat="5.308056" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
-	<node id="8" lat="5.308056" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+	<node id="1" lat="5.308056" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+  <node id="2" lat="5.308057" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+	<node id="3" lat="5.308058" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+  <node id="4" lat="5.308059" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+	<node id="5" lat="5.308060" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+	<node id="6" lat="5.308061" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+	<node id="7" lat="5.308062" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+	<node id="8" lat="5.308063" lon="-54.2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
   <way id="1" version="2" timestamp="2012-07-09T12:29:25Z" changeset="12161456" uid="218937" user="wl59">
 		<nd ref="1"/>
 		<nd ref="2"/>
@@ -53,9 +53,10 @@
 		<tag k="highway" v="secondary"/>
 		<tag k="name" v="Rue J. Symphorien"/>
 	</way>
-  <node id="277048539" lat="0" lon="0" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
-  <node id="277048540" lat="1" lon="1" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
-  <node id="277048541" lat="1" lon="2" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+  <node id="277048539" lat="5.3" lon="-54.3" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+  <node id="277048540" lat="5.4" lon="-54.3" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+  <node id="277048541" lat="5.4" lon="-54.1" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
+  <node id="277048542" lat="5.3" lon="-54.1" version="2" timestamp="2013-04-21T10:10:53Z" changeset="15808730" uid="149876" user="dbusse"/>
   <way id="7" version="11" timestamp="2013-03-20T19:17:44Z" changeset="15435383" uid="11068" user="windu2b">
 		<nd ref="277048539"/>
 		<nd ref="277048540"/>
@@ -72,6 +73,7 @@
   </way>
   <way id="9" version="11" timestamp="2013-03-20T19:17:44Z" changeset="15435383" uid="11068" user="windu2b">
 		<nd ref="277048541"/>
+    <nd ref="277048542"/>
 		<nd ref="277048539"/>
 		<tag k="admin_level" v="8"/>
 		<tag k="boundary" v="administrative"/>

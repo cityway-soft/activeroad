@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 module ActiveRoad
   class PhysicalRoad < ActiveRoad::Base
     extend ::Enumerize
     extend ActiveModel::Naming
 
-    attr_accessible :objectid, :tags, :geometry, :logical_road_id, :length_in_meter, :minimum_width, :covering, :transport_mode, :slope, :cant, :physical_road_type 
+    attr_accessible :objectid, :tags, :geometry, :logical_road_id, :boundary_id, :length_in_meter, :minimum_width, :covering, :transport_mode, :slope, :cant, :physical_road_type 
     serialize :tags, ActiveRecord::Coders::Hstore
 
     # TODO : Pass covering in array mode???
@@ -18,6 +19,7 @@ module ActiveRoad
 
     has_many :numbers, :class_name => "ActiveRoad::StreetNumber", :inverse_of => :physical_road
     belongs_to :logical_road, :class_name => "ActiveRoad::LogicalRoad"
+    belongs_to :boundary, :class_name => "ActiveRoad::Boundary"
     has_and_belongs_to_many :junctions, :uniq => true
     has_many :physical_road_conditionnal_costs
 
@@ -37,6 +39,8 @@ module ActiveRoad
       logical_road.try(:name) or objectid
     end
 
+    # distance in srid format 0.001 ~= 111.3 m à l'équateur
+    # TODO : Must convert distance in meters => distance in srid
     def self.nearest_to(location, distance = 0.001)
       # FIX Limit to 2 physical roads for perf, must be extended
       with_in(location, distance).closest_to(location).limit(2).includes(:junctions, :physical_road_conditionnal_costs)
@@ -50,6 +54,10 @@ module ActiveRoad
     def self.with_in(location, distance = 0.001)
       location_as_text = location.to_ewkt(false)
       where "ST_DWithin(ST_GeomFromText(?, 4326), geometry, ?)", location_as_text, distance
+    end
+
+    def self.all_within(other)
+      find(:all, :conditions => "ST_Within(geometry, ST_GeomFromEWKT(E'#{other.as_hex_ewkb}'))")
     end
 
   end

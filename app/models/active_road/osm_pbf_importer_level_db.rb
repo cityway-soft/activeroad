@@ -95,8 +95,8 @@ module ActiveRoad
       backup_nodes
       backup_ways
       iterate_nodes
-      iterate_ways
       backup_relations_pgsql
+      iterate_ways      
       backup_logical_roads_pgsql
       
       close_nodes_database
@@ -201,7 +201,10 @@ module ActiveRoad
         unless way.boundary.present?
           spherical_factory = ::RGeo::Geographic.spherical_factory
           length_in_meter = spherical_factory.line_string(way.geometry.points.collect(&:to_rgeo)).length
-          physical_road_values << [way.id, way.car, way.bike, way.train, way.pedestrian, way.name, length_in_meter, way.geometry, way.options]
+
+          boundary = ActiveRoad::Boundary.first_contains(way.geometry)
+          
+          physical_road_values << [way.id, way.car, way.bike, way.train, way.pedestrian, way.name, length_in_meter, way.geometry, boundary ? boundary.id : nil, way.options]
           attributes_by_objectid[way.id] = physical_road_conditionnal_costs(way)
         end
 

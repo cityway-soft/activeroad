@@ -113,7 +113,7 @@ shared_examples "an OsmPbfImporter module" do
 
   describe "#backup_ways_pgsql" do
     let!(:line) { line_string( "0 0,1 0" ) }
-    let(:physical_road_values) { [ [ "1", true, false, false, false, "", 1, line, {} ], ["2", true, false, false, false, "", 2, line, {"oneway" => "true"}] ] }
+    let(:physical_road_values) { [ [ "1", true, false, false, false, "", 1, line, nil, {} ], ["2", true, false, false, false, "", 2, line, nil, {"oneway" => "true"}] ] }
     let(:prcc) { [ "car", 0.3 ] }
     let(:physical_road_conditionnal_costs_by_objectid) { { "1" => [ prcc ] } }
     
@@ -128,6 +128,41 @@ shared_examples "an OsmPbfImporter module" do
       ActiveRoad::PhysicalRoadConditionnalCost.all.size.should == 1
       ActiveRoad::PhysicalRoadConditionnalCost.first.physical_road_id.should == ActiveRoad::PhysicalRoad.first.id
     end
+  end
+
+  describe "#backup_logical_roads_pgsql" do
+    let!(:physical_road) { create(:physical_road) }
+    let!(:boundary) { create(:boundary) }
+
+    it "should not create a logical road if physical road has no boundary" do
+      physical_road = create(:physical_road, :boundary_id => nil)
+      subject.backup_logical_roads_pgsql
+      expect(ActiveRoad::LogicalRoad.all.size).to eq(0)
+    end
+    
+    it "should create a logical road with no name and a boundary if physical road has no name but a boundary" do
+      physical_road = create(:physical_road, :boundary_id => boundary.id)
+      subject.backup_logical_roads_pgsql
+      expect(ActiveRoad::LogicalRoad.all.size).to eq(1)
+      expect(ActiveRoad::LogicalRoad.first.attributes).to include( "boundary_id" => boundary.id )
+    end
+
+
+    it "should create a logical road with a name and a boundary if physical road has a name and a boundary" do
+      physical_road = create(:physical_road, :boundary_id => boundary.id, :name => "Test")
+      subject.backup_logical_roads_pgsql
+      expect(ActiveRoad::LogicalRoad.all.size).to eq(1)
+      expect(ActiveRoad::LogicalRoad.first.attributes).to include( "boundary_id" => boundary.id, "name" => "Test" )
+    end
+
+    it "should create one logical road with a name and a boundary if physical roads have same name and a boundary" do
+      physical_road = create(:physical_road, :boundary_id => boundary.id, :name => "Test")
+      physical_road = create(:physical_road, :boundary_id => boundary.id, :name => "Test")
+      subject.backup_logical_roads_pgsql
+      expect(ActiveRoad::LogicalRoad.all.size).to eq(1)
+      expect(ActiveRoad::LogicalRoad.first.attributes).to include( "boundary_id" => boundary.id, "name" => "Test" )
+    end
+    
   end
 
   describe "#backup_nodes_pgsql" do

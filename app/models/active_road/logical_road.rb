@@ -3,11 +3,12 @@ module ActiveRoad
     extend ActiveSupport::Memoizable
     attr_accessible :objectid, :name
 
-    #validates_uniqueness_of :objectid
-
     has_many :physical_roads, :class_name => "ActiveRoad::PhysicalRoad", :inverse_of => :logical_road
-
     has_many :numbers, :through => :physical_roads, :class_name => "ActiveRoad::StreetNumber"
+    belongs_to :boundary, :class_name => "ActiveRoad::Boundary"
+
+    #validates_uniqueness_of :objectid
+    validates :boundary, presence: true
 
     def geometry
       GeoRuby::SimpleFeatures::MultiLineString.from_line_strings physical_roads.map(&:geometry)

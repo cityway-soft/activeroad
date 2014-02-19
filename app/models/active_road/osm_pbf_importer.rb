@@ -160,7 +160,7 @@ module ActiveRoad
 
     def backup_ways_pgsql(physical_road_values, attributes_by_objectid = {})
       # Save physical roads
-      physical_road_columns = [:objectid, :car, :bike, :train, :pedestrian, :name, :length_in_meter, :geometry, :tags]
+      physical_road_columns = [:objectid, :car, :bike, :train, :pedestrian, :name, :length_in_meter, :geometry, :boundary_id, :tags]
       ActiveRoad::PhysicalRoad.import(physical_road_columns, physical_road_values, :validate => false)      
       
       prcc = logical_roads = []
@@ -186,10 +186,11 @@ module ActiveRoad
         ActiveRoad::LogicalRoad.transaction do 
           group.each do |physical_road|
             # TODO : use geographical data to know if it's the same logical road or not        
-            logical_road = ActiveRoad::LogicalRoad.where(:name => physical_road.name).first_or_create! do |logical_road|
-              logical_road.name = physical_road.name          
-              logical_road.physical_roads << physical_road
-            end if physical_road.name.present?
+            logical_road = ActiveRoad::LogicalRoad.where(["name = :name AND boundary_id = :boundary_id", {:name => physical_road.name, :boundary_id => physical_road.boundary_id} ]).first_or_create! do |logical_road|
+              logical_road.name = physical_road.name
+              logical_road.boundary_id = physical_road.boundary_id
+              logical_road.physical_roads << physical_road              
+            end if physical_road.boundary_id.present?
           end
         end
       end
@@ -239,6 +240,29 @@ module ActiveRoad
       closed_ways         
     end
 
+    def join_way(way, other)
+      if way.closed?
+        raise StandardError, "Trying to join a closed way to another"
+      end
+      if other.closed?
+        raise StandardError, "Trying to join a way to a closed way"
+      end
+      
+      if way.points.first == other.points.first
+        new_points = other.reverse.points[0..-2] + way.points
+      elsif way.points.first == other.points.last
+        new_points = other.points[0..-2] + way.points
+      elsif way.points.last == other.points.first
+        new_points = way.points[0..-2] + other.points
+      elsif way.points.last == other.points.last
+        new_points = way.points[0..-2] + other.reverse.points
+      else
+        raise StandardError, "Trying to join two ways with no end point in common"
+      end
+
+      GeoRuby::SimpleFeatures::LineString.from_points(new_points)
+    end
+
     class EndpointToWayMap
       attr_accessor :endpoints
 
@@ -270,30 +294,7 @@ module ActiveRoad
         return endpoints.size
       end
       
-    end
-    
-    def join_way(way, other)
-      if way.closed?
-        raise StandardError, "Trying to join a closed way to another"
-      end
-      if other.closed?
-        raise StandardError, "Trying to join a way to a closed way"
-      end
-      
-      if way.points.first == other.points.first
-        new_points = other.reverse.points[0..-2] + way.points
-      elsif way.points.first == other.points.last
-        new_points = other.points[0..-2] + way.points
-      elsif way.points.last == other.points.first
-        new_points = way.points[0..-2] + other.points
-      elsif way.points.last == other.points.last
-        new_points = way.points[0..-2] + other.reverse.points
-      else
-        raise StandardError, "Trying to join two ways with no end point in common"
-      end
-
-      GeoRuby::SimpleFeatures::LineString.from_points(new_points)
-    end
+    end   
     
     class Node
       attr_accessor :id, :lon, :lat, :ways, :end_of_way, :addr_housenumber

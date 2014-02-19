@@ -8,7 +8,7 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
   it_behaves_like "an OsmPbfImporter module" do
     let(:importer) { subject }
   end
-
+  
   describe "#backup_ways" do
     before :each do
       subject.backup_nodes
@@ -103,11 +103,15 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
   end
 
   describe "#iterate_ways" do
-    let!(:line) { line_string( "0 0,1 0" ) }
+    let!(:line) { line_string( "0 0,1 1" ) }
+    let!(:line2) { line_string( "0 0,0 1" ) }
+    let!(:boundary) { create(:boundary, :geometry => multi_polygon( [ polygon( point(0,0), point(2,0), point(2,2), point(0,2) ) ] ) ) }
     
-    before :each do 
+    before :each do
+      subject.delete_ways_database
+      
       subject.ways_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("1", line, ["1", "2"], true, false, false, false, "Test", "100", true, "", "", {"cycleway" => "lane"}) ) )
-      subject.ways_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("2", line, ["1", "2"], true, false, false, false, "Test", "100", true, "", "", {"toll" => "true"}) ) )
+      subject.ways_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("2", line2, ["1", "2"], true, false, false, false, "Test", "100", true, "", "", {"toll" => "true"}) ) )
       subject.ways_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("3", line, ["1", "2"], true, false, false, false, "Test", "100", true, "", "", {}) ) )
     end
 
@@ -119,7 +123,7 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     end
     
     it "should iterate ways to save it" do
-      subject.should_receive(:backup_ways_pgsql).exactly(1).times.with( [["1", true, false, false, false, "Test", 111319.49079327357, line, {"cycleway"=>"lane"}], ["2", true, false, false, false, "Test", 111319.49079327357, line, {"toll"=>"true"}], ["3", true, false, false, false, "Test", 111319.49079327357, line, {}]], {"1"=>[["pedestrian", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308], ["train", 1.7976931348623157e+308]], "2"=>[["pedestrian", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308], ["train", 1.7976931348623157e+308]], "3"=>[["pedestrian", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308], ["train", 1.7976931348623157e+308]]} )
+      subject.should_receive(:backup_ways_pgsql).exactly(1).times.with( [["1", true, false, false, false, "Test", 157425.537108412, line, boundary.id, {"cycleway"=>"lane"}], ["2", true, false, false, false, "Test", 111319.49079327357, line2, nil, {"toll"=>"true"}], ["3", true, false, false, false, "Test", 157425.537108412, line, boundary.id, {}]], {"1"=>[["pedestrian", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308], ["train", 1.7976931348623157e+308]], "2"=>[["pedestrian", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308], ["train", 1.7976931348623157e+308]], "3"=>[["pedestrian", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308], ["train", 1.7976931348623157e+308]]} )
       subject.iterate_ways
     end
   end
@@ -134,10 +138,10 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
       ActiveRoad::PhysicalRoadConditionnalCost.all.size.should == 9
       ActiveRoad::Junction.all.size.should == 6
       ActiveRoad::Junction.all.collect(&:objectid).should =~ ["1", "2", "5", "8", "9", "10"]
-      ActiveRoad::LogicalRoad.all.size.should == 1
-      ActiveRoad::LogicalRoad.all.collect(&:name).should =~ ["Rue J. Symphorien"]      
       ActiveRoad::StreetNumber.all.size.should == 2
       ActiveRoad::StreetNumber.all.collect(&:objectid).should =~ ["2646260105", "2646260106"]
+      ActiveRoad::LogicalRoad.all.size.should == 2
+      ActiveRoad::LogicalRoad.all.collect(&:name).should =~ ["Rue J. Symphorien", nil]      
     end
   end
 
@@ -147,7 +151,7 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
       subject.backup_relations_pgsql
       ActiveRoad::Boundary.all.size.should == 1
       ActiveRoad::Boundary.first.objectid.should == "73464"
-      ActiveRoad::Boundary.first.geometry.should == GeoRuby::SimpleFeatures::MultiPolygon.from_polygons( [GeoRuby::SimpleFeatures::Polygon.from_points( [[ point(0.0, 0.0), point(1.0, 1.0), point(2.0, 1.0), point(0.0, 0.0)]] )])
+      ActiveRoad::Boundary.first.geometry.should == multi_polygon( [ polygon( point(-54.3, 5.3), point(-54.3, 5.4), point(-54.1, 5.4), point(-54.1, 5.3), point(-54.3, 5.3) ) ] )
     end
 
     # it "should order ways geometry" do

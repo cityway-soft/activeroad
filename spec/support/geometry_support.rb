@@ -30,7 +30,7 @@ def polygon(*points)
   end
 end
 
-def multi_polygon(*polygons)
-  GeoRuby::SimpleFeatures::MultiPolygon.from_polygons([polygons], polygons.first.srid)
+def multi_polygon(polygons)
+  GeoRuby::SimpleFeatures::MultiPolygon.from_polygons(polygons, polygons.first.srid)
 end
 
