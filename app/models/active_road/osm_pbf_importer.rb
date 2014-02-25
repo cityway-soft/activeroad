@@ -116,66 +116,41 @@ module ActiveRoad
       end
     end     
 
-    def way_geometry(node_ids)
-      nodes_geometry = []
-      node_ids.each do |id|
-        node = Marshal.load(nodes_database[id])
-        nodes_geometry << GeoRuby::SimpleFeatures::Point.from_x_y(node.lon, node.lat, 4326)
-      end
-
-      GeoRuby::SimpleFeatures::LineString.from_points(nodes_geometry, 4326) if nodes_geometry.present? &&  1 < nodes_geometry.count     
-    end   
-
-    def backup_nodes_pgsql(junctions_values = [], junctions_ways = {})    
+    def backup_nodes_pgsql(junctions_values = [])    
       junction_columns = [:objectid, :geometry]
       # Save junctions in the stack
-      ActiveRoad::Junction.import(junction_columns, junctions_values, :validate => false) if junctions_values.present?
-      
-      # Link the junction with physical roads
-      ActiveRoad::Junction.transaction do 
-        junctions_ways.each do |junction_objectid, way_objectids|
-          junction = ActiveRoad::Junction.find_by_objectid(junction_objectid)
-          
-          physical_roads = ActiveRoad::PhysicalRoad.find_all_by_objectid(way_objectids)
-          junction.physical_roads << physical_roads if physical_roads      
-        end
-      end
+      ActiveRoad::Junction.import(junction_columns, junctions_values, :validate => false) if junctions_values.present?     
     end
 
-    def backup_street_numbers_pgsql(street_number_values = [], street_number_ways = {})    
+    def backup_street_numbers_pgsql(street_number_values = [])    
       street_number_columns = [:objectid, :geometry, :number]
       # Save street_numbers in the stack
-      ActiveRoad::StreetNumber.import(street_number_columns, street_number_values, :validate => false) if street_number_values.present?
-      
-      # Link the street_number with physical roads
-      # ActiveRoad::Street_Number.transaction do 
-      #   street_numbers_ways.each do |street_number_objectid, way_objectids|
-      #     street_number = ActiveRoad::Street_Number.find_by_objectid(street_number_objectid)
-          
-      #     physical_roads = ActiveRoad::PhysicalRoad.find_all_by_objectid(way_objectids)
-      #     street_number.physical_roads << physical_roads if physical_roads      
-      #   end
-      # end
+      ActiveRoad::StreetNumber.import(street_number_columns, street_number_values, :validate => false) if street_number_values.present?     
     end   
 
-    def backup_ways_pgsql(physical_road_values, attributes_by_objectid = {})
+    def backup_ways_pgsql(physical_road_values)
       # Save physical roads
       physical_road_columns = [:objectid, :car, :bike, :train, :pedestrian, :name, :length_in_meter, :geometry, :boundary_id, :tags]
-      ActiveRoad::PhysicalRoad.import(physical_road_columns, physical_road_values, :validate => false)      
-      
-      prcc = logical_roads = []
-      attributes_by_objectid.each do |objectid, physical_road_conditionnal_costs|
-        pr = ActiveRoad::PhysicalRoad.where(:objectid => objectid).first
 
-        physical_road_conditionnal_costs.each do |physical_road_conditionnal_cost|
-          physical_road_conditionnal_cost.append pr.id
-          prcc << physical_road_conditionnal_cost
+      ActiveRoad::PhysicalRoad.import(physical_road_columns, physical_road_values.map{ |prv| prv.values_at(:objectid, :car, :bike, :train, :pedestrian, :name, :length_in_meter, :geometry, :boundary_id, :tags) }, :validate => false)      
+
+      physical_road_conditionnal_costs = []
+      ActiveRoad::PhysicalRoad.transaction do
+        physical_road_values.each do |physical_road_value|
+          physical_road = ActiveRoad::PhysicalRoad.where(:objectid => physical_road_value[:objectid]).first
+          # Link junctions with physical road
+          junctions = ActiveRoad::Junction.find_all_by_objectid(physical_road_value[:junctions])
+          physical_road.junctions << junctions if junctions.present?
+
+          # Prepare data to save conditionnal costs by batch
+          physical_road_conditionnal_costs += physical_road_value[:conditionnal_costs].map{ |cc| cc.append(physical_road.id) } if physical_road_value[:conditionnal_costs]
         end
-      end        
+      end
 
       # Save physical road conditionnal costs
       physical_road_conditionnal_cost_columns = [:tags, :cost, :physical_road_id]
-      ActiveRoad::PhysicalRoadConditionnalCost.import(physical_road_conditionnal_cost_columns, prcc, :validate => false)      
+      ActiveRoad::PhysicalRoadConditionnalCost.import(physical_road_conditionnal_cost_columns, physical_road_conditionnal_costs, :validate => false)
+
     end
 
     def backup_logical_roads_pgsql
@@ -186,8 +161,8 @@ module ActiveRoad
         ActiveRoad::LogicalRoad.transaction do 
           group.each do |physical_road|
             # TODO : use geographical data to know if it's the same logical road or not        
-            logical_road = ActiveRoad::LogicalRoad.where(["name = :name AND boundary_id = :boundary_id", {:name => physical_road.name, :boundary_id => physical_road.boundary_id} ]).first_or_create! do |logical_road|
-              logical_road.name = physical_road.name
+            logical_road = ActiveRoad::LogicalRoad.where(["name = :name AND boundary_id = :boundary_id", {:name => physical_road.name ? physical_road.name : "", :boundary_id => physical_road.boundary_id} ]).first_or_create! do |logical_road|
+              logical_road.name = physical_road.name ? physical_road.name : ""
               logical_road.boundary_id = physical_road.boundary_id
               logical_road.physical_roads << physical_road              
             end if physical_road.boundary_id.present?
@@ -294,7 +269,7 @@ module ActiveRoad
         return endpoints.size
       end
       
-    end   
+    end
     
     class Node
       attr_accessor :id, :lon, :lat, :ways, :end_of_way, :addr_housenumber
@@ -319,14 +294,17 @@ module ActiveRoad
       def marshal_load array
         @id, @lon, @lat, @addr_housenumber, @ways, @end_of_way = array
       end
+
+      def used?
+        ways.present? || end_of_way
+      end
     end
 
     class Way
-      attr_accessor :id, :geometry, :nodes, :car, :bike, :train, :pedestrian, :name, :maxspeed, :oneway, :boundary, :admin_level, :options
+      attr_accessor :id, :nodes, :car, :bike, :train, :pedestrian, :name, :maxspeed, :oneway, :boundary, :admin_level, :options
 
-      def initialize(id, geometry, nodes = [], car = false, bike = false, train = false, pedestrian = false, name = "", maxspeed = 0, oneway = false, boundary = "", admin_level = "", options = {})
+      def initialize(id, nodes = [], car = false, bike = false, train = false, pedestrian = false, name = "", maxspeed = 0, oneway = false, boundary = "", admin_level = "", options = {})
         @id = id
-        @geometry = geometry
         @nodes = nodes
         @car = car
         @bike = bike
@@ -345,11 +323,11 @@ module ActiveRoad
       end
 
       def marshal_dump
-        [@id, @geometry, @nodes, @car, @bike, @train, @pedestrian, @name, @maxspeed, @oneway, @boundary, @admin_level, @options]
+        [@id, @nodes, @car, @bike, @train, @pedestrian, @name, @maxspeed, @oneway, @boundary, @admin_level, @options]
       end
       
       def marshal_load array
-        @id, @geometry, @nodes, @car, @bike, @train, @pedestrian, @name, @maxspeed, @oneway, @boundary, @admin_level, @options = array
+        @id, @nodes, @car, @bike, @train, @pedestrian, @name, @maxspeed, @oneway, @boundary, @admin_level, @options = array
       end
     end
        

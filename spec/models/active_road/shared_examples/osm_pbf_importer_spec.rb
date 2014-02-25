@@ -81,52 +81,36 @@ shared_examples "an OsmPbfImporter module" do
     let(:physical_road) { create(:physical_road) }
 
     it "should return conditionnal cost with pedestrian, bike and train to infinity when tag key is car" do
-      importer.physical_road_conditionnal_costs( ActiveRoad::OsmPbfImporter::Way.new("", "", [], true) ).should == [["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]]
+      importer.physical_road_conditionnal_costs( ActiveRoad::OsmPbfImporter::Way.new("", [], true) ).should == [["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]]
     end
 
     it "should return conditionnal cost with pedestrian, bike, car and train to infinity when tag key is nothing" do   
-      importer.physical_road_conditionnal_costs( ActiveRoad::OsmPbfImporter::Way.new("", "", []) ).should == [ ["car", Float::MAX], ["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]]
+      importer.physical_road_conditionnal_costs( ActiveRoad::OsmPbfImporter::Way.new("", []) ).should == [ ["car", Float::MAX], ["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]]
     end
-  end
-
-  describe "#way_geometry" do
-    let(:node_ids) { ["1","2","3"] }
-    
-    before :each do 
-      importer.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 0.0, 0.0)) )
-      importer.nodes_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 1.0, 1.0)) )
-      importer.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 2.0, 2.0)) )
-    end
-
-    after :each do
-      importer.close_nodes_database
-      importer.delete_nodes_database
-      subject.close_ways_database
-      subject.delete_ways_database
-    end
-
-    it "should update physical road geometry" do        
-      importer.way_geometry(node_ids).should ==  GeoRuby::SimpleFeatures::LineString.from_points( [point(0.0,0.0), point(1.0,1.0), point(2.0,2.0) ])
-    end
-
   end
 
   describe "#backup_ways_pgsql" do
     let!(:line) { line_string( "0 0,1 0" ) }
-    let(:physical_road_values) { [ [ "1", true, false, false, false, "", 1, line, nil, {} ], ["2", true, false, false, false, "", 2, line, nil, {"oneway" => "true"}] ] }
-    let(:prcc) { [ "car", 0.3 ] }
-    let(:physical_road_conditionnal_costs_by_objectid) { { "1" => [ prcc ] } }
+    let!(:junctions) { Array.new(2) { create(:junction) } }
+    let(:physical_road_values) { [ { :objectid => "1", :car => true, :bike => false, :train => false, :pedestrian => false, :name => "", :length_in_meter => 1.0, :geometry => line, :boundary_id => nil, :tags => {}, :junctions => [junctions.first.objectid, junctions.last.objectid]}, {:objectid => "2", :car => true, :bike => false, :train => false, :pedestrian => false, :name => "",  :length_in_meter => 1.9, :geometry => line, :boundary_id => nil, :tags => {"oneway" => "true"}, :conditionnal_costs => [[ "car", 0.3 ]], :junctions => [junctions.first.objectid, junctions.last.objectid] } ] }
     
     it "should save physical roads in postgresql database" do  
       importer.backup_ways_pgsql(physical_road_values)
-      ActiveRoad::PhysicalRoad.all.size.should == 2
-      ActiveRoad::PhysicalRoad.all.collect(&:objectid).should == ["1", "2"]
+      expect(ActiveRoad::PhysicalRoad.all.size.should).to eq(2)
+      expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["1", "2"])
     end
 
     it "should save physical road conditionnal costs in postgresql database" do   
-      importer.backup_ways_pgsql(physical_road_values, physical_road_conditionnal_costs_by_objectid)
-      ActiveRoad::PhysicalRoadConditionnalCost.all.size.should == 1
-      ActiveRoad::PhysicalRoadConditionnalCost.first.physical_road_id.should == ActiveRoad::PhysicalRoad.first.id
+      importer.backup_ways_pgsql(physical_road_values)
+      expect(ActiveRoad::PhysicalRoadConditionnalCost.all.size).to eq(1)
+      last_physical_road = ActiveRoad::PhysicalRoad.find_by_objectid("2")
+      expect(ActiveRoad::PhysicalRoadConditionnalCost.all.collect(&:physical_road_id)).to match_array([last_physical_road.id])
+    end
+
+     it "should save junctions in postgresql database" do   
+      importer.backup_ways_pgsql(physical_road_values)
+      expect(ActiveRoad::Junction.all.size).to eq(2)
+      expect(ActiveRoad::Junction.all.collect(&:objectid)).to match_array([junctions.first.objectid, junctions.last.objectid])
     end
   end
 
@@ -147,7 +131,6 @@ shared_examples "an OsmPbfImporter module" do
       expect(ActiveRoad::LogicalRoad.first.attributes).to include( "boundary_id" => boundary.id )
     end
 
-
     it "should create a logical road with a name and a boundary if physical road has a name and a boundary" do
       physical_road = create(:physical_road, :boundary_id => boundary.id, :name => "Test")
       subject.backup_logical_roads_pgsql
@@ -166,37 +149,24 @@ shared_examples "an OsmPbfImporter module" do
   end
 
   describe "#backup_nodes_pgsql" do
-    let!(:physical_road) { create(:physical_road) }
     let!(:point) { GeoRuby::SimpleFeatures::Point.from_x_y( 0, 0, 4326) }
 
     it "should save junctions in postgresql nodes_database" do         
       junctions_values = [["1", point], ["2", point]]
-      junctions_ways = {"1" => [ physical_road.objectid ], "2" => [ physical_road.objectid ]}
 
-      importer.backup_nodes_pgsql(junctions_values, junctions_ways)
-      ActiveRoad::Junction.all.size.should == 2
-      first_junction = ActiveRoad::Junction.first
-      first_junction.objectid.should == "1"
-      first_junction.physical_roads.should == [physical_road]
-
-      last_junction = ActiveRoad::Junction.last
-      last_junction.objectid.should ==  "2"
-      last_junction.physical_roads.should == [physical_road]
+      importer.backup_nodes_pgsql(junctions_values)
+      expect(ActiveRoad::Junction.all.collect(&:objectid)).to match_array(["1", "2"])
     end
   end
 
   describe "#backup_street_numbers_pgsql" do
-    let!(:physical_road) { create(:physical_road) }
     let!(:point) { GeoRuby::SimpleFeatures::Point.from_x_y( 0, 0, 4326) }
 
     it "should save junctions in postgresql nodes_database" do         
       street_number_values = [["1", point, "7"], ["2", point, "7,8,9A" ]]
-      street_number_ways = {}
 
-      importer.backup_street_numbers_pgsql(street_number_values, street_number_ways)
-      street_numbers = ActiveRoad::StreetNumber.all
-      expect(street_numbers.size).to eq(2)
-      expect(street_numbers.collect(&:objectid)).to match_array(["1", "2"])
+      importer.backup_street_numbers_pgsql(street_number_values)
+      expect(ActiveRoad::StreetNumber.all.collect(&:objectid)).to match_array(["1", "2"])
     end
   end
 

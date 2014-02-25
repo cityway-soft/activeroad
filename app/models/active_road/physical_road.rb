@@ -39,6 +39,10 @@ module ActiveRoad
       logical_road.try(:name) or objectid
     end
 
+    def intersection(other)
+      postgis_calculate(:intersection, [self, other])
+    end
+    
     # distance in srid format 0.001 ~= 111.3 m à l'équateur
     # TODO : Must convert distance in meters => distance in srid
     def self.nearest_to(location, distance = 0.001)
@@ -57,7 +61,15 @@ module ActiveRoad
     end
 
     def self.all_within(other)
-      find(:all, :conditions => "ST_Within(geometry, ST_GeomFromEWKT(E'#{other.as_hex_ewkb}'))")
+      where "ST_Within(geometry, ST_GeomFromEWKT(E'#{other.as_hex_ewkb}'))"
+    end
+
+    def self.all_intersect(other)
+      where("ST_Intersects(geometry, ST_GeomFromEWKT(E'#{other.as_hex_ewkb}'))")
+    end
+
+    def self.all_intersection(other)
+      where("ST_Intersection(geometry, ST_GeomFromEWKT(E'#{other.as_hex_ewkb}'))")
     end
 
   end

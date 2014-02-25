@@ -6,7 +6,6 @@ module ActiveRoad
 
     validates_presence_of :physical_road_id
     validates_presence_of :tags
-    validates_uniqueness_of :tags
     validates_presence_of :cost
     
   end
