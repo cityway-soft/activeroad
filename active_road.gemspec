@@ -39,5 +39,5 @@ Gem::Specification.new do |s|
   s.add_dependency 'shortest_path', '0.0.3'
   s.add_dependency 'enumerize', '0.7.0'
   s.add_dependency "pbf_parser", '0.0.6'
-  s.add_dependency "leveldb-native", '0.0.5'
+  s.add_dependency "leveldb-native", '0.5'
 end
