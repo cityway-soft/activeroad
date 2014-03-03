@@ -42,6 +42,10 @@ module ActiveRoad
     def intersection(other)
       postgis_calculate(:intersection, [self, other])
     end
+
+    def difference(other)
+      postgis_calculate(:difference, [self, other])
+    end
     
     # distance in srid format 0.001 ~= 111.3 m à l'équateur
     # TODO : Must convert distance in meters => distance in srid
@@ -66,10 +70,6 @@ module ActiveRoad
 
     def self.all_intersect(other)
       where("ST_Intersects(geometry, ST_GeomFromEWKT(E'#{other.as_hex_ewkb}'))")
-    end
-
-    def self.all_intersection(other)
-      where("ST_Intersection(geometry, ST_GeomFromEWKT(E'#{other.as_hex_ewkb}'))")
     end
 
   end

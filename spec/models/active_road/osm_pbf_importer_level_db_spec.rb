@@ -55,6 +55,10 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     end
 
     after :each do
+      subject_without_data.nodes_database.delete("1")
+      subject_without_data.nodes_database.delete("2")
+      subject_without_data.nodes_database.delete("3")
+
       subject_without_data.close_nodes_database
     end
 
@@ -94,6 +98,10 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     end
 
     after :each do
+      subject_without_data.nodes_database.delete("1")
+      subject_without_data.nodes_database.delete("2")
+      subject_without_data.nodes_database.delete("3")
+
       subject_without_data.close_nodes_database
     end
     
@@ -120,16 +128,24 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     end
 
     after :each do
-      subject_without_data.close_ways_database
+      subject_without_data.nodes_database.delete("1")
+      subject_without_data.nodes_database.delete("2")
+      subject_without_data.nodes_database.delete("3")
+
+      subject_without_data.ways_database.delete("1")
+      subject_without_data.ways_database.delete("2")
+      subject_without_data.ways_database.delete("3")
+
       subject_without_data.close_nodes_database
+      subject_without_data.close_ways_database
     end
     
     it "should iterate ways to save it" do
       
-      subject_without_data.should_receive(:backup_ways_pgsql).exactly(1).times.with( [{:objectid=>"1-0", :car=>true, :bike=>false, :train=>false, :pedestrian=>false, :name=>"Test", :length_in_meter=>314827.08993590315, :geometry=>line, :boundary_id=>boundary.id, :tags=>{"cycleway"=>"lane"}, :conditionnal_costs=>[["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]], :junctions=>["1", "2"]},
+      subject_without_data.should_receive(:backup_ways_pgsql).exactly(1).times.with( [{:objectid=>"1-0", :car=>true, :bike=>false, :train=>false, :pedestrian=>false, :name=>"Test", :length_in_meter=>314827.08993590315, :geometry=>line, :boundary_id=>nil, :tags=>{"cycleway"=>"lane"}, :conditionnal_costs=>[["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]], :junctions=>["1", "2"]},
                                                                                       {:objectid=>"1-1", :car=>true, :bike=>false, :train=>false, :pedestrian=>false, :name=>"Test", :length_in_meter=>157353.62718543052, :geometry=>line2, :boundary_id=>nil, :tags=>{"cycleway"=>"lane"}, :conditionnal_costs=>[["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]], :junctions=>["2", "3"]},
-                                                                                      {:objectid=>"2-0", :car=>true, :bike=>false, :train=>false, :pedestrian=>false, :name=>"Test", :length_in_meter=>314827.08993590315, :geometry=>line, :boundary_id=>boundary.id, :tags=>{"toll"=>"true"}, :conditionnal_costs=>[["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]], :junctions=>["1", "2"]},
-                                                                                      {:objectid=>"3-0", :car=>true, :bike=>false, :train=>false, :pedestrian=>false, :name=>"Test", :length_in_meter=>314827.08993590315, :geometry=>line, :boundary_id=>boundary.id, :tags=>{}, :conditionnal_costs=>[["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]], :junctions=>["1", "2"]}] )
+                                                                                      {:objectid=>"2-0", :car=>true, :bike=>false, :train=>false, :pedestrian=>false, :name=>"Test", :length_in_meter=>314827.08993590315, :geometry=>line, :boundary_id=>nil, :tags=>{"toll"=>"true"}, :conditionnal_costs=>[["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]], :junctions=>["1", "2"]},
+                                                                                      {:objectid=>"3-0", :car=>true, :bike=>false, :train=>false, :pedestrian=>false, :name=>"Test", :length_in_meter=>314827.08993590315, :geometry=>line, :boundary_id=>nil, :tags=>{}, :conditionnal_costs=>[["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]], :junctions=>["1", "2"]}] )
       subject_without_data.iterate_ways
     end
   end
@@ -144,28 +160,68 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
   end
   
   describe "#split_way_with_nodes" do
-    let!(:way) { double("way", :id => "1", :car => false, :bike => false, :train => true, :pedestrian => true, :name => "", :length_in_meter => 3, :nodes => ["1", "2", "3"], :geometry => nil , :options => {} ) }
+    let!(:simple_way) { double("way", :id => "1", :car => false, :bike => false, :train => true, :pedestrian => true, :name => "", :length_in_meter => 3, :nodes => ["1", "2", "3"], :geometry => nil , :options => {} ) }
+    let(:complex_way) { double("way", :id => "2", :car => false, :bike => false, :train => true, :pedestrian => true, :name => "", :length_in_meter => 3, :nodes => ["4", "5", "6", "7", "8"], :geometry => nil , :options => {} ) }
+    let(:complex_way_boundary) { double("way", :id => "2", :car => false, :bike => false, :train => true, :pedestrian => true, :name => "", :length_in_meter => 3, :nodes => ["4", "6", "8"], :geometry => nil , :options => {} ) }
 
-    before :each do 
-      subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 0.0, 0.0, "", ["1", "2"])) )
-      subject_without_data.nodes_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 1.0, 1.0, "", ["1", "3"])) )
-      subject_without_data.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 2.0, 2.0, "", [], true)) )
+    before :each do
+      # Nodes for simple way
+      subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", -1.0, 1.0, "", [simple_way.id], true)) )
+      subject_without_data.nodes_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 0.0, 1.0, "", [simple_way.id, "2"])) )
+      subject_without_data.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 1.0, 1.0, "", [simple_way.id], true)) )
+
+      #Nodes for complex way
+      subject_without_data.nodes_database.put("4", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("4", -1.0, 1.0, "", [complex_way.id], true)) )
+      subject_without_data.nodes_database.put("5", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("5", 0.0, 1.0, "", [complex_way.id] )) )
+      subject_without_data.nodes_database.put("6", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("6", 1.0, 1.0, "", [complex_way.id, "3"] )) )
+      subject_without_data.nodes_database.put("7", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("7", 1.0, 2.0, "", [complex_way.id] )) )
+      subject_without_data.nodes_database.put("8", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("8", 1.0, 3.0, "", [complex_way.id], true)) )
     end
-
+    
     after :each do
+      subject_without_data.nodes_database.delete("1")
+      subject_without_data.nodes_database.delete("2")
+      subject_without_data.nodes_database.delete("3")
+      subject_without_data.nodes_database.delete("4")
+      subject_without_data.nodes_database.delete("5")
+      subject_without_data.nodes_database.delete("6")
+      subject_without_data.nodes_database.delete("7")
+      subject_without_data.nodes_database.delete("8")
       subject_without_data.close_nodes_database
-      subject_without_data.close_ways_database
     end
 
     it "should return ways splitted" do
-      expect(subject_without_data.split_way_with_nodes(way)).to match_array( [{:objectid=>"1-0", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :length_in_meter=>157425.537108412, :geometry=>line_string( "0 0,1 1"), :boundary_id=>nil, :tags=>{}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["1", "2"]}, {:objectid=>"1-1", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :length_in_meter=>157401.56104583558, :geometry=>line_string( "1 1,2 2"), :boundary_id=>nil, :tags=>{}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["2", "3"]}] )
+      expect(subject_without_data.split_way_with_nodes(simple_way)).to match_array( [{:objectid=>"1-0", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :length_in_meter=>111302.53586533663, :geometry=>line_string( "-1 1,0 1"), :boundary_id=>nil, :tags=>{}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["1", "2"]},
+                                                                              {:objectid=>"1-1", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :length_in_meter=>111302.53586533663, :geometry=>line_string( "0 1,1 1"), :boundary_id=>nil, :tags=>{}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["2", "3"]}] )
     end
 
     it "should return ways not splitted" do
       subject_without_data.stub :split_ways => false
-      expect(subject_without_data.split_way_with_nodes(way)).to match_array( [{:objectid=>"1-0", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :length_in_meter=>314827.09815424756, :geometry=>line_string( "0 0,1 1,2 2"), :boundary_id=>nil, :tags=>{}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["1", "2", "3"]}] )      
+      expect(subject_without_data.split_way_with_nodes(simple_way)).to match_array( [{:objectid=>"1-0", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :length_in_meter=>222605.07173067325, :geometry=>line_string( "-1 1,0 1,1 1"), :boundary_id=>nil, :tags=>{}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["1", "2", "3"]}] )
+    end
+    
+  end
+
+  describe "#split_way_with_boundaries" do
+    let!(:line) { line_string("-1 1, 0 1,1 1, 1 2, 1 3") }
+    let!(:way) { double("way", :geometry => line) }
+    let!(:boundary) { create(:boundary, :geometry => multi_polygon( [ polygon( point(0,0), point(2,0), point(2,2), point(0,2) ) ] ) ) }
+    let!(:boundary2) { create(:boundary, :geometry => multi_polygon( [ polygon( point(0,2), point(2,2), point(2,4), point(0,4) ) ] ) ) }
+    
+    it "should split way in three parts" do
     end
 
+    it "should affect ways to 2 boundaries" do
+    end
+
+    #     it "should return ways splitted with boundary" do
+    #   boundary = create(:boundary, :geometry => multi_polygon( [ polygon( point(0,0), point(2,0), point(2,2), point(0,2) ) ] ) )
+    #   boundary2 = create(:boundary, :geometry => multi_polygon( [ polygon( point(0,2), point(2,2), point(2,4), point(0,4) ) ] ) )        
+    #   expect(subject_without_data.split_way_with_nodes(complex_way_boundary)).to match_array( [{:objectid=>"2-0", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :length_in_meter=>111302.53586533663, :geometry=>line_string("-1.0 1.0,0.0 1.0"), :boundary_id=>nil, :tags=>{}, :conditionnal_costs=>[["car", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308]], :junctions=>["4", "5"]},
+    #                                                                            {:objectid=>"2-1", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :length_in_meter=>111319.4907932736, :geometry=>line_string("0.0 1.0,1.0 1.0"), :boundary_id=>boundary.id, :tags=>{}, :conditionnal_costs=>[["car", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308]], :junctions=>["5", "6-8-0"]},
+    #                                                                            {:objectid=>"2-2", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :length_in_meter=>111319.49079327364, :geometry=>line_string("1.0 2.0,1.0 3.0"), :boundary_id=>boundary2.id, :tags=>{}, :conditionnal_costs=>[["car", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308]], :junctions=>["6-8-0", "6-8-1"]}] )
+    # end
+                                       
   end
 
   describe "#import" do
@@ -177,17 +233,17 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     
     it "should have import all nodes in a temporary nodes_database" do  
       subject.import
-      ActiveRoad::PhysicalRoad.all.size.should == 11
-      ActiveRoad::PhysicalRoad.all.collect(&:objectid).should =~ ["3-0", "3-1", "3-2", "5-0", "5-1", "5-2", "5-3", "5-4", "6-0", "6-1", "6-2"]
+      ActiveRoad::PhysicalRoad.all.size.should == 8
+      ActiveRoad::PhysicalRoad.all.collect(&:objectid).should =~ ["3-0", "3-1", "5-0", "5-1", "5-2", "6-0", "6-1", "6-2"]
       ActiveRoad::Boundary.all.size.should == 1
       ActiveRoad::Boundary.all.collect(&:objectid).should =~ ["73464"]
-      ActiveRoad::PhysicalRoadConditionnalCost.all.size.should == 33
+      ActiveRoad::PhysicalRoadConditionnalCost.all.size.should == 24
       ActiveRoad::Junction.all.size.should == 6
       ActiveRoad::Junction.all.collect(&:objectid).should =~ ["1", "2", "5", "8", "9", "10"]
       ActiveRoad::StreetNumber.all.size.should == 2
       ActiveRoad::StreetNumber.all.collect(&:objectid).should =~ ["2646260105", "2646260106"]
-      ActiveRoad::LogicalRoad.all.size.should == 2     
-      ActiveRoad::LogicalRoad.all.collect(&:name).should =~ ["Rue J. Symphorien", ""]      
+      ActiveRoad::LogicalRoad.all.size.should == 0 # 2  
+      ActiveRoad::LogicalRoad.all.collect(&:name).should =~ [] # ["Rue J. Symphorien", ""]      
     end
   end
 

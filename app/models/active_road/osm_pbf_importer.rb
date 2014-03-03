@@ -135,17 +135,22 @@ module ActiveRoad
       ActiveRoad::PhysicalRoad.import(physical_road_columns, physical_road_values.map{ |prv| prv.values_at(:objectid, :car, :bike, :train, :pedestrian, :name, :length_in_meter, :geometry, :boundary_id, :tags) }, :validate => false)      
 
       physical_road_conditionnal_costs = []
-      ActiveRoad::PhysicalRoad.transaction do
-        physical_road_values.each do |physical_road_value|
-          physical_road = ActiveRoad::PhysicalRoad.where(:objectid => physical_road_value[:objectid]).first
-          # Link junctions with physical road
-          junctions = ActiveRoad::Junction.find_all_by_objectid(physical_road_value[:junctions])
-          physical_road.junctions << junctions if junctions.present?
-
-          # Prepare data to save conditionnal costs by batch
-          physical_road_conditionnal_costs += physical_road_value[:conditionnal_costs].map{ |cc| cc.append(physical_road.id) } if physical_road_value[:conditionnal_costs]
-        end
+      junctions = []      
+      physical_road_values.each do |physical_road_value|
+        physical_road = ActiveRoad::PhysicalRoad.where(:objectid => physical_road_value[:objectid]).first
+        
+        # Prepare data to save junctions by batch
+        physical_road_value[:junctions].each do |junction|
+          junctions << [physical_road.id, junction]
+        end               
+        
+        # Prepare data to save conditionnal costs by batch
+        physical_road_conditionnal_costs += physical_road_value[:conditionnal_costs].collect{ |cc| cc + [physical_road.id] } if physical_road_value[:conditionnal_costs]
       end
+
+      # Save junctions
+      junction_physical_road_columns = [:physical_road_id, :junction_id]
+      ActiveRoad::JunctionsPhysicalRoad.import(junction_physical_road_columns, junctions, :validate => false)
 
       # Save physical road conditionnal costs
       physical_road_conditionnal_cost_columns = [:tags, :cost, :physical_road_id]
@@ -296,7 +301,7 @@ module ActiveRoad
       end
 
       def used?
-        ways.present? || end_of_way
+        ( ways.present? && ways.size > 1 ) || end_of_way
       end
     end
 

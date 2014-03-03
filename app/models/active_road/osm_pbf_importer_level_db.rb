@@ -9,7 +9,7 @@ module ActiveRoad
 
     attr_reader :ways_database_path, :nodes_database_path, :pbf_file, :split_ways
 
-    def initialize(pbf_file, nodes_database_path = "/tmp/osm_pbf_nodes_leveldb", ways_database_path = "/tmp/osm_pbf_ways_leveldb", split_ways = false)
+    def initialize(pbf_file, nodes_database_path = "/tmp/osm_pbf_nodes_leveldb", ways_database_path = "/tmp/osm_pbf_ways_leveldb", split_ways = true)
       @pbf_file = pbf_file
       @nodes_database_path = nodes_database_path
       @ways_database_path = ways_database_path
@@ -21,7 +21,7 @@ module ActiveRoad
     end
 
     def close_nodes_database
-      nodes_database.close!
+      nodes_database.close
     end
 
     def delete_nodes_database
@@ -33,7 +33,7 @@ module ActiveRoad
     end
     
     def close_ways_database
-      ways_database.close!
+      ways_database.close
     end
 
     def delete_ways_database
@@ -236,20 +236,26 @@ module ActiveRoad
           physical_road_values += split_way_with_nodes(way)                   
         end
 
-        if (physical_road_values.count == @@pg_batch_size || (ways_database_size == ways_counter && physical_road_values.present?) )
+        if (physical_road_values.count >= @@pg_batch_size || (ways_database_size == ways_counter && physical_road_values.present?) )
           backup_ways_pgsql(physical_road_values)
           
           # Reset  
           physical_road_values = []
         end
       }
+
+      # Backup the rest of the way
+      backup_ways_pgsql(physical_road_values) if physical_road_values.present?
+      
       Rails.logger.debug "Finish to backup #{ways_counter} ways in PostgreSql in #{(Time.now - start)} seconds"      
     end
 
     def split_way_with_nodes(way)
-      
+
+      way_conditionnal_costs = physical_road_conditionnal_costs(way)
       nodes_used = []
-      nodes = []     
+      nodes = []
+      # Get nodes really used and all nodes (used and for geometry need) for a way
       way.nodes.each_with_index do |node_id, index|
         node = Marshal.load( nodes_database[node_id.to_s] )
         nodes << node
@@ -257,6 +263,7 @@ module ActiveRoad
       end
 
       ways_nodes = []
+      # Split way between each nodes used
       if split_ways
         nodes_used.each_with_index do |before_node, index|        
           ways_nodes << nodes.values_at(before_node..nodes_used[ index + 1]) if before_node != nodes_used.last
@@ -264,20 +271,78 @@ module ActiveRoad
       else
         ways_nodes = [nodes]
       end
-        
+
       physical_road_values = []
       ways_nodes.each_with_index do |way_nodes, index|
         way_geometry = way_geometry(way_nodes)
         spherical_factory = ::RGeo::Geographic.spherical_factory
         length_in_meter = spherical_factory.line_string(way_geometry.points.collect(&:to_rgeo)).length
-        way_boundary = find_boundary(way_geometry)
         
-        physical_road_values << {:objectid => way.id + "-#{index}", :car => way.car, :bike => way.bike, :train => way.train, :pedestrian =>  way.pedestrian, :name =>  way.name, :length_in_meter => length_in_meter, :geometry => way_geometry, :boundary_id => way_boundary ? way_boundary.id : nil, :tags => way.options, :conditionnal_costs => physical_road_conditionnal_costs(way) , :junctions => way_nodes.collect(&:id)}
+        physical_road_values << {:objectid => way.id + "-#{index}", :car => way.car, :bike => way.bike, :train => way.train, :pedestrian =>  way.pedestrian, :name =>  way.name, :length_in_meter => length_in_meter, :geometry => way_geometry, :boundary_id => nil, :tags => way.options, :conditionnal_costs => way_conditionnal_costs, :junctions => way_nodes.collect(&:id)}
       end
 
       physical_road_values
     end
 
+    class SimpleWay
+      attr_accessor :boundary, :geometry
+        
+      def initialize(boundary, geometry)
+        @boundary = boundary
+        @geometry = geometry
+      end
+
+      def departure_id
+        first_point = geometry.points.first
+        "first_point.lon-first_point.lat"
+      end
+      
+      def arrival_id
+        last_point = geometry.points.last
+        "first_point.lon-first_point.lat"
+      end
+      
+    end
+
+    def split_way_with_boundaries
+      ActiveRoad::PhysicalRoad.each do |physical_road|
+        # Get boundaries intersected with way
+        boundaries_intersected = ActiveRoad::Boundary.all_intersect(physical_road.geometry)
+      
+        if boundaries_intersected.blank?
+          ways_splitted << { :geometry => way_geometry, :node_ids => [ way_nodes.first.id, way_nodes.last.id ], :boundary => nil }
+        else
+          diff_and_intersect = []
+          
+          # Get geometries not in boundaries
+          differences = (way_geometry.to_rgeo.difference(boundaries_intersected.map{ |b| b.geometry.to_rgeo }.reduce(:union) )).to_georuby
+          differences.each do |difference|
+            diff_and_intersect << SimpleWay.new(nil, difference) 
+          end
+          
+          
+          # Get intersection geometries with boundaries
+          intersections = [].tap do |intersections|
+            boundaries_intersected.each do |boundary_intersected|
+              geometry_intersection = boundary_intersected.intersection(way_geometry) 
+              diff_and_intersect << SimpleWay.new(boundary_intersected, geometry_intersection) 
+            end
+          end
+
+          # Classify differences and intersections by node
+          ordered_ways = {}.tap do |ordered_ways|
+            diff_and_intersect.each do |simple_way|
+              ordered_ways["#{simple_way.departure_id != first_node_id ? simple_way.departure_id : first_node.id}"] = { :previous_simple_way => simple_way }    
+              ordered_ways["#{simple_way.arrival_id != last_node_id ? simple_way.arrival_id : arrival_id}"] = { :next_simple_way => simple_way }
+            end
+          end
+
+          puts ordered_ways["#{first_node.id}"]
+        end
+      end
+    end
+    
+    
     def way_geometry(nodes)
       points = []
       nodes.each do |node|
@@ -288,8 +353,7 @@ module ActiveRoad
     end   
 
     # Problem add new junctions
-    def split_way_with_boundary(way)
-      
+    def split_way_with_boundaries(way)          
     end
     
     def find_boundary(way_geometry)

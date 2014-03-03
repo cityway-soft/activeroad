@@ -15,6 +15,19 @@ module ActiveRoad
       geometry.polygons.collect(&:rings).flatten
     end
     
+    def intersection(other)
+      postgis_calculate(:intersection, [self, other])
+    end
+
+    
+    def difference(other)
+      postgis_calculate(:difference, [self, other])
+    end
+
+    def sym_difference(other)
+      postgis_calculate(:symDifference, [self, other])
+    end    
+    
     # Contains not take object equals on a boundary border!!
     def self.first_contains(other)
       where("ST_Contains(geometry, ST_GeomFromEWKT(E'#{other.as_hex_ewkb}'))").first
@@ -24,8 +37,5 @@ module ActiveRoad
       where("ST_Intersects(geometry, ST_GeomFromEWKT(E'#{other.as_hex_ewkb}'))")
     end
     
-    def self.all_intersection(other)
-      where("ST_Intersection(geometry, ST_GeomFromEWKT(E'#{other.as_hex_ewkb}'))")
-    end
   end  
 end
