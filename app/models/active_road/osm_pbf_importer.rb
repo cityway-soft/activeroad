@@ -132,7 +132,9 @@ module ActiveRoad
       # Save physical roads
       physical_road_columns = [:objectid, :car, :bike, :train, :pedestrian, :name, :length_in_meter, :geometry, :boundary_id, :tags]
 
-      ActiveRoad::PhysicalRoad.import(physical_road_columns, physical_road_values.map{ |prv| prv.values_at(:objectid, :car, :bike, :train, :pedestrian, :name, :length_in_meter, :geometry, :boundary_id, :tags) }, :validate => false)      
+      ActiveRoad::PhysicalRoad.import(physical_road_columns, physical_road_values.map{ |prv| prv.values_at(:objectid, :car, :bike, :train, :pedestrian, :name, :length_in_meter, :geometry, :boundary_id, :tags) }, :validate => false)
+
+      #puts test.num_inserts.inspect
 
       physical_road_conditionnal_costs = []
       physical_road_from_junction = {}
@@ -143,10 +145,8 @@ module ActiveRoad
         physical_road = physical_roads.where(:objectid => physical_road_value[:objectid]).first
 
         # Prepare data to save junctions by batch
-        physical_road_values.each do |physical_road_value|
-          physical_road_value[:junctions].each do |node_id|
-            physical_road_from_junction[node_id] = physical_road.id 
-          end
+        physical_road_value[:junctions].each do |node_id|
+          physical_road_from_junction[node_id] = physical_road.id 
         end
         
         # Prepare data to save conditionnal costs by batch
