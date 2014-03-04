@@ -1,12 +1,12 @@
 module ActiveRoad
-  module OsmPbfImporter   
-    
-    @@relation_required_tags_keys = ["boundary", "admin_level"]      
+  module OsmPbfImporter
+
+    @@relation_required_tags_keys = ["boundary", "admin_level"]
     @@relation_selected_tags_keys = ["boundary", "admin_level", "ref:INSEE", "name", "addr:postcode", "type"]
     mattr_reader :relation_required_tags_keys
     mattr_reader :relation_selected_tags_keys
-    
-    @@way_required_tags_keys = ["highway", "railway", "boundary", "admin_level"]    
+
+    @@way_required_tags_keys = ["highway", "railway", "boundary", "admin_level"]
     @@way_selected_tags_keys = [ "name", "maxspeed", "oneway", "boundary", "admin_level" ]
     # Add first_node_id and last_node_id
     @@way_optionnal_tags_keys = ["highway", "bridge", "tunnel", "toll", "cycleway", "cycleway-right", "cycleway-left", "cycleway-both", "oneway:bicycle", "oneway", "bicycle", "segregated", "foot", "lanes", "lanes:forward", "lanes:forward:bus", "busway:right", "busway:left", "oneway_bus", "boundary", "admin_level"]
@@ -16,10 +16,10 @@ module ActiveRoad
 
     @@nodes_selected_tags_keys = [ "addr:housenumber" ]
     mattr_reader :nodes_selected_tags_keys
-    
+
     @@pg_batch_size = 10000 # Not Rails.logger.debug a high value because postgres failed to allocate memory
     mattr_reader :pg_batch_size
-    
+
     def self.included(base)
       base.extend(ClassMethods)
     end
@@ -35,7 +35,7 @@ module ActiveRoad
         false
       end
     end
-    
+
     # http://wiki.openstreetmap.org/wiki/FR:Cycleway
     # http://wiki.openstreetmap.org/wiki/FR:Bicycle
     def bike?(tags)
@@ -43,10 +43,10 @@ module ActiveRoad
       bike_tags_keys = ["cycleway:left", "cycleway:right", "cycleway", "cycleway:left"]
 
       if (tags["highway"].present? && highway_tag_values.include?(tags["highway"])) || (bike_tags_keys & tags.keys).present?
-        true        
+        true
       else
         false
-      end              
+      end
     end
 
     # http://wiki.openstreetmap.org/wiki/Key:railway
@@ -67,7 +67,7 @@ module ActiveRoad
       else
         false
       end
-    end      
+    end
 
     def required_way?(tags)
       @@way_required_tags_keys.each do |require_tag_key|
@@ -75,16 +75,16 @@ module ActiveRoad
           return true
         end
       end
-      return false      
+      return false
     end
-    
+
     def required_relation?(tags)
       @@relation_required_tags_keys.each do |require_tag_key|
         if tags.keys.include?(require_tag_key)
           return true
         end
       end
-      return false      
+      return false
     end
 
     # Return an hash with tag_key => tag_value for osm attributes
@@ -131,32 +131,38 @@ module ActiveRoad
     def backup_ways_pgsql(physical_road_values)
       # Save physical roads
       physical_road_columns = [:objectid, :car, :bike, :train, :pedestrian, :name, :length_in_meter, :geometry, :boundary_id, :tags]
-
-      ActiveRoad::PhysicalRoad.import(physical_road_columns, physical_road_values.map{ |prv| prv.values_at(:objectid, :car, :bike, :train, :pedestrian, :name, :length_in_meter, :geometry, :boundary_id, :tags) }, :validate => false)
-
-      #puts test.num_inserts.inspect
+      
+      ActiveRoad::PhysicalRoad.import(physical_road_columns, physical_road_values.values.map{ |prv| prv.values_at(:objectid, :car, :bike, :train, :pedestrian, :name, :length_in_meter, :geometry, :boundary_id, :tags) }, :validate => false)
 
       physical_road_conditionnal_costs = []
-      physical_road_from_junction = {}
+      physical_road_nodes = {}      
       
-      physical_roads = ActiveRoad::PhysicalRoad.where(:objectid => physical_road_values.map{ |physical_road_value| physical_road_value[:objectid] })
+      physical_roads = ActiveRoad::PhysicalRoad.where(:marker => 0)
       
-      physical_road_values.each do |physical_road_value|
-        physical_road = physical_roads.where(:objectid => physical_road_value[:objectid]).first
+      physical_roads.each do |physical_road|
+        physical_road_value = physical_road_values[physical_road.objectid]
 
-        # Prepare data to save junctions by batch
-        physical_road_value[:junctions].each do |node_id|
-          physical_road_from_junction[node_id] = physical_road.id 
-        end
+        if physical_road_value.present?
+          # Prepare data to save junctions by batch
+          physical_road_nodes[ physical_road.id ] = physical_road_value[:junctions]
         
-        # Prepare data to save conditionnal costs by batch
-        physical_road_conditionnal_costs += physical_road_value[:conditionnal_costs].collect{ |cc| cc + [physical_road.id] } if physical_road_value[:conditionnal_costs]
+          # Prepare data to save conditionnal costs by batch
+          physical_road_conditionnal_costs += physical_road_value[:conditionnal_costs].collect{ |cc| cc + [physical_road.id] } if physical_road_value[:conditionnal_costs]
+        end
       end
       
-      junctions = ActiveRoad::Junction.where(:objectid => physical_road_from_junction.keys)
+      nodes_junctions = {}.tap do |nodes_junctions|
+        (ActiveRoad::Junction.select([:objectid, :id]).map { |j| [j.objectid, j.id] }).each do |node_junction|
+          nodes_junctions[node_junction.first] = node_junction.last
+        end
+      end
+      
       junctions_physical_roads = []
-      junctions.each do |junction|
-        junctions_physical_roads << [physical_road_from_junction[junction.objectid], junction.id]
+      physical_road_nodes.each do |physical_road, nodes|
+        nodes.each do |node|
+          # Hack : Normaly you have to take only nodes to be used!!
+          junctions_physical_roads << [ physical_road, nodes_junctions[node] ] if nodes_junctions[node].present?
+        end
       end               
 
       # Save junctions
@@ -167,6 +173,8 @@ module ActiveRoad
       physical_road_conditionnal_cost_columns = [:tags, :cost, :physical_road_id]
       ActiveRoad::PhysicalRoadConditionnalCost.import(physical_road_conditionnal_cost_columns, physical_road_conditionnal_costs, :validate => false)
 
+      ActiveRoad::PhysicalRoad.update_all( { :marker => 1} )
+      
     end
 
     def backup_logical_roads_pgsql
@@ -174,23 +182,23 @@ module ActiveRoad
       start = Time.now
 
       ActiveRoad::PhysicalRoad.find_in_batches(batch_size: 2000) do |group|
-        ActiveRoad::LogicalRoad.transaction do 
+        ActiveRoad::LogicalRoad.transaction do
           group.each do |physical_road|
-            # TODO : use geographical data to know if it's the same logical road or not        
+            # TODO : use geographical data to know if it's the same logical road or not
             logical_road = ActiveRoad::LogicalRoad.where(["name = :name AND boundary_id = :boundary_id", {:name => physical_road.name ? physical_road.name : "", :boundary_id => physical_road.boundary_id} ]).first_or_create! do |logical_road|
               logical_road.name = physical_road.name ? physical_road.name : ""
               logical_road.boundary_id = physical_road.boundary_id
-              logical_road.physical_roads << physical_road              
+              logical_road.physical_roads << physical_road
             end if physical_road.boundary_id.present?
           end
         end
       end
-      Rails.logger.debug "Finish to backup logical roads in PostgreSql in #{(Time.now - start)} seconds"      
+      Rails.logger.debug "Finish to backup logical roads in PostgreSql in #{(Time.now - start)} seconds"
     end
 
-    def extract_relation_polygon(outer_geometries, inner_geometries = [])      
+    def extract_relation_polygon(outer_geometries, inner_geometries = [])
       outer_rings = join_ways(outer_geometries)
-      inner_rings = join_ways(inner_geometries)      
+      inner_rings = join_ways(inner_geometries)
       GeoRuby::SimpleFeatures::Polygon.from_linear_rings( outer_rings + inner_rings )
     end
 
@@ -202,7 +210,7 @@ module ActiveRoad
           closed_ways << way
           next
         end
-        
+
         # Are there any existing ways we can join this to?
         to_join_to = endpoints_to_ways.get_from_either_end(way)
         if to_join_to.present?
@@ -227,8 +235,8 @@ module ActiveRoad
       if endpoints_to_ways.number_of_endpoints != 0
         raise StandardError, "Unclosed boundaries"
       end
-      
-      closed_ways         
+
+      closed_ways
     end
 
     def join_way(way, other)
@@ -238,7 +246,7 @@ module ActiveRoad
       if other.closed?
         raise StandardError, "Trying to join a way to a closed way"
       end
-      
+
       if way.points.first == other.points.first
         new_points = other.reverse.points[0..-2] + way.points
       elsif way.points.first == other.points.last
@@ -272,21 +280,21 @@ module ActiveRoad
       def remove_way(way)
         endpoints.delete(way.points.first)
         endpoints.delete(way.points.last)
-      end      
+      end
 
-      def get_from_either_end(way)        
+      def get_from_either_end(way)
         [].tap do |selected_end_points|
           selected_end_points << endpoints[way.points.first] if endpoints.include?(way.points.first)
           selected_end_points << endpoints[way.points.last] if endpoints.include?(way.points.last)
         end
       end
-      
+
       def number_of_endpoints
         return endpoints.size
       end
-      
+
     end
-    
+
     class Node
       attr_accessor :id, :lon, :lat, :ways, :end_of_way, :addr_housenumber
 
@@ -306,7 +314,7 @@ module ActiveRoad
       def marshal_dump
         [@id, @lon, @lat, @addr_housenumber, @ways, @end_of_way]
       end
-      
+
       def marshal_load array
         @id, @lon, @lat, @addr_housenumber, @ways, @end_of_way = array
       end
@@ -341,11 +349,11 @@ module ActiveRoad
       def marshal_dump
         [@id, @nodes, @car, @bike, @train, @pedestrian, @name, @maxspeed, @oneway, @boundary, @admin_level, @options]
       end
-      
+
       def marshal_load array
         @id, @nodes, @car, @bike, @train, @pedestrian, @name, @maxspeed, @oneway, @boundary, @admin_level, @options = array
       end
     end
-       
-  end  
+
+  end
 end

@@ -224,7 +224,7 @@ module ActiveRoad
       start = Time.now
    
       ways_counter = 0 
-      physical_road_values = []
+      physical_road_values = {}
       ways_database_size = ways_database.count
 
       # traverse records by iterator      
@@ -233,14 +233,14 @@ module ActiveRoad
         way = Marshal.load(value)
 
         unless way.boundary.present?          
-          physical_road_values += split_way_with_nodes(way)                   
+          physical_road_values = physical_road_values.merge( split_way_with_nodes(way) )
         end
 
         if (physical_road_values.count >= @@pg_batch_size || (ways_database_size == ways_counter && physical_road_values.present?) )
           backup_ways_pgsql(physical_road_values)
           
           # Reset  
-          physical_road_values = []
+          physical_road_values = {}
         end
       }
 
@@ -272,13 +272,13 @@ module ActiveRoad
         ways_nodes = [nodes]
       end
 
-      physical_road_values = []
+      physical_road_values = {}
       ways_nodes.each_with_index do |way_nodes, index|
         way_geometry = way_geometry(way_nodes)
         spherical_factory = ::RGeo::Geographic.spherical_factory
         length_in_meter = spherical_factory.line_string(way_geometry.points.collect(&:to_rgeo)).length
         
-        physical_road_values << {:objectid => way.id + "-#{index}", :car => way.car, :bike => way.bike, :train => way.train, :pedestrian =>  way.pedestrian, :name =>  way.name, :length_in_meter => length_in_meter, :geometry => way_geometry, :boundary_id => nil, :tags => way.options, :conditionnal_costs => way_conditionnal_costs, :junctions => way_nodes.collect(&:id)}
+        physical_road_values[way.id + "-#{index}"] = {:objectid => way.id + "-#{index}", :car => way.car, :bike => way.bike, :train => way.train, :pedestrian =>  way.pedestrian, :name =>  way.name, :length_in_meter => length_in_meter, :geometry => way_geometry, :boundary_id => nil, :tags => way.options, :conditionnal_costs => way_conditionnal_costs, :junctions => way_nodes.collect(&:id)}
       end
 
       physical_road_values

@@ -92,7 +92,9 @@ shared_examples "an OsmPbfImporter module" do
   describe "#backup_ways_pgsql" do
     let!(:line) { line_string( "0 0,1 0" ) }
     let!(:junctions) { Array.new(2) { create(:junction) } }
-    let(:physical_road_values) { [ { :objectid => "1", :car => true, :bike => false, :train => false, :pedestrian => false, :name => "", :length_in_meter => 1.0, :geometry => line, :boundary_id => nil, :tags => {}, :junctions => [junctions.first.objectid, junctions.last.objectid]}, {:objectid => "2", :car => true, :bike => false, :train => false, :pedestrian => false, :name => "",  :length_in_meter => 1.9, :geometry => line, :boundary_id => nil, :tags => {"oneway" => "true"}, :conditionnal_costs => [[ "car", 0.3 ]], :junctions => [junctions.first.objectid, junctions.last.objectid] } ] }
+    let!(:physical_road_values) {
+      { "1" => { :objectid => "1", :car => true, :bike => false, :train => false, :pedestrian => false, :name => "", :length_in_meter => 1.0, :geometry => line, :boundary_id => nil, :tags => {}, :junctions => [junctions.first.objectid, junctions.last.objectid]},
+        "2" => {:objectid => "2", :car => true, :bike => false, :train => false, :pedestrian => false, :name => "",  :length_in_meter => 1.9, :geometry => line, :boundary_id => nil, :tags => {"oneway" => "true"}, :conditionnal_costs => [[ "car", 0.3 ]], :junctions => [junctions.first.objectid, junctions.last.objectid] } } }
     
     it "should save physical roads in postgresql database" do  
       importer.backup_ways_pgsql(physical_road_values)
