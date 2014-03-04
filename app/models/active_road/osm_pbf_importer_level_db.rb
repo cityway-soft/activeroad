@@ -21,7 +21,7 @@ module ActiveRoad
     end
 
     def close_nodes_database
-      nodes_database.close
+      nodes_database.close!
     end
 
     def delete_nodes_database
@@ -33,7 +33,7 @@ module ActiveRoad
     end
     
     def close_ways_database
-      ways_database.close
+      ways_database.close!
     end
 
     def delete_ways_database
@@ -310,8 +310,6 @@ module ActiveRoad
         boundaries_intersected = ActiveRoad::Boundary.all_intersect(physical_road.geometry)
       
         if boundaries_intersected.blank?
-          ways_splitted << { :geometry => way_geometry, :node_ids => [ way_nodes.first.id, way_nodes.last.id ], :boundary => nil }
-        else
           diff_and_intersect = []
           
           # Get geometries not in boundaries
@@ -319,8 +317,7 @@ module ActiveRoad
           differences.each do |difference|
             diff_and_intersect << SimpleWay.new(nil, difference) 
           end
-          
-          
+                    
           # Get intersection geometries with boundaries
           intersections = [].tap do |intersections|
             boundaries_intersected.each do |boundary_intersected|
@@ -352,10 +349,6 @@ module ActiveRoad
       GeoRuby::SimpleFeatures::LineString.from_points(points, 4326) if points.present? &&  1 < points.count     
     end   
 
-    # Problem add new junctions
-    def split_way_with_boundaries(way)          
-    end
-    
     def find_boundary(way_geometry)
       ActiveRoad::Boundary.first_contains(way_geometry)
     end    

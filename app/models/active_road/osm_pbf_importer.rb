@@ -135,22 +135,33 @@ module ActiveRoad
       ActiveRoad::PhysicalRoad.import(physical_road_columns, physical_road_values.map{ |prv| prv.values_at(:objectid, :car, :bike, :train, :pedestrian, :name, :length_in_meter, :geometry, :boundary_id, :tags) }, :validate => false)      
 
       physical_road_conditionnal_costs = []
-      junctions = []      
+      physical_road_from_junction = {}
+      
+      physical_roads = ActiveRoad::PhysicalRoad.where(:objectid => physical_road_values.map{ |physical_road_value| physical_road_value[:objectid] })
+      
       physical_road_values.each do |physical_road_value|
-        physical_road = ActiveRoad::PhysicalRoad.where(:objectid => physical_road_value[:objectid]).first
-        
+        physical_road = physical_roads.where(:objectid => physical_road_value[:objectid]).first
+
         # Prepare data to save junctions by batch
-        physical_road_value[:junctions].each do |junction|
-          junctions << [physical_road.id, junction]
-        end               
+        physical_road_values.each do |physical_road_value|
+          physical_road_value[:junctions].each do |node_id|
+            physical_road_from_junction[node_id] = physical_road.id 
+          end
+        end
         
         # Prepare data to save conditionnal costs by batch
         physical_road_conditionnal_costs += physical_road_value[:conditionnal_costs].collect{ |cc| cc + [physical_road.id] } if physical_road_value[:conditionnal_costs]
       end
+      
+      junctions = ActiveRoad::Junction.where(:objectid => physical_road_from_junction.keys)
+      junctions_physical_roads = []
+      junctions.each do |junction|
+        junctions_physical_roads << [physical_road_from_junction[junction.objectid], junction.id]
+      end               
 
       # Save junctions
       junction_physical_road_columns = [:physical_road_id, :junction_id]
-      ActiveRoad::JunctionsPhysicalRoad.import(junction_physical_road_columns, junctions, :validate => false)
+      ActiveRoad::JunctionsPhysicalRoad.import(junction_physical_road_columns, junctions_physical_roads, :validate => false)
 
       # Save physical road conditionnal costs
       physical_road_conditionnal_cost_columns = [:tags, :cost, :physical_road_id]
