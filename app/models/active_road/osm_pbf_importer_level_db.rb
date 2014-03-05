@@ -305,6 +305,9 @@ module ActiveRoad
     end
 
     def split_way_with_boundaries
+      Rails.logger.debug "Begin to split and affect boundaries to ways in PostgreSql"
+      start = Time.now
+      
       ActiveRoad::PhysicalRoad.each do |physical_road|
         # Get boundaries intersected with way
         boundaries_intersected = ActiveRoad::Boundary.all_intersect(physical_road.geometry)
@@ -337,6 +340,7 @@ module ActiveRoad
           puts ordered_ways["#{first_node.id}"]
         end
       end
+      Rails.logger.debug "Finis to split and affect boundaries to ways in PostgreSql in #{(Time.now - start)} seconds"
     end
     
     
