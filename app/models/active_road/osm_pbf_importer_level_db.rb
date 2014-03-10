@@ -68,7 +68,7 @@ module ActiveRoad
         end
 
         if node.addr_housenumber.present?
-          street_number_values << [ node.id, geometry, node.addr_housenumber ]
+          street_number_values << [ node.id, geometry, node.addr_housenumber, node.tags ]
         end
 
         street_number_values_size = street_number_values.size
@@ -127,7 +127,7 @@ module ActiveRoad
             nodes_counter+= 1
 
             select_tags = selected_tags(node[:tags], @@nodes_selected_tags_keys)         
-            nodes_database[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat], select_tags["addr:housenumber"]))      
+            nodes_database[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat], select_tags["addr:housenumber"], [], false, select_tags))      
           end
         end
         # When there's no more fileblocks to parse, #next returns false
@@ -284,65 +284,178 @@ module ActiveRoad
       physical_road_values
     end
 
-    class SimpleWay
-      attr_accessor :boundary, :geometry
-        
-      def initialize(boundary, geometry)
-        @boundary = boundary
-        @geometry = geometry
-      end
-
-      def departure_id
-        first_point = geometry.points.first
-        "first_point.lon-first_point.lat"
-      end
-      
-      def arrival_id
-        last_point = geometry.points.last
-        "first_point.lon-first_point.lat"
-      end
-      
-    end
-
     def split_way_with_boundaries
       Rails.logger.debug "Begin to split and affect boundaries to ways in PostgreSql"
       start = Time.now
-      
-      ActiveRoad::PhysicalRoad.each do |physical_road|
-        # Get boundaries intersected with way
-        boundaries_intersected = ActiveRoad::Boundary.all_intersect(physical_road.geometry)
-      
-        if boundaries_intersected.blank?
-          diff_and_intersect = []
-          
-          # Get geometries not in boundaries
-          differences = (way_geometry.to_rgeo.difference(boundaries_intersected.map{ |b| b.geometry.to_rgeo }.reduce(:union) )).to_georuby
-          differences.each do |difference|
-            diff_and_intersect << SimpleWay.new(nil, difference) 
-          end
-                    
-          # Get intersection geometries with boundaries
-          intersections = [].tap do |intersections|
-            boundaries_intersected.each do |boundary_intersected|
-              geometry_intersection = boundary_intersected.intersection(way_geometry) 
-              diff_and_intersect << SimpleWay.new(boundary_intersected, geometry_intersection) 
-            end
-          end
 
-          # Classify differences and intersections by node
-          ordered_ways = {}.tap do |ordered_ways|
-            diff_and_intersect.each do |simple_way|
-              ordered_ways["#{simple_way.departure_id != first_node_id ? simple_way.departure_id : first_node.id}"] = { :previous_simple_way => simple_way }    
-              ordered_ways["#{simple_way.arrival_id != last_node_id ? simple_way.arrival_id : arrival_id}"] = { :next_simple_way => simple_way }
-            end
-          end
+      # Update physical roads entirely contains in boundaries
+      # ActiveRoad::PhysicalRoad.connection.select_all("SELECT physical_road.id AS physical_road_id, boundary.id AS boundary_id FROM physical_roads physical_road, boundaries boundary WHERE ST_Contains( boundary.geometry, physical_road.geometry)").each_slice(@@pg_batch_size) do |group|
+      #   ActiveRoad::PhysicalRoad.transaction do 
+      #     group.each do |element|
+      #       ActiveRoad::PhysicalRoad.update(element["physical_road_id"], :boundary_id => element["boundary_id"])
+      #     end
+      #   end
+      # end
 
-          puts ordered_ways["#{first_node.id}"]
+      if split_ways
+        simple_ways = []
+        
+        # Get geometries in boundary      
+        sql = "SELECT b.id AS boundary_id, p.id AS physical_road_id, p.objectid AS physical_road_objectid, p.tags AS physical_road_tags, ST_AsText(p.geometry) AS physical_road_geometry, 
+j1.objectid AS departure_objectid, ST_AsText(j1.geometry) AS departure_geometry, 
+j2.objectid AS arrival_objectid, ST_AsText(j2.geometry) AS arrival_geometry, ST_AsText( ST_Intersection( p.geometry , b.geometry)) AS intersection_geometry 
+FROM physical_roads p, boundaries b, junctions j1, junctions j2, junctions_physical_roads jp, junctions_physical_roads jp2 
+WHERE p.boundary_id IS NULL AND ST_Crosses( b.geometry, p.geometry)
+AND j1.id = jp.junction_id AND p.id = jp.physical_road_id AND ST_AsText(ST_StartPoint(p.geometry) ) = ST_AsText(j1.geometry) 
+AND j2.id = jp2.junction_id AND p.id = jp2.physical_road_id AND ST_AsText(ST_EndPoint(p.geometry) ) = ST_AsText(j2.geometry)".gsub(/^( |\t)+/, "")      
+        ActiveRoad::PhysicalRoad.connection.select_all( sql ).each do |result|
+          intersection_geometry = GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['intersection_geometry']}")
+          if intersection_geometry.class == GeoRuby::SimpleFeatures::MultiLineString            
+            intersection_geometry.each do |line_string|
+              simple_ways << SimpleWay.new(result["boundary_id"], result["physical_road_id"], result["physical_road_objectid"], result["physical_road_tags"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['physical_road_geometry']}"), result["departure_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['departure_geometry']}"), result["arrival_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['arrival_geometry']}"), line_string )
+            end
+          elsif intersection_geometry.class == GeoRuby::SimpleFeatures::LineString  
+            simple_ways << SimpleWay.new(result["boundary_id"], result["physical_road_id"], result["physical_road_objectid"], result["physical_road_tags"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['physical_road_geometry']}"), result["departure_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['departure_geometry']}"), result["arrival_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['arrival_geometry']}"), intersection_geometry )
+          end
         end
+
+        #puts "intersections : #{simple_ways.inspect}"
+        
+        # Get geometries not in boundaries      
+        sql = "SELECT difference_geometry AS difference_geometry, v.id AS physical_road_id, v.objectid AS physical_road_objectid, v.tags AS physical_road_tags, ST_AsText(v.geometry) AS physical_road_geometry,
+j1.objectid AS departure_objectid, ST_AsText(j1.geometry) AS departure_geometry, 
+j2.objectid AS arrival_objectid, ST_AsText(j2.geometry) AS arrival_geometry
+FROM ( SELECT pr.id, pr.objectid, pr.tags, pr.geometry, pr.boundary_id, ST_Union( b.geometry) as zone FROM physical_roads pr, boundaries b WHERE pr.boundary_id IS NULL AND ST_Crosses( b.geometry, pr.geometry) GROUP BY pr.id, pr.geometry) v, junctions j1, junctions j2, junctions_physical_roads jp, junctions_physical_roads jp2, ST_AsText( ST_Difference( v.geometry, v.zone) ) difference_geometry
+WHERE j1.id = jp.junction_id AND v.id = jp.physical_road_id AND ST_AsText(ST_StartPoint(v.geometry) ) = ST_AsText(j1.geometry)
+AND j2.id = jp2.junction_id AND v.id = jp2.physical_road_id AND ST_AsText(ST_EndPoint(v.geometry) ) = ST_AsText(j2.geometry)
+AND difference_geometry != ST_AsText( 'GEOMETRYCOLLECTION EMPTY' )".gsub(/^( |\t)+/, "") 
+        ActiveRoad::PhysicalRoad.connection.select_all( sql ).each do |result|
+          difference_geometry = GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['difference_geometry']}")
+          if difference_geometry.class == GeoRuby::SimpleFeatures::MultiLineString
+            difference_geometry.each do |line_string|
+              simple_ways << SimpleWay.new(nil, result["physical_road_id"], result["physical_road_objectid"], result["physical_road_tags"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['physical_road_geometry']}"), result["departure_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['departure_geometry']}"), result["arrival_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['arrival_geometry']}"), line_string )
+            end
+          elsif difference_geometry.class == GeoRuby::SimpleFeatures::LineString  
+            simple_ways << SimpleWay.new(nil, result["physical_road_id"], result["physical_road_objectid"], result["physical_road_tags"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['physical_road_geometry']}"), result["departure_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['departure_geometry']}"), result["arrival_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['arrival_geometry']}"), difference_geometry )
+          end
+        end
+
+        #puts "difference : #{simple_ways.inspect}"
+        
+        # Prepare reordering ways         
+        simple_ways_by_old_physical_road_id = simple_ways.group_by{|sw| sw.old_physical_road_id}
+        
+        simple_ways_by_old_physical_road_id.each do |old_physical_road_id, ways|
+          ways.each do |way|
+            if way.departure == way.old_departure_geometry
+              way.departure_objectid = way.old_departure_objectid
+              way.previous = nil
+            else
+              way.departure_objectid = way.default_departure_objectid
+              way.previous = ways.detect{ |select_way| select_way.arrival == way.departure }
+            end
+            
+            if way.arrival == way.old_arrival_geometry
+              way.arrival_objectid = way.old_arrival_objectid
+              way.next = nil 
+            else
+              way.arrival_objectid = way.default_arrival_objectid
+              way.next = ways.detect{ |select_way| select_way.departure == way.arrival }
+            end          
+          end
+        end
+
+        # Save new ways and junctions
+        #physical_roads ||= ActiveRoad::PhysicalRoad.where(:objectid => simple_ways_by_old_physical_road_id.keys).includes(:conditionnal_costs)
+        
+        simple_ways_by_old_physical_road_id.each_slice(@@pg_batch_size) {
+          |group| group.each do |old_physical_road_id, ways|
+            ActiveRoad::PhysicalRoad.transaction do 
+              next_way = ways.detect{ |select_way| select_way.previous == nil }
+              way_counter = 0
+              junction_counter = 0
+              
+              while next_way != nil
+                #old_physical_road = physical_roads.where(:id => old_physical_road_id)
+                # Fix tags build from string
+                tags = {}.tap do |tags| 
+                  next_way.old_physical_road_tags.split(',').each do |pair|
+                    key,value = pair.split("=>")
+                    tags[key] = value
+                  end
+                end if next_way.old_physical_road_tags.present?
+
+                physical_road = ActiveRoad::PhysicalRoad.create! :objectid => "#{next_way.old_physical_road_objectid}-#{way_counter}", :boundary_id => next_way.boundary_id, :geometry => next_way.geometry, :tags => tags
+                #physical_road.conditionnal_costs = old_physical_road.conditionnal_costs
+
+                # Create departure
+                if next_way.previous != nil
+                  departure = ActiveRoad::Junction.where(:objectid => "#{next_way.departure_objectid}-#{junction_counter}").first_or_create( :geometry => next_way.departure )
+                  junction_counter += 1
+                else
+                  departure = ActiveRoad::Junction.find_by_objectid(next_way.departure_objectid) 
+                end
+                
+                # Create arrival
+                if next_way.next != nil
+                  arrival = ActiveRoad::Junction.where(:objectid => "#{next_way.arrival_objectid}-#{junction_counter}").first_or_create( :geometry => next_way.arrival )
+                else
+                  arrival = ActiveRoad::Junction.find_by_objectid(next_way.arrival_objectid)
+                end
+
+                # Add departure and arrival to physical road
+                # puts "departure #{departure.inspect}"
+                # puts "arrival #{arrival.inspect}"
+                physical_road.junctions << [departure, arrival]
+
+                way_counter += 1
+                next_way = next_way.next
+              end
+            end
+          end
+        }
+        
+        # Delete old ways
+        ActiveRoad::PhysicalRoad.destroy(simple_ways_by_old_physical_road_id.keys)
       end
-      Rails.logger.debug "Finis to split and affect boundaries to ways in PostgreSql in #{(Time.now - start)} seconds"
+      
+      Rails.logger.debug "Finish to split and affect boundaries to ways in PostgreSql in #{(Time.now - start)} seconds"
     end
-    
+
+    class SimpleWay
+      attr_accessor :boundary_id, :old_physical_road_id, :old_physical_road_objectid, :old_physical_road_tags, :old_physical_road_geometry, :old_departure_objectid, :old_departure_geometry, :old_arrival_objectid, :old_arrival_geometry, :departure_objectid, :arrival_objectid, :geometry, :next, :previous
+        
+      def initialize(boundary_id, old_physical_road_id, old_physical_road_objectid, old_physical_road_tags, old_physical_road_geometry, old_departure_objectid, old_departure_geometry, old_arrival_objectid, old_arrival_geometry, geometry)
+        @boundary_id = boundary_id
+        @old_physical_road_id = old_physical_road_id
+        @old_physical_road_objectid = old_physical_road_objectid
+        @old_physical_road_tags = old_physical_road_tags
+        @old_physical_road_geometry = old_physical_road_geometry
+        @old_departure_objectid = old_departure_objectid
+        @old_departure_geometry = old_departure_geometry
+        @old_arrival_objectid = old_arrival_objectid
+        @old_arrival_geometry = old_arrival_geometry
+        @geometry = geometry       
+      end
+
+      def departure
+        #puts "geometry class #{geometry.class}, value #{geometry.inspect}"
+        geometry.points.first if geometry
+      end
+
+      def arrival
+        geometry.points.last if geometry
+      end      
+      
+      def default_departure_objectid
+        "#{old_departure_objectid}-#{old_arrival_objectid}"
+      end
+      
+      def default_arrival_objectid
+        "#{old_departure_objectid}-#{old_arrival_objectid}"
+      end
+      
+    end    
     
     def way_geometry(nodes)
       points = []
@@ -406,17 +519,16 @@ module ActiveRoad
                     end
                   end
                 
-                  boundary_polygon = extract_relation_polygon(outer_ways.values, inner_ways.values)
+                  boundary_polygons = extract_relation_polygon(outer_ways.values, inner_ways.values)
 
-                  if boundary_polygon.present?
-                    boundary_geometry = GeoRuby::SimpleFeatures::MultiPolygon.from_polygons( [boundary_polygon] )
-                    borders = boundary_polygon.rings
+                  if boundary_polygons.present?
+                    boundary_geometry = GeoRuby::SimpleFeatures::MultiPolygon.from_polygons( boundary_polygons )
                   
                     # boundaries_values << [ relation[:id], boundary_geometry, tags["name"], tags["admin_level"], tags["addr:postcode"], tags["ref:INSEE"] ]
                     # boundaries_values_size = boundaries_values.size                  
                   
                     #ActiveRoad::Boundary.import(boundaries_columns, boundaries_values, :validate => false)                
-                    ActiveRoad::Boundary.create! :objectid => relation[:id], :geometry => boundary_geometry, :name => tags["name"], :admin_level => tags["admin_level"], :postal_code => tags["addr:postcode"], :insee_code => tags["ref:INSEE"], :borders => borders
+                    ActiveRoad::Boundary.create! :objectid => relation[:id], :geometry => boundary_geometry, :name => tags["name"], :admin_level => tags["admin_level"], :postal_code => tags["addr:postcode"], :insee_code => tags["ref:INSEE"]
                   end
                 rescue StandardError => e
                   p "Geometry error : impossible to build polygon for relation #{tags["name"]} with id #{relation[:id]} : #{e.message}"

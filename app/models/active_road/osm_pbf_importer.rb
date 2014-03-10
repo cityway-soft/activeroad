@@ -14,7 +14,7 @@ module ActiveRoad
     mattr_reader :way_selected_tags_keys
     mattr_reader :way_optionnal_tags_keys
 
-    @@nodes_selected_tags_keys = [ "addr:housenumber" ]
+    @@nodes_selected_tags_keys = [ "addr:housenumber", "addr:city", "addr:postcode", "addr:street" ]
     mattr_reader :nodes_selected_tags_keys
 
     @@pg_batch_size = 10000 # Not Rails.logger.debug a high value because postgres failed to allocate memory
@@ -123,7 +123,7 @@ module ActiveRoad
     end
 
     def backup_street_numbers_pgsql(street_number_values = [])    
-      street_number_columns = [:objectid, :geometry, :number]
+      street_number_columns = [:objectid, :geometry, :number, :tags]
       # Save street_numbers in the stack
       ActiveRoad::StreetNumber.import(street_number_columns, street_number_values, :validate => false) if street_number_values.present?     
     end   
@@ -199,7 +199,13 @@ module ActiveRoad
     def extract_relation_polygon(outer_geometries, inner_geometries = [])
       outer_rings = join_ways(outer_geometries)
       inner_rings = join_ways(inner_geometries)
-      GeoRuby::SimpleFeatures::Polygon.from_linear_rings( outer_rings + inner_rings )
+
+      # TODO : Fix the case where many outer rings with many inner rings
+      polygons = [].tap do |polygons|
+        outer_rings.each { |outer_ring|
+          polygons << GeoRuby::SimpleFeatures::Polygon.from_linear_rings( [outer_ring] + inner_rings )
+        }
+      end
     end
 
     def join_ways(ways)
@@ -296,15 +302,16 @@ module ActiveRoad
     end
 
     class Node
-      attr_accessor :id, :lon, :lat, :ways, :end_of_way, :addr_housenumber
+      attr_accessor :id, :lon, :lat, :ways, :end_of_way, :addr_housenumber, :tags
 
-      def initialize(id, lon, lat, addr_housenumber = "", ways = [], end_of_way = false )
+      def initialize(id, lon, lat, addr_housenumber = "", ways = [], end_of_way = false, tags = {} )
         @id = id
         @lon = lon
         @lat = lat
         @addr_housenumber = addr_housenumber
         @ways = ways
         @end_of_way = end_of_way
+        @tags = tags
       end
 
       def add_way(id)
@@ -312,11 +319,11 @@ module ActiveRoad
       end
 
       def marshal_dump
-        [@id, @lon, @lat, @addr_housenumber, @ways, @end_of_way]
+        [@id, @lon, @lat, @addr_housenumber, @ways, @end_of_way, @tags]
       end
 
       def marshal_load array
-        @id, @lon, @lat, @addr_housenumber, @ways, @end_of_way = array
+        @id, @lon, @lat, @addr_housenumber, @ways, @end_of_way, @tags = array
       end
 
       def used?

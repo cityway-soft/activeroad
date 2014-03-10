@@ -94,7 +94,7 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     before :each do      
       subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 2.0, 2.0, "", ["1", "2"])) )
       subject_without_data.nodes_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 2.0, 2.0, "", ["1", "3"])) )
-      subject_without_data.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 2.0, 2.0, "7,8", [])) )
+      subject_without_data.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 2.0, 2.0, "7,8", [], false, {"addr:street" => "Rue de Noaille"})) )
     end
 
     after :each do
@@ -108,7 +108,7 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     it "should iterate nodes to save it" do
       GeoRuby::SimpleFeatures::Point.stub :from_x_y => point
       subject_without_data.should_receive(:backup_nodes_pgsql).exactly(1).times.with([["1", point], ["2", point] ])
-      subject_without_data.should_receive(:backup_street_numbers_pgsql).exactly(1).times.with([ ["3", point, "7,8"] ])
+      subject_without_data.should_receive(:backup_street_numbers_pgsql).exactly(1).times.with([ ["3", point, "7,8", {"addr:street" => "Rue de Noaille"}] ])
       subject_without_data.iterate_nodes
     end
   end
@@ -202,16 +202,47 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     
   end
 
-  describe "#split_way_with_boundaries" do
-    let!(:line) { line_string("-1 1, 0 1,1 1, 1 2, 1 3") }
-    let!(:way) { double("way", :geometry => line) }
-    let!(:boundary) { create(:boundary, :geometry => multi_polygon( [ polygon( point(0,0), point(2,0), point(2,2), point(0,2) ) ] ) ) }
+  describe "#split_way_with_boundaries" do        
+    let!(:boundary) { create(:boundary, :geometry => multi_polygon( [ polygon( point(0,0), point(2,0), point(2,2), point(0,2), point(0,0) ) ] ) ) }
     let!(:boundary2) { create(:boundary, :geometry => multi_polygon( [ polygon( point(0,2), point(2,2), point(2,4), point(0,4) ) ] ) ) }
     
     it "should split way in three parts" do
+      physical_road = create(:physical_road, :geometry => line_string("-1.0 1.0, 1.0 1.0, 1.0 2.0, 1.0 3.0"), :boundary_id => nil, :tags => {"bridge" => true})
+      departure = create(:junction, :geometry => point(-1.0, 1.0))
+      arrival = create(:junction, :geometry => point(1.0, 3.0))
+      physical_road.junctions << [departure, arrival]
+      
+      subject_without_data.split_way_with_boundaries
+      expect(ActiveRoad::PhysicalRoad.all.size).to eq(3)
+      expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["#{physical_road.objectid}-0", "#{physical_road.objectid}-1", "#{physical_road.objectid}-2"])
+
+      expect(ActiveRoad::Junction.all.size).to eq(4)
+      expect(ActiveRoad::Junction.all.collect(&:objectid)).to match_array(["#{departure.objectid}", "#{departure.objectid}-#{arrival.objectid}-0", "#{departure.objectid}-#{arrival.objectid}-1", "#{arrival.objectid}"])
+
+      subject_without_data.split_way_with_boundaries
+      expect(ActiveRoad::PhysicalRoad.all.collect(&:boundary_id)).to match_array([nil, boundary.id, boundary2.id])
     end
 
-    it "should affect ways to 2 boundaries" do
+    # Split intersection between segment on perimeter and segment in boundary
+    it "should treat geometry differences with multi linestring" do
+      physical_road = create(:physical_road, :geometry => line_string("-1.0 1.0, 1.0 1.0, 1.0 2.0, -1.0 2.0"), :boundary_id => nil)
+      departure = create(:junction, :geometry => point(-1.0, 1.0))
+      arrival = create(:junction, :geometry => point(-1.0, 2.0))
+      physical_road.junctions << [departure, arrival]
+      
+      subject_without_data.split_way_with_boundaries
+      expect(ActiveRoad::PhysicalRoad.all.size).to eq(4)
+    end
+
+    it "should update boundary_id" do
+      physical_road = create(:physical_road, :geometry => line_string("0.0 1.0,1.0 1.0"), :boundary_id => nil)
+      departure = create(:junction, :geometry => point(0.0, 1.0))
+      arrival = create(:junction, :geometry => point(1.0, 1.0))
+      physical_road.junctions << [departure, arrival]
+      
+      subject_without_data.split_way_with_boundaries
+      expect(ActiveRoad::PhysicalRoad.all.size).to eq(1)
+      expect(ActiveRoad::PhysicalRoad.all.collect(&:boundary_id)).to match_array([boundary.id])      
     end
 
     #     it "should return ways splitted with boundary" do

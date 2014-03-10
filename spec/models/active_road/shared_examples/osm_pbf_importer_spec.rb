@@ -165,7 +165,7 @@ shared_examples "an OsmPbfImporter module" do
     let!(:point) { GeoRuby::SimpleFeatures::Point.from_x_y( 0, 0, 4326) }
 
     it "should save junctions in postgresql nodes_database" do         
-      street_number_values = [["1", point, "7"], ["2", point, "7,8,9A" ]]
+      street_number_values = [["1", point, "7", {}], ["2", point, "7,8,9A", {"addr:street" => "Rue de Noaille"}]]
 
       importer.backup_street_numbers_pgsql(street_number_values)
       expect(ActiveRoad::StreetNumber.all.collect(&:objectid)).to match_array(["1", "2"])
@@ -183,12 +183,12 @@ shared_examples "an OsmPbfImporter module" do
     end
 
     it "should return polygon if way geometries are connected" do
-      expect(importer.extract_relation_polygon([first_way_geom, second_way_geom, third_way_geom])).to eq( polygon(point(0.0,0.0), point(1.0,1.0), point(2.0,2.0)) )
+      expect(importer.extract_relation_polygon([first_way_geom, second_way_geom, third_way_geom])).to match_array( [ polygon(point(0.0,0.0), point(1.0,1.0), point(2.0,2.0)) ] )
     end
 
     it "should return polygon if way geometries are connected and some of them have points in the reverse order" do
       second_way_geom_reversed = line_string( "2 2,1 1" ) 
-      expect(importer.extract_relation_polygon([first_way_geom, second_way_geom_reversed, third_way_geom])).to eq( polygon(point(0.0,0.0), point(1.0,1.0), point(2.0,2.0)) )
+      expect(importer.extract_relation_polygon([first_way_geom, second_way_geom_reversed, third_way_geom])).to match_array( [ polygon(point(0.0,0.0), point(1.0,1.0), point(2.0,2.0)) ] )
     end
       
   end
