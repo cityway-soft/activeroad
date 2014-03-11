@@ -392,9 +392,9 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
                 #old_physical_road = physical_roads.where(:id => old_physical_road_id)
                 #Fix tags build from string
                 tags = {}.tap do |tags| 
-                  next_way.old_physical_road_tags.split(',').each do |pair|
-                    key,value = pair.split("=>")
-                    tags[key] = value
+                  next_way.old_physical_road_tags.split(',').each do |pair|                    
+                    key, value = pair.split("=>")
+                    tags[key.gsub(/\"/, "")] = value.gsub(/\"/, "")
                   end
                 end if next_way.old_physical_road_tags.present?
 

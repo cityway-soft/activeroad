@@ -207,7 +207,7 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     let!(:boundary2) { create(:boundary, :geometry => multi_polygon( [ polygon( point(0,2), point(2,2), point(2,4), point(0,4) ) ] ) ) }
     
     it "should split way in three parts" do
-      physical_road = create(:physical_road, :geometry => line_string("-1.0 1.0, 1.0 1.0, 1.0 2.0, 1.0 3.0"), :boundary_id => nil, :tags => {"bridge" => true})
+      physical_road = create(:physical_road, :geometry => line_string("-1.0 1.0, 1.0 1.0, 1.0 2.0, 1.0 3.0"), :boundary_id => nil, :tags => {"bridge" => "true"})
       departure = create(:junction, :geometry => point(-1.0, 1.0))
       arrival = create(:junction, :geometry => point(1.0, 3.0))
       physical_road.junctions << [departure, arrival]
@@ -219,8 +219,9 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
       expect(ActiveRoad::Junction.all.size).to eq(4)
       expect(ActiveRoad::Junction.all.collect(&:objectid)).to match_array(["#{departure.objectid}", "#{departure.objectid}-#{arrival.objectid}-0", "#{departure.objectid}-#{arrival.objectid}-1", "#{arrival.objectid}"])
 
-      subject_without_data.split_way_with_boundaries
       expect(ActiveRoad::PhysicalRoad.all.collect(&:boundary_id)).to match_array([nil, boundary.id, boundary2.id])
+      expect(ActiveRoad::PhysicalRoad.all.collect(&:tags)).to match_array([{"bridge" => "true"}, {"bridge" => "true"}, {"bridge" => "true"}])
+      
     end
 
     # Split intersection between segment on perimeter and segment in boundary
