@@ -302,6 +302,7 @@ module ActiveRoad
 
       if split_ways
         simple_ways = []
+        simple_ways_not_line_string = 0
         
         # Get geometries in boundary      
         sql = "SELECT b.id AS boundary_id, p.id AS physical_road_id, p.objectid AS physical_road_objectid, p.tags AS physical_road_tags, ST_AsText(p.geometry) AS physical_road_geometry, 
@@ -316,10 +317,14 @@ AND j2.id = jp2.junction_id AND p.id = jp2.physical_road_id AND ST_Equals(ST_End
           intersection_geometry = GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['intersection_geometry']}")
 
           # Not take in consideration point intersection!!
-          simple_ways << SimpleWay.new(result["boundary_id"], result["physical_road_id"], result["physical_road_objectid"], result["physical_road_tags"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['physical_road_geometry']}"), result["departure_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['departure_geometry']}"), result["arrival_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['arrival_geometry']}"), intersection_geometry ) if intersection_geometry.class == GeoRuby::SimpleFeatures::LineString          
+          if intersection_geometry.class == GeoRuby::SimpleFeatures::LineString
+            simple_way = SimpleWay.new(result["boundary_id"], result["physical_road_id"], result["physical_road_objectid"], result["physical_road_tags"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['physical_road_geometry']}"), result["departure_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['departure_geometry']}"), result["arrival_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['arrival_geometry']}"), intersection_geometry )
+            # Delete boucle line string Ex : 9938647-4
+            simple_ways << simple_way if simple_way.departure != simple_way.arrival
+          else
+            simple_ways_not_line_string += 1
+          end
         end
-
-        #puts "intersections : #{simple_ways.inspect}"
         
         # Get geometries not in boundaries      
         sql = "SELECT ST_AsText( (ST_Dump(difference_geometry)).geom ) AS difference_geometry, v.id AS physical_road_id, v.objectid AS physical_road_objectid, v.tags AS physical_road_tags, ST_AsText(v.geometry) AS physical_road_geometry,
@@ -335,12 +340,16 @@ WHERE j1.id = jp.junction_id AND v.id = jp.physical_road_id AND ST_Equals(ST_Sta
 AND j2.id = jp2.junction_id AND v.id = jp2.physical_road_id AND ST_Equals(ST_EndPoint(v.geometry), j2.geometry)
 AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "") 
         ActiveRoad::PhysicalRoad.connection.select_all( sql ).each do |result|
-          difference_geometry = GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['difference_geometry']}")         
-          simple_ways << SimpleWay.new(nil, result["physical_road_id"], result["physical_road_objectid"], result["physical_road_tags"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['physical_road_geometry']}"), result["departure_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['departure_geometry']}"), result["arrival_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['arrival_geometry']}"), difference_geometry ) if difference_geometry.class == GeoRuby::SimpleFeatures::LineString
+          difference_geometry = GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['difference_geometry']}")
+          if difference_geometry.class == GeoRuby::SimpleFeatures::LineString
+            simple_way = SimpleWay.new(nil, result["physical_road_id"], result["physical_road_objectid"], result["physical_road_tags"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['physical_road_geometry']}"), result["departure_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['departure_geometry']}"), result["arrival_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['arrival_geometry']}"), difference_geometry )
+            # Delete boucle line string Ex : 9938647-4
+            simple_ways << simple_way if simple_way.departure != simple_way.arrival
+          else
+            simple_ways_not_line_string += 1
+          end
         end
-
-        #puts "difference : #{simple_ways.inspect}"
-        
+       
         # Prepare reordering ways         
         simple_ways_by_old_physical_road_id = simple_ways.group_by{|sw| sw.old_physical_road_id}
         
@@ -362,22 +371,26 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
               way.next = ways.detect{ |select_way| select_way.departure == way.arrival }
             end          
           end
-        end
+        end       
 
         # Save new ways and junctions
         #physical_roads ||= ActiveRoad::PhysicalRoad.where(:objectid => simple_ways_by_old_physical_road_id.keys).includes(:conditionnal_costs)
         
-        simple_ways_by_old_physical_road_id.each_slice(@@pg_batch_size) { |group|
-          ActiveRoad::PhysicalRoad.transaction do
+        simple_ways_by_old_physical_road_id.each_slice(1000) { |group|
+          ActiveRoad::PhysicalRoad.transaction do            
+            
             group.each do |old_physical_road_id, ways|
               #puts ways.sort.inspect             
               next_way = ways.detect{ |select_way| select_way.previous == nil }
               way_counter = 0
               junction_counter = 0
+
               
               while next_way != nil
+                start = Time.now
+
                 #old_physical_road = physical_roads.where(:id => old_physical_road_id)
-                # Fix tags build from string
+                #Fix tags build from string
                 tags = {}.tap do |tags| 
                   next_way.old_physical_road_tags.split(',').each do |pair|
                     key,value = pair.split("=>")
@@ -407,8 +420,15 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
                 physical_road.junctions << [departure, arrival]
 
                 way_counter += 1
-                next_way = next_way.next
+
+                if way_counter > ways.size
+                  Rails.logger.error "Infinite boucle when save physical road splitted with boundaries"
+                  raise Exception.new "Infinite boucle when save physical road splitted with boundaries"
+                end
+                
+                next_way = next_way.next                                
               end
+              
             end
           end
         }
