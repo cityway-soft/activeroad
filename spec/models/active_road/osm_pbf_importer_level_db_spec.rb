@@ -273,8 +273,8 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
       ActiveRoad::Junction.all.collect(&:objectid).should =~ ["1", "2", "5", "8", "9", "10"]
       ActiveRoad::StreetNumber.all.size.should == 2
       ActiveRoad::StreetNumber.all.collect(&:objectid).should =~ ["2646260105", "2646260106"]
-      ActiveRoad::LogicalRoad.all.size.should == 0 # 2  
-      ActiveRoad::LogicalRoad.all.collect(&:name).should =~ [] # ["Rue J. Symphorien", ""]
+      ActiveRoad::LogicalRoad.all.size.should == 2  
+      ActiveRoad::LogicalRoad.all.collect(&:name).should =~ ["Rue J. Symphorien", ""]
       ActiveRoad::JunctionsPhysicalRoad.all.size.should == 16
     end
   end
