@@ -178,7 +178,7 @@ module ActiveRoad
     end
 
     def backup_logical_roads_pgsql
-      Rails.logger.debug "Begin to backup logical roads in PostgreSql"
+      Rails.logger.info "Begin to backup logical roads in PostgreSql"
       start = Time.now
 
       ActiveRoad::PhysicalRoad.find_in_batches(batch_size: 2000) do |group|
@@ -193,7 +193,7 @@ module ActiveRoad
           end
         end
       end
-      Rails.logger.debug "Finish to backup logical roads in PostgreSql in #{(Time.now - start)} seconds"
+      Rails.logger.info "Finish to backup logical roads in PostgreSql in #{(Time.now - start)} seconds"
     end
 
     def extract_relation_polygon(outer_geometries, inner_geometries = [])

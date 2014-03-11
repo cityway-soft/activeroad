@@ -80,7 +80,7 @@ module ActiveRoad
         end
       }
       
-      Rails.logger.debug "Finish to backup #{nodes_counter} nodes in PostgreSql in #{(Time.now - start)} seconds"         
+      Rails.logger.info "Finish to backup #{nodes_counter} nodes in PostgreSql in #{(Time.now - start)} seconds"         
     end
     
     def import
@@ -114,7 +114,7 @@ module ActiveRoad
     end
 
     def backup_nodes
-      Rails.logger.debug "Begin to backup nodes in LevelDB nodes_database in #{nodes_database_path}"
+      Rails.logger.info "Begin to backup nodes in LevelDB nodes_database in #{nodes_database_path}"
       start = Time.now
       nodes_parser = ::PbfParser.new(pbf_file)
       nodes_counter = 0
@@ -137,11 +137,11 @@ module ActiveRoad
         # This avoids an infinit loop when the last fileblock still contains ways
         break unless nodes_parser.next
       end
-      Rails.logger.debug "Finish to backup #{nodes_counter} nodes in LevelDB nodes_database in #{(Time.now - start)} seconds"
+      Rails.logger.info "Finish to backup #{nodes_counter} nodes in LevelDB nodes_database in #{(Time.now - start)} seconds"
     end
     
     def update_nodes_with_way
-      Rails.logger.debug "Update way in nodes in LevelDB"
+      Rails.logger.info "Update way in nodes in LevelDB"
       start = Time.now
       ways_parser = ::PbfParser.new(pbf_file)
       ways_counter = 0 
@@ -171,7 +171,7 @@ module ActiveRoad
         break unless ways_parser.next        
       end
 
-      Rails.logger.debug "Finish to update #{ways_counter} ways in nodes in LevelDB  in #{(Time.now - start)} seconds"
+      Rails.logger.info "Finish to update #{ways_counter} ways in nodes in LevelDB  in #{(Time.now - start)} seconds"
     end
 
     def update_node_with_way(way_id, node_ids)
@@ -185,7 +185,7 @@ module ActiveRoad
     end
     
     def backup_ways
-      Rails.logger.debug "Begin to backup ways in LevelDB"
+      Rails.logger.info "Begin to backup ways in LevelDB"
       start = Time.now
       ways_parser = ::PbfParser.new(pbf_file)
       ways_counter = 0 
@@ -219,11 +219,11 @@ module ActiveRoad
         break unless ways_parser.next        
       end
 
-      Rails.logger.debug "Finish to backup #{ways_counter} ways in LevelDB  in #{(Time.now - start)} seconds"
+      Rails.logger.info "Finish to backup #{ways_counter} ways in LevelDB  in #{(Time.now - start)} seconds"
     end
 
     def iterate_ways
-      Rails.logger.debug "Begin to backup ways in PostgreSql"
+      Rails.logger.info "Begin to backup ways in PostgreSql"
       start = Time.now
    
       ways_counter = 0 
@@ -250,7 +250,7 @@ module ActiveRoad
       # Backup the rest of the way
       backup_ways_pgsql(physical_road_values) if physical_road_values.present?
       
-      Rails.logger.debug "Finish to backup #{ways_counter} ways in PostgreSql in #{(Time.now - start)} seconds"      
+      Rails.logger.info "Finish to backup #{ways_counter} ways in PostgreSql in #{(Time.now - start)} seconds"      
     end
 
     def split_way_with_nodes(way)
@@ -288,7 +288,7 @@ module ActiveRoad
     end
 
     def split_way_with_boundaries
-      Rails.logger.debug "Begin to split and affect boundaries to ways in PostgreSql"
+      Rails.logger.info "Begin to split and affect boundaries to ways in PostgreSql"
       start = Time.now
 
       # Update physical roads entirely contains in boundaries
@@ -417,7 +417,7 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
         ActiveRoad::PhysicalRoad.destroy(simple_ways_by_old_physical_road_id.keys)
       end
       
-      Rails.logger.debug "Finish to split and affect boundaries to ways in PostgreSql in #{(Time.now - start)} seconds"
+      Rails.logger.info "Finish to split and affect boundaries to ways in PostgreSql in #{(Time.now - start)} seconds"
     end
 
     class SimpleWay
@@ -485,7 +485,7 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
     end    
 
     def backup_relations_pgsql
-      Rails.logger.debug "Begin to backup relations in PostgreSql"
+      Rails.logger.info "Begin to backup relations in PostgreSql"
       start = Time.now
       relations_parser = ::PbfParser.new(pbf_file)
       relations_counter = 0
@@ -558,7 +558,7 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
       end
 
       end   
-      Rails.logger.debug  "Finish to backup #{relations_counter} relations in PostgreSql  in #{(Time.now - start)} seconds"
+      Rails.logger.info  "Finish to backup #{relations_counter} relations in PostgreSql  in #{(Time.now - start)} seconds"
     end
 
   end
