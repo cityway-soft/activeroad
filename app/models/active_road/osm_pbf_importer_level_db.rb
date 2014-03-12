@@ -280,8 +280,11 @@ module ActiveRoad
         way_geometry = way_geometry(way_nodes)
         spherical_factory = ::RGeo::Geographic.spherical_factory
         length_in_meter = spherical_factory.line_string(way_geometry.points.collect(&:to_rgeo)).length
-        
-        physical_road_values[way.id + "-#{index}"] = {:objectid => way.id + "-#{index}", :car => way.car, :bike => way.bike, :train => way.train, :pedestrian =>  way.pedestrian, :name =>  way.name, :length_in_meter => length_in_meter, :geometry => way_geometry, :boundary_id => nil, :tags => way.options, :conditionnal_costs => way_conditionnal_costs, :junctions => way_nodes.collect(&:id)}
+
+        physical_road_tags = way.options.dup         
+        physical_road_tags["first_node_id"] = way_nodes.first.id
+        physical_road_tags["last_node_id"] =  way_nodes.last.id
+        physical_road_values[way.id + "-#{index}"] = {:objectid => way.id + "-#{index}", :car => way.car, :bike => way.bike, :train => way.train, :pedestrian =>  way.pedestrian, :name =>  way.name, :length_in_meter => length_in_meter, :geometry => way_geometry, :boundary_id => nil, :tags => physical_road_tags, :conditionnal_costs => way_conditionnal_costs, :junctions => way_nodes.collect(&:id)}
       end
 
       physical_road_values
@@ -389,16 +392,7 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
               while next_way != nil
                 start = Time.now
 
-                #old_physical_road = physical_roads.where(:id => old_physical_road_id)
-                #Fix tags build from string
-                tags = {}.tap do |tags| 
-                  next_way.old_physical_road_tags.split(',').each do |pair|                    
-                    key, value = pair.split("=>")
-                    tags[key.gsub(/\"/, "")] = value.gsub(/\"/, "")
-                  end
-                end if next_way.old_physical_road_tags.present?
-
-                physical_road = ActiveRoad::PhysicalRoad.create! :objectid => "#{next_way.old_physical_road_objectid}-#{way_counter}", :boundary_id => next_way.boundary_id, :geometry => next_way.geometry, :tags => tags
+                #old_physical_road = physical_roads.where(:id => old_physical_road_id)               
                 #physical_road.conditionnal_costs = old_physical_road.conditionnal_costs
 
                 # Create departure
@@ -416,6 +410,12 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
                   arrival = ActiveRoad::Junction.find_by_objectid(next_way.arrival_objectid)
                 end
 
+                old_physical_road_tags = next_way.old_physical_road_tags_hash
+                old_physical_road_tags["first_node_id"] = departure.objectid
+                old_physical_road_tags["last_node_id"] =  arrival.objectid 
+                
+                physical_road = ActiveRoad::PhysicalRoad.create! :objectid => "#{next_way.old_physical_road_objectid}-#{way_counter}", :boundary_id => next_way.boundary_id, :geometry => next_way.geometry, :tags => old_physical_road_tags
+                
                 # Add departure and arrival to physical road
                 physical_road.junctions << [departure, arrival]
 
@@ -448,7 +448,7 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
         @boundary_id = boundary_id
         @old_physical_road_id = old_physical_road_id
         @old_physical_road_objectid = old_physical_road_objectid
-        @old_physical_road_tags = old_physical_road_tags
+        @old_physical_road_tags = old_physical_road_tags || ""
         @old_physical_road_geometry = old_physical_road_geometry
         @old_departure_objectid = old_departure_objectid
         @old_departure_geometry = old_departure_geometry
@@ -457,6 +457,16 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
         @geometry = geometry       
       end
 
+      def old_physical_road_tags_hash
+        #Fix tags build from string
+        tags = {}.tap do |tags| 
+          old_physical_road_tags.split(',').each do |pair|                    
+            key, value = pair.split("=>")
+            tags[key.gsub(/\"/, "")] = value.gsub(/\"/, "")
+          end
+        end
+      end
+      
       def departure
         #puts "geometry class #{geometry.class}, value #{geometry.inspect}"
         geometry.points.first if geometry
