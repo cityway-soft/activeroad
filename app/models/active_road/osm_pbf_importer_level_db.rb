@@ -306,7 +306,8 @@ module ActiveRoad
       if split_ways
         simple_ways = []
         simple_ways_not_line_string = 0
-        
+
+        # Fix : Produce 2 ways when way is tangent to boundary borders for each boundary
         # Get geometries in boundary      
         sql = "SELECT b.id AS boundary_id, p.id AS physical_road_id, p.objectid AS physical_road_objectid, p.tags AS physical_road_tags, ST_AsText(p.geometry) AS physical_road_geometry, 
 j1.objectid AS departure_objectid, ST_AsText(j1.geometry) AS departure_geometry, 
@@ -355,7 +356,9 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
        
         # Prepare reordering ways         
         simple_ways_by_old_physical_road_id = simple_ways.group_by{|sw| sw.old_physical_road_id}
-        
+
+        # Hack : in the code we take the first one which has an intersection point and it deletes
+        # dual segment tangent on the boundary borders 
         simple_ways_by_old_physical_road_id.each do |old_physical_road_id, ways|
           ways.each do |way|
             if way.departure == way.old_departure_geometry
