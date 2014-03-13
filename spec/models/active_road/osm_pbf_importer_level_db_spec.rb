@@ -207,7 +207,7 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     let!(:boundary2) { create(:boundary, :geometry => multi_polygon( [ polygon( point(0,2), point(2,2), point(2,4), point(0,4) ) ] ) ) }
     
     it "should split way in three parts" do
-      physical_road = create(:physical_road, :geometry => line_string("-1.0 1.0, 1.0 1.0, 1.0 2.0, 1.0 3.0"), :boundary_id => nil, :tags => {"bridge" => "true"})
+      physical_road = create(:physical_road, :geometry => line_string("-1.0 1.0, 1.0 1.0, 1.0 2.0, 1.0 3.0"), :boundary_id => nil, :tags => {"bridge" => "true", "first_node_id" => "1", "last_node_id" => "2"})
       departure = create(:junction, :geometry => point(-1.0, 1.0))
       arrival = create(:junction, :geometry => point(1.0, 3.0))
       physical_road.junctions << [departure, arrival]

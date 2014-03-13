@@ -462,7 +462,7 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
         tags = {}.tap do |tags| 
           old_physical_road_tags.split(',').each do |pair|                    
             key, value = pair.split("=>")
-            tags[key.gsub(/\"/, "")] = value.gsub(/\"/, "")
+            tags[key.gsub(/\W/, "")] = value.gsub(/\W/, "")
           end
         end
       end
