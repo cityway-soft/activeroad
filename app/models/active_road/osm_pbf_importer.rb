@@ -14,7 +14,7 @@ module ActiveRoad
     mattr_reader :way_selected_tags_keys
     mattr_reader :way_optionnal_tags_keys
 
-    @@nodes_selected_tags_keys = [ "addr:housenumber", "addr:city", "addr:postcode", "addr:street" ]
+    @@nodes_selected_tags_keys = [ "addr:housenumber", "addr:city", "addr:postcode", "addr:street", "junction" ]
     mattr_reader :nodes_selected_tags_keys
 
     @@pg_batch_size = 10000 # Not Rails.logger.debug a high value because postgres failed to allocate memory
@@ -117,7 +117,7 @@ module ActiveRoad
     end     
 
     def backup_nodes_pgsql(junctions_values = [])    
-      junction_columns = [:objectid, :geometry]
+      junction_columns = [:objectid, :geometry, :tags]
       # Save junctions in the stack
       ActiveRoad::Junction.import(junction_columns, junctions_values, :validate => false) if junctions_values.present?     
     end

@@ -56,7 +56,7 @@ module ActiveRoad
         geometry = GeoRuby::SimpleFeatures::Point.from_x_y( node.lon, node.lat, 4326) if( node.lon && node.lat )
         
         if node.ways.present? && (node.ways.count >= 2 || node.end_of_way == true )  # Take node with at least two ways or at the end of a way
-          junctions_values << [ node.id, geometry ]
+          junctions_values << [ node.id, geometry, node.tags ]
         end
         
         junction_values_size = junctions_values.size

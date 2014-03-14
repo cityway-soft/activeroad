@@ -166,7 +166,7 @@ shared_examples "an OsmPbfImporter module" do
     let!(:point) { GeoRuby::SimpleFeatures::Point.from_x_y( 0, 0, 4326) }
 
     it "should save junctions in postgresql nodes_database" do         
-      junctions_values = [["1", point], ["2", point]]
+      junctions_values = [["1", point, {}], ["2", point, {}]]
 
       importer.backup_nodes_pgsql(junctions_values)
       expect(ActiveRoad::Junction.all.collect(&:objectid)).to match_array(["1", "2"])
