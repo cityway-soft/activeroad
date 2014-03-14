@@ -1,7 +1,7 @@
 module ActiveRoad
   class LogicalRoad < ActiveRoad::Base
     extend ActiveSupport::Memoizable
-    attr_accessible :objectid, :name
+    attr_accessible :objectid, :name, :boundary_id
 
     has_many :physical_roads, :class_name => "ActiveRoad::PhysicalRoad", :inverse_of => :logical_road
     has_many :numbers, :through => :physical_roads, :class_name => "ActiveRoad::StreetNumber"

@@ -117,13 +117,13 @@ shared_examples "an OsmPbfImporter module" do
   end
 
   describe "#backup_logical_roads_pgsql" do
-    let!(:physical_road) { create(:physical_road) }
     let!(:boundary) { create(:boundary) }
 
     it "should not create a logical road if physical road has no boundary" do
       physical_road = create(:physical_road, :boundary_id => nil)
       subject.backup_logical_roads_pgsql
       expect(ActiveRoad::LogicalRoad.all.size).to eq(0)
+      expect(ActiveRoad::PhysicalRoad.all.collect(&:logical_road_id)).to match_array([nil])
     end
     
     it "should create a logical road with no name and a boundary if physical road has no name but a boundary" do
@@ -131,6 +131,16 @@ shared_examples "an OsmPbfImporter module" do
       subject.backup_logical_roads_pgsql
       expect(ActiveRoad::LogicalRoad.all.size).to eq(1)
       expect(ActiveRoad::LogicalRoad.first.attributes).to include( "boundary_id" => boundary.id )
+      expect(ActiveRoad::PhysicalRoad.all.collect(&:logical_road_id)).to match_array(ActiveRoad::LogicalRoad.all.collect(&:id))
+    end
+    
+    it "should create a logical road with no name and a boundary if physical roads has no name but a boundary" do
+      physical_road = create(:physical_road, :boundary_id => boundary.id)
+      physical_road2 = create(:physical_road, :boundary_id => boundary.id)
+      subject.backup_logical_roads_pgsql
+      expect(ActiveRoad::LogicalRoad.all.size).to eq(1)
+      expect(ActiveRoad::LogicalRoad.first.attributes).to include( "boundary_id" => boundary.id )
+      expect(ActiveRoad::PhysicalRoad.all.collect(&:logical_road_id)).to match_array([ActiveRoad::LogicalRoad.first.id, ActiveRoad::LogicalRoad.first.id])
     end
 
     it "should create a logical road with a name and a boundary if physical road has a name and a boundary" do
@@ -138,6 +148,7 @@ shared_examples "an OsmPbfImporter module" do
       subject.backup_logical_roads_pgsql
       expect(ActiveRoad::LogicalRoad.all.size).to eq(1)
       expect(ActiveRoad::LogicalRoad.first.attributes).to include( "boundary_id" => boundary.id, "name" => "Test" )
+      expect(ActiveRoad::PhysicalRoad.all.collect(&:logical_road_id)).to match_array([ActiveRoad::LogicalRoad.first.id])
     end
 
     it "should create one logical road with a name and a boundary if physical roads have same name and a boundary" do
@@ -146,6 +157,7 @@ shared_examples "an OsmPbfImporter module" do
       subject.backup_logical_roads_pgsql
       expect(ActiveRoad::LogicalRoad.all.size).to eq(1)
       expect(ActiveRoad::LogicalRoad.first.attributes).to include( "boundary_id" => boundary.id, "name" => "Test" )
+      expect(ActiveRoad::PhysicalRoad.all.collect(&:logical_road_id)).to match_array([ActiveRoad::LogicalRoad.first.id, ActiveRoad::LogicalRoad.first.id])
     end
     
   end

@@ -185,11 +185,8 @@ module ActiveRoad
         ActiveRoad::LogicalRoad.transaction do
           group.each do |physical_road|
             # TODO : use geographical data to know if it's the same logical road or not
-            logical_road = ActiveRoad::LogicalRoad.where(["name = :name AND boundary_id = :boundary_id", {:name => physical_road.name ? physical_road.name : "", :boundary_id => physical_road.boundary_id} ]).first_or_create! do |logical_road|
-              logical_road.name = physical_road.name ? physical_road.name : ""
-              logical_road.boundary_id = physical_road.boundary_id
-              logical_road.physical_roads << physical_road
-            end if physical_road.boundary_id.present?
+            logical_road = ActiveRoad::LogicalRoad.where(["name = :name AND boundary_id = :boundary_id", {:name => physical_road.name ? physical_road.name : "", :boundary_id => physical_road.boundary_id } ]).first_or_create!(:name => physical_road.name.present? ? physical_road.name : "", :boundary_id => physical_road.boundary_id) if physical_road.boundary_id
+            logical_road.physical_roads << physical_road if logical_road
           end
         end
       end
