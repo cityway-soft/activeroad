@@ -60,13 +60,16 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
     path_weights += path_weight(path.length_in_meter) if path.respond_to?(:length_in_meter)
     
     # Add junction weight if it's a junction with a waiting constraint
-    if path.class != GeoRuby::SimpleFeatures::Point && path.departure.class == ActiveRoad::Junction && path.departure && path.departure.waiting_constraint
+    if !(GeoRuby::SimpleFeatures::Point === path)  && ActiveRoad::Junction === path.departure && path.departure.waiting_constraint
       path_weights += path.departure.waiting_constraint
     end
 
     # Add physical road weight if it's a physical road
-    if path.class == ActiveRoad::Path && path.physical_road && path.physical_road.physical_road_conditionnal_costs.present?
-      cc_percentage = request_conditionnal_costs_linker.conditionnal_costs_sum(path.physical_road.physical_road_conditionnal_costs)
+    physical_road = path.physical_road if ActiveRoad::Path === path
+    physical_road_conditionnal_costs = physical_road.physical_road_conditionnal_costs if physical_road
+
+    if physical_road && physical_road_conditionnal_costs
+      cc_percentage = request_conditionnal_costs_linker.conditionnal_costs_sum(physical_road_conditionnal_costs)
       path_weights += path_weight(path.length_in_meter, cc_percentage) if path.respond_to?(:length_in_meter)
     end
     
@@ -78,7 +81,7 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
   end
   
   def geometry
-    @geometry ||= GeoRuby::SimpleFeatures::LineString.merge path.collect { |n| n.to_geometry }.select { |g| GeoRuby::SimpleFeatures::LineString === g }
+    @geometry ||= GeoRuby::SimpleFeatures::LineString.merge path.collect{ |n| n.to_geometry }.select{ |g| GeoRuby::SimpleFeatures::LineString === g }
   end
 
   #-----------------------------------------
@@ -104,7 +107,7 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
     context_downhill = context[:downhill] ? context[:downhill] : 0
     context_height = context[:height] ? context[:height] : 0
 
-    if( node.class == ActiveRoad::Path )
+    if( ActiveRoad::Path === node )
       departure = node.departure
       physical_road = node.physical_road            
 
@@ -128,15 +131,18 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
     request = request && ( search_heuristic(node) + weight ) < ( time_heuristic(source) * 4 )
   end
 
-  def ways(node, context={})
+  def ways(node, context={}) 
     paths =
       if GeoRuby::SimpleFeatures::Point === node
+        # Search access to physical roads for departure
         ActiveRoad::AccessLink.from(node)
       else
         node.paths
       end
-    
-    unless GeoRuby::SimpleFeatures::Point === node # For the first point to access physical roads
+
+    # Search for each node if they have physical roads in common with arrival
+    # If true finish the trip and link to arrival
+    unless GeoRuby::SimpleFeatures::Point === node 
       destination_accesses.select do |destination_access|
         if node.access_to_road?(destination_access.physical_road)
           paths << ActiveRoad::Path.new(:departure => node.arrival, :arrival => destination_access, :physical_road => destination_access.physical_road)
@@ -146,8 +152,8 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
 
     array = paths.collect do |path|
       [ path, path_weights(path)]
-    end
-
+    end       
+    
     Hash[array]
   end
 

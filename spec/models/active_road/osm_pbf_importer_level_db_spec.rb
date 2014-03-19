@@ -142,10 +142,10 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     
     it "should iterate ways to save it" do
       
-      subject_without_data.should_receive(:backup_ways_pgsql).exactly(1).times.with( { "1-0" => {:objectid=>"1-0", :car=>true, :bike=>false, :train=>false, :pedestrian=>false, :name=>"Test", :length_in_meter=>314827.08993590315, :geometry=>line, :boundary_id=>nil, :tags=>{"cycleway"=>"lane","first_node_id"=>"1", "last_node_id"=>"2"}, :conditionnal_costs=>[["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]], :junctions=>["1", "2"]},
-                                                                                       "1-1" => {:objectid=>"1-1", :car=>true, :bike=>false, :train=>false, :pedestrian=>false, :name=>"Test", :length_in_meter=>157353.62718543052, :geometry=>line2, :boundary_id=>nil, :tags=>{"cycleway"=>"lane", "first_node_id"=>"2", "last_node_id"=>"3"}, :conditionnal_costs=>[["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]], :junctions=>["2", "3"]},
-                                                                                       "2-0" => {:objectid=>"2-0", :car=>true, :bike=>false, :train=>false, :pedestrian=>false, :name=>"Test", :length_in_meter=>314827.08993590315, :geometry=>line, :boundary_id=>nil, :tags=>{"toll"=>"true", "first_node_id"=>"1", "last_node_id"=>"2"}, :conditionnal_costs=>[["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]], :junctions=>["1", "2"]},
-                                                                                      "3-0" => {:objectid=>"3-0", :car=>true, :bike=>false, :train=>false, :pedestrian=>false, :name=>"Test", :length_in_meter=>314827.08993590315, :geometry=>line, :boundary_id=>nil, :tags=>{"first_node_id"=>"1", "last_node_id"=>"2"}, :conditionnal_costs=>[["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]], :junctions=>["1", "2"]} } )
+      subject_without_data.should_receive(:backup_ways_pgsql).exactly(1).times.with( { "1-0" => {:objectid=>"1-0", :car=>true, :bike=>false, :train=>false, :pedestrian=>false, :name=>"Test", :geometry=>line, :boundary_id=>nil, :tags=>{"cycleway"=>"lane","first_node_id"=>"1", "last_node_id"=>"2"}, :conditionnal_costs=>[["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]], :junctions=>["1", "2"]},
+                                                                                       "1-1" => {:objectid=>"1-1", :car=>true, :bike=>false, :train=>false, :pedestrian=>false, :name=>"Test", :geometry=>line2, :boundary_id=>nil, :tags=>{"cycleway"=>"lane", "first_node_id"=>"2", "last_node_id"=>"3"}, :conditionnal_costs=>[["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]], :junctions=>["2", "3"]},
+                                                                                       "2-0" => {:objectid=>"2-0", :car=>true, :bike=>false, :train=>false, :pedestrian=>false, :name=>"Test", :geometry=>line, :boundary_id=>nil, :tags=>{"toll"=>"true", "first_node_id"=>"1", "last_node_id"=>"2"}, :conditionnal_costs=>[["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]], :junctions=>["1", "2"]},
+                                                                                      "3-0" => {:objectid=>"3-0", :car=>true, :bike=>false, :train=>false, :pedestrian=>false, :name=>"Test", :geometry=>line, :boundary_id=>nil, :tags=>{"first_node_id"=>"1", "last_node_id"=>"2"}, :conditionnal_costs=>[["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]], :junctions=>["1", "2"]} } )
       subject_without_data.iterate_ways
     end
   end
@@ -160,9 +160,9 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
   end
   
   describe "#split_way_with_nodes" do
-    let!(:simple_way) { double("way", :id => "1", :car => false, :bike => false, :train => true, :pedestrian => true, :name => "", :length_in_meter => 3, :nodes => ["1", "2", "3"], :geometry => nil , :options => {} ) }
-    let(:complex_way) { double("way", :id => "2", :car => false, :bike => false, :train => true, :pedestrian => true, :name => "", :length_in_meter => 3, :nodes => ["4", "5", "6", "7", "8"], :geometry => nil , :options => {} ) }
-    let(:complex_way_boundary) { double("way", :id => "2", :car => false, :bike => false, :train => true, :pedestrian => true, :name => "", :length_in_meter => 3, :nodes => ["4", "6", "8"], :geometry => nil , :options => {} ) }
+    let!(:simple_way) { double("way", :id => "1", :car => false, :bike => false, :train => true, :pedestrian => true, :name => "", :nodes => ["1", "2", "3"], :geometry => nil , :options => {} ) }
+    let(:complex_way) { double("way", :id => "2", :car => false, :bike => false, :train => true, :pedestrian => true, :name => "", :nodes => ["4", "5", "6", "7", "8"], :geometry => nil , :options => {} ) }
+    let(:complex_way_boundary) { double("way", :id => "2", :car => false, :bike => false, :train => true, :pedestrian => true, :name => "", :nodes => ["4", "6", "8"], :geometry => nil , :options => {} ) }
 
     before :each do
       # Nodes for simple way
@@ -191,13 +191,13 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     end
 
     it "should return ways splitted" do
-      expect(subject_without_data.split_way_with_nodes(simple_way)).to include( { "1-0" => {:objectid=>"1-0", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :length_in_meter=>111302.53586533663, :geometry=>line_string( "-1 1,0 1"), :boundary_id=>nil, :tags=>{"first_node_id"=>"1", "last_node_id"=>"2"}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["1", "2"]},
-                                                                                      "1-1" => {:objectid=>"1-1", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :length_in_meter=>111302.53586533663, :geometry=>line_string( "0 1,1 1"), :boundary_id=>nil, :tags=>{"first_node_id"=>"2", "last_node_id"=>"3"}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["2", "3"]} } )
+      expect(subject_without_data.split_way_with_nodes(simple_way)).to include( { "1-0" => {:objectid=>"1-0", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :geometry=>line_string( "-1 1,0 1"), :boundary_id=>nil, :tags=>{"first_node_id"=>"1", "last_node_id"=>"2"}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["1", "2"]},
+                                                                                      "1-1" => {:objectid=>"1-1", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :geometry=>line_string( "0 1,1 1"), :boundary_id=>nil, :tags=>{"first_node_id"=>"2", "last_node_id"=>"3"}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["2", "3"]} } )
     end
 
     it "should return ways not splitted" do
       subject_without_data.stub :split_ways => false
-      expect(subject_without_data.split_way_with_nodes(simple_way)).to include( { "1-0" => {:objectid=>"1-0", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :length_in_meter=>222605.07173067325, :geometry=>line_string( "-1 1,0 1,1 1"), :boundary_id=>nil, :tags=>{"first_node_id"=>"1", "last_node_id"=>"3"}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["1", "2", "3"]} } )
+      expect(subject_without_data.split_way_with_nodes(simple_way)).to include( { "1-0" => {:objectid=>"1-0", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :geometry=>line_string( "-1 1,0 1,1 1"), :boundary_id=>nil, :tags=>{"first_node_id"=>"1", "last_node_id"=>"3"}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["1", "2", "3"]} } )
     end
     
   end

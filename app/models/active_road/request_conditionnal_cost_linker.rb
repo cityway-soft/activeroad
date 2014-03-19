@@ -39,7 +39,7 @@ module ActiveRoad
     end
 
     def conditionnal_costs_linked(conditionnal_costs)
-      conditionnal_costs.find_all_by_tags(authorized_constraints)
+      conditionnal_costs.where(:tags => authorized_constraints)
     end
 
     def conditionnal_costs_sum(conditionnal_costs)

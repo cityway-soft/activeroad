@@ -130,9 +130,9 @@ module ActiveRoad
 
     def backup_ways_pgsql(physical_road_values)
       # Save physical roads
-      physical_road_columns = [:objectid, :car, :bike, :train, :pedestrian, :name, :length_in_meter, :geometry, :boundary_id, :tags]
+      physical_road_columns = [:objectid, :car, :bike, :train, :pedestrian, :name, :geometry, :boundary_id, :tags]
       
-      ActiveRoad::PhysicalRoad.import(physical_road_columns, physical_road_values.values.map{ |prv| prv.values_at(:objectid, :car, :bike, :train, :pedestrian, :name, :length_in_meter, :geometry, :boundary_id, :tags) }, :validate => false)
+      ActiveRoad::PhysicalRoad.import(physical_road_columns, physical_road_values.values.map{ |prv| prv.values_at(:objectid, :car, :bike, :train, :pedestrian, :name, :geometry, :boundary_id, :tags) }, :validate => false)
 
       physical_road_conditionnal_costs = []
       physical_road_nodes = {}      

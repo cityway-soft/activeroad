@@ -2,49 +2,51 @@ require 'spec_helper'
 
 describe ActiveRoad::ShortestPath::Finder do
 
-  #        Path schema
-  #
-  #    E-----------------F    
-  #    | _______________/|
-  #    |/                |
-  #    C-----------------D
-  #    |                 |
-  #    |                 |
-  #    A-----------------B 
-  #  
+  shared_context "shared simple graph" do
+    #        Path schema
+    #
+    #    E-----------------F    
+    #    | _______________/|
+    #    |/                |
+    #    C-----------------D
+    #    |                 |
+    #    |                 |
+    #    A-----------------B 
+    #
+    let!(:ab) { create(:physical_road, :objectid => "ab", :geometry => line_string( "0.0 0.0,1.0 0.0" ) ) }
+    let!(:cd) { create(:physical_road, :objectid => "cd", :geometry => line_string( "0.0 1.0,1.0 1.0" ) ) }
+    let!(:ef) { create(:physical_road, :objectid => "ef", :geometry => line_string( "0.0 2.0,1.0 2.0" ) ) }
+    let!(:ac) { create(:physical_road, :objectid => "ac", :geometry => line_string( "0.0 0.0,0.0 1.0" ) ) }
+    let!(:bd) { create(:physical_road, :objectid => "bd", :geometry => line_string( "1.0 0.0,1.0 1.0" ) ) }
+    let!(:ce) { create(:physical_road, :objectid => "ce", :geometry => line_string( "0.0 1.0,0.0 2.0" ) ) }
+    let!(:df) { create(:physical_road, :objectid => "df", :geometry => line_string( "1.0 1.0,1.0 2.0" ) ) }
+    let!(:cf) { create(:physical_road, :objectid => "cf", :geometry => line_string( "0.0 1.0,1.0 2.0" ) ) }
 
-  let(:departure) { point(-0.0001, -0.0001) }
-  let(:arrival) { point(1, 2) }
+    let!(:a) { create(:junction, :objectid => "a", :geometry => point(0.0, 0.0), :physical_roads => [ ab, ac ] ) }
+    let!(:b) { create(:junction, :objectid => "b", :geometry => point(1.0, 0.0), :physical_roads => [ ab, bd ] ) }
+    let!(:c) { create(:junction, :objectid => "c", :geometry => point(0.0, 1.0), :physical_roads => [ cd, ac, ce, cf ] ) }
+    let!(:d) { create(:junction, :objectid => "d", :geometry => point(1.0, 1.0), :physical_roads => [ cd, bd, df ] ) }
+    let!(:e) { create(:junction, :objectid => "e", :geometry => point(0.0, 2.0), :physical_roads => [ ce, ef ] ) }
+    let!(:f) { create(:junction, :objectid => "f", :geometry => point(1.0, 2.0), :physical_roads => [ ef, df, cf ] ) }
+    
+  end
+  
+  let(:departure) { point(-0.0005, 0.0005) }
+  let(:arrival) { point(1.0005, 1.98) }
   let(:speed) { 4 }
   let(:constraints) { ["bike"] }
 
   describe "#path" do       
-
-    let!(:ab) { create(:physical_road, :objectid => "ab", :geometry => line_string( "0 0,1 0" ) ) }
-    let!(:cd) { create(:physical_road, :objectid => "cd", :geometry => line_string( "0 1,1 1" ) ) }
-    let!(:ef) { create(:physical_road, :objectid => "ef", :geometry => line_string( "0 2,1 2" ) ) }
-    let!(:ac) { create(:physical_road, :objectid => "ac", :geometry => line_string( "0 0,0 1" ) ) }
-    let!(:bd) { create(:physical_road, :objectid => "bd", :geometry => line_string( "1 0,1 1" ) ) }
-    let!(:ce) { create(:physical_road, :objectid => "ce", :geometry => line_string( "0 1,0 2" ) ) }
-    let!(:df) { create(:physical_road, :objectid => "df", :geometry => line_string( "1 1,1 2" ) ) }
-    let!(:cf) { create(:physical_road, :objectid => "cf", :geometry => line_string( "0 1,1 2" ) ) }
-
-    let!(:a) { create(:junction, :objectid => "a", :geometry => point(0, 0), :physical_roads => [ ab, ac ] ) }
-    let!(:b) { create(:junction, :objectid => "b", :geometry => point(1, 0), :physical_roads => [ ab, bd ] ) }
-    let!(:c) { create(:junction, :objectid => "c", :geometry => point(0, 1), :physical_roads => [ cd, ac, ce, cf ] ) }
-    let!(:d) { create(:junction, :objectid => "d", :geometry => point(1, 1), :physical_roads => [ cd, bd, df ] ) }
-    let!(:e) { create(:junction, :objectid => "e", :geometry => point(0, 2), :physical_roads => [ ce, ef ] ) }
-    let!(:f) { create(:junction, :objectid => "f", :geometry => point(1, 2), :physical_roads => [ ef, df, cf ] ) }
+    include_context "shared simple graph"
     
     it "should find a solution between first and last road with with no constraints" do
       path = ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4).path
-      path.should_not be_blank
       path.size.should == 7
       path[0].should == departure
       path[1].class.should == ActiveRoad::AccessLink
       path[2].physical_road.objectid.should == "ac"
       path[3].physical_road.objectid.should == "cf"
-      path[4].physical_road.objectid.should == "ef"
+      path[4].physical_road.objectid.should == "df"
       path[5].class.should == ActiveRoad::AccessLink
       path[6].should == arrival
     end  
@@ -52,33 +54,46 @@ describe ActiveRoad::ShortestPath::Finder do
     it "should find a solution between first and last road with constraints" do
       cf_conditionnal_costs = create(:physical_road_conditionnal_cost, :physical_road => cf, :tags => "bike", :cost => 0.7)
       path = ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4, ["bike"]).path
-      path.should_not be_blank
       path.size.should == 7
       path[0].should == departure
       path[1].class.should == ActiveRoad::AccessLink
       path[2].physical_road.objectid.should == "ac"
-      path[3].physical_road.objectid.should == "ce"
-      path[4].physical_road.objectid.should == "ef"
+      path[3].physical_road.objectid.should == "cd"
+      path[4].physical_road.objectid.should == "df"
       path[5].class.should == ActiveRoad::AccessLink
       path[6].should == arrival
     end
     
     it "should find a solution between first and last road with constraints which block the itinerary" do
-      cf_conditionnal_costs = create(:physical_road_conditionnal_cost, :physical_road => cf, :tags => "bike", :cost => 0.5)  
+      cf_conditionnal_costs = create(:physical_road_conditionnal_cost, :physical_road => cf, :tags => "bike", :cost => 0)  
       path = ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4, ["~bike"]).path
-      path.should_not be_blank
       path.size.should == 7
       path[0].should == departure
       path[1].class.should == ActiveRoad::AccessLink
       path[2].physical_road.objectid.should == "ac"
-      path[3].physical_road.objectid.should == "ce"
-      path[4].physical_road.objectid.should == "ef"
+      path[3].physical_road.objectid.should == "cd"
+      path[4].physical_road.objectid.should == "df"
       path[5].class.should == ActiveRoad::AccessLink
       path[6].should == arrival
     end
 
     it "should return something when no solution" do
-      subject = ActiveRoad::ShortestPath::Finder.new departure, arrival, 4, constraints
+      departure = point(-0.01, 0.01)
+      path = ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4).path
+      expect(path).to eq([])      
+    end
+
+    it "should return something when departure or arrival are 'outside the graph'" do
+      departure = point(-0.0005, -0.0005)
+      path = ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4).path
+      path.size.should == 8
+      path[0].should == departure
+      path[1].class.should == ActiveRoad::AccessLink
+      path[2].physical_road.objectid.should == "ab"
+      path[3].physical_road.objectid.should == "ac"
+      path[4].physical_road.objectid.should == "cf"
+      path[6].class.should == ActiveRoad::AccessLink
+      path[7].should == arrival
     end
     
   end
@@ -179,27 +194,12 @@ describe ActiveRoad::ShortestPath::Finder do
   end
 
   describe "#geometry" do         
-
-    let!(:ab) { create(:physical_road, :objectid => "ab", :geometry => line_string( "0 0,1 0" ) ) }
-    let!(:cd) { create(:physical_road, :objectid => "cd", :geometry => line_string( "0 1,1 1" ) ) }
-    let!(:ef) { create(:physical_road, :objectid => "ef", :geometry => line_string( "0 2,1 2" ) ) }
-    let!(:ac) { create(:physical_road, :objectid => "ac", :geometry => line_string( "0 0,0 1" ) ) }
-    let!(:bd) { create(:physical_road, :objectid => "bd", :geometry => line_string( "1 0,1 1" ) ) }
-    let!(:ce) { create(:physical_road, :objectid => "ce", :geometry => line_string( "0 1,0 2" ) ) }
-    let!(:df) { create(:physical_road, :objectid => "df", :geometry => line_string( "1 1,1 2" ) ) }
-    let!(:cf) { create(:physical_road, :objectid => "cf", :geometry => line_string( "0 1,1 2" ) ) }
-
-    let!(:a) { create(:junction, :objectid => "a", :geometry => point(0, 0), :physical_roads => [ ab, ac ] ) }
-    let!(:b) { create(:junction, :objectid => "b", :geometry => point(1, 0), :physical_roads => [ ab, bd ] ) }
-    let!(:c) { create(:junction, :objectid => "c", :geometry => point(0, 1), :physical_roads => [ cd, ac, ce, cf ] ) }
-    let!(:d) { create(:junction, :objectid => "d", :geometry => point(1, 1), :physical_roads => [ cd, bd, df ] ) }
-    let!(:e) { create(:junction, :objectid => "e", :geometry => point(0, 2), :physical_roads => [ ce, ef ] ) }
-    let!(:f) { create(:junction, :objectid => "f", :geometry => point(1, 2), :physical_roads => [ ef, df, cf ] ) }
-
-    let(:subject) { ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4) }
+    include_context "shared simple graph"
+    
+    let(:shortest_path) { ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4) }
 
     it "should return geometry" do
-      subject.geometry.should_not == nil
+      shortest_path.geometry.should_not == nil
     end
   end
   

@@ -278,13 +278,11 @@ module ActiveRoad
       physical_road_values = {}
       ways_nodes.each_with_index do |way_nodes, index|
         way_geometry = way_geometry(way_nodes)
-        spherical_factory = ::RGeo::Geographic.spherical_factory
-        length_in_meter = spherical_factory.line_string(way_geometry.points.collect(&:to_rgeo)).length
 
         physical_road_tags = way.options.dup         
         physical_road_tags["first_node_id"] = way_nodes.first.id
         physical_road_tags["last_node_id"] =  way_nodes.last.id
-        physical_road_values[way.id + "-#{index}"] = {:objectid => way.id + "-#{index}", :car => way.car, :bike => way.bike, :train => way.train, :pedestrian =>  way.pedestrian, :name =>  way.name, :length_in_meter => length_in_meter, :geometry => way_geometry, :boundary_id => nil, :tags => physical_road_tags, :conditionnal_costs => way_conditionnal_costs, :junctions => way_nodes.collect(&:id)}
+        physical_road_values[way.id + "-#{index}"] = {:objectid => way.id + "-#{index}", :car => way.car, :bike => way.bike, :train => way.train, :pedestrian =>  way.pedestrian, :name =>  way.name, :geometry => way_geometry, :boundary_id => nil, :tags => physical_road_tags, :conditionnal_costs => way_conditionnal_costs, :junctions => way_nodes.collect(&:id)}
       end
 
       physical_road_values

@@ -24,7 +24,7 @@ module ActiveRoad
     has_many :physical_road_conditionnal_costs
 
     acts_as_geom :geometry => :line_string
-    delegate :locate_point, :interpolate_point, :to => :geometry    
+    delegate :locate_point, :interpolate_point, :length, :to => :geometry    
 
     before_create :update_length_in_meter
     before_update :update_length_in_meter
@@ -32,6 +32,7 @@ module ActiveRoad
       if geometry.present?
         spherical_factory = ::RGeo::Geographic.spherical_factory  
         self.length_in_meter = spherical_factory.line_string(geometry.points.collect(&:to_rgeo)).length
+        #self.length_in_meter = length
       end
     end
     
@@ -50,8 +51,8 @@ module ActiveRoad
     # distance in srid format 0.001 ~= 111.3 m à l'équateur
     # TODO : Must convert distance in meters => distance in srid
     def self.nearest_to(location, distance = 0.001)
-      # FIX Limit to 2 physical roads for perf, must be extended
-      with_in(location, distance).closest_to(location).limit(2).includes(:junctions, :physical_road_conditionnal_costs)
+      # FIX Limit to 1 physical roads for perf, must be extended
+      with_in(location, distance).closest_to(location).limit(1)
     end
 
     def self.closest_to(location)
@@ -61,7 +62,7 @@ module ActiveRoad
 
     def self.with_in(location, distance = 0.001)
       location_as_text = location.to_ewkt(false)
-      where "ST_DWithin(ST_GeomFromText(?, 4326), geometry, ?)", location_as_text, distance
+      includes(:physical_road_conditionnal_costs).where("ST_DWithin(ST_GeomFromText(?, 4326), geometry, ?)", location_as_text, distance)
     end
 
     def self.all_within(other)
