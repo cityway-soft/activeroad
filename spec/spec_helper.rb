@@ -7,6 +7,10 @@ require 'rspec/autorun'
 
 require 'factory_girl_rails'
 require 'ruby-prof'
+require 'bullet'
+
+require 'coveralls'
+Coveralls.wear!
 
 ENGINE_RAILS_ROOT=File.join(File.dirname(__FILE__), '../')
 
@@ -42,6 +46,7 @@ RSpec.configure do |config|
   config.infer_base_class_for_anonymous_controllers = false
 
   # Exclude performance test for rspec
+  # To include test with profile run bundle exec rake spec --tag profile:true 
   config.filter_run_excluding :profile => true
 
 end

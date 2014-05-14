@@ -1,4 +1,5 @@
-# ActiveRoad [![Build Status](https://travis-ci.org/dryade/activeroad.png)](http://travis-ci.org/dryade/activeroad?branch=master) [![Dependency Status](https://gemnasium.com/dryade/activeroad.png)](https://gemnasium.com/dryade/activeroad) [![Code Climate](https://codeclimate.com/github/dryade/activeroad.png)](https://codeclimate.com/github/dryade/activeroad)
+# ActiveRoad
+[![Build Status](https://travis-ci.org/dryade/activeroad.png)](http://travis-ci.org/dryade/activeroad?branch=master) [![Dependency Status](https://gemnasium.com/dryade/activeroad.png)](https://gemnasium.com/dryade/activeroad) [![Code Climate](https://codeclimate.com/github/dryade/activeroad.png)](https://codeclimate.com/github/dryade/activeroad) [![Coverage Status](https://img.shields.io/coveralls/dryade/activeroad.svg)](https://coveralls.io/r/dryade/activeroad)
 
 Rails engine with a model for transport networks which includes
  - an itinerary research

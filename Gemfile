@@ -3,8 +3,8 @@ source "http://rubygems.org"
 # Specify your gem's dependencies in activeroad.gemspec
 gemspec
 
-gem 'dr-postgis_adapter', :require => "postgis_adapter"
-#gem "pbf_parser", :git => "https://github.com/planas/pbf_parser.git"
+gem 'dr-postgis_adapter', :path => "/home/luc/projects/postgis_adapter"
+gem 'coveralls', require: false
 
 group :development do
   gem "rails-erd" # Tool to make schema class
