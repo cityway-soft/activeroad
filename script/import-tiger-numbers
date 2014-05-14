@@ -4,7 +4,7 @@ require File.expand_path('../../config/boot', __FILE__)
 
 require 'georuby-ext'
 
-require 'progressbar'
+#require 'progressbar'
 require 'geo_ruby/shp4r/shp'
 
 require 'nokogiri'
@@ -178,12 +178,12 @@ TigerRecord.osm_index = osm_index
 until ARGV.empty?
   file = ARGV.shift
   GeoRuby::Shp4r::ShpFile.open(file) do |shape_file|
-    progress = ProgressBar.new(file, shape_file.record_count)
+    #progress = ProgressBar.new(file, shape_file.record_count)
 
     ActiveRoad::Base.transaction do 
       shape_file.each_record do |shape|
         TigerRecord.new(shape).create_numbers
-        progress.inc
+        #progress.inc
       end
     end
   end
