@@ -3,7 +3,7 @@ source "http://rubygems.org"
 # Specify your gem's dependencies in activeroad.gemspec
 gemspec
 
-gem 'dr-postgis_adapter', :path => "/home/luc/projects/postgis_adapter"
+gem 'dr-postgis_adapter', :require => 'postgis_adapter'
 gem 'coveralls', require: false
 
 group :development do
