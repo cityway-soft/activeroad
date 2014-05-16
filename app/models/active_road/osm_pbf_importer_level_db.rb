@@ -9,11 +9,11 @@ module ActiveRoad
 
     attr_reader :ways_database_path, :nodes_database_path, :pbf_file, :split_ways
 
-    def initialize(pbf_file, nodes_database_path = "/tmp/osm_pbf_nodes_leveldb", ways_database_path = "/tmp/osm_pbf_ways_leveldb", split_ways = true)
+    def initialize(pbf_file, split_ways = false, nodes_database_path = "/tmp/osm_pbf_nodes_leveldb", ways_database_path = "/tmp/osm_pbf_ways_leveldb")
       @pbf_file = pbf_file
+      @split_ways = split_ways
       @nodes_database_path = nodes_database_path
       @ways_database_path = ways_database_path
-      @split_ways = split_ways
     end
 
     def nodes_database

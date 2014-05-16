@@ -1,7 +1,0 @@
-source 'https://rubygems.org'
-
-gem 'rails', '>=3.1.12'
-
-gem 'active_road', :path => '../../'
-gem 'dr-postgis_adapter', :require => "postgis_adapter"
-
