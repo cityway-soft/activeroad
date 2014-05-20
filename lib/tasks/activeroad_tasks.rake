@@ -16,7 +16,7 @@ namespace :active_road do
       begin
         puts "Import data from osm pbf file #{args.file} and with split_ways #{args.split_ways} with LevelDB"
         raise "You should provide a valid osm file" if args.file.blank?
-        ActiveRoad::OsmPbfImporterLevelDb.new(args.file, split_ways).import
+        ActiveRoad::OsmPbfImporterLevelDb.new(args.file, args.split_ways).import
         puts "Completed import successfully."    
       rescue => e
         puts("Failed to import osm data : " + e.message)
