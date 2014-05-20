@@ -5,12 +5,21 @@ class CountTagInOsmData
   
   def initialize(pbf_file, select_tags)
     @pbf_file = pbf_file
-    @select_tags = eval(select_tags)
+    @select_tags = eval(select_tags)   
   end
 
   def has_select_tags?(tags)
     tags.each do |key, value|
       if (@select_tags.keys.include?(key) && @select_tags[key] == '*') || (@select_tags.keys.include?(key) && @select_tags[key] == value)
+        return true
+      end
+    end
+    return false
+  end
+
+  def has_select_attributes?(node)
+    @select_tags.each do |key, value|
+      if (node.key?(key) && @select_tags[key] == '*') || (node.key?(key) && node[key] == value)
         return true
       end
     end
@@ -29,7 +38,7 @@ class CountTagInOsmData
     
     until nodes_parser.nodes.empty?
       nodes_parser.nodes.each do |node|
-        if node.key?(:tags) && has_select_tags?(node[:tags])
+        if (node.key?(:tags) && has_select_tags?(node[:tags])) || has_select_attributes?(node)
           nodes_counter += 1
         end        
       end
@@ -44,20 +53,16 @@ class CountTagInOsmData
     puts "Begin to count ways with specific tags"
     start = Time.now
     ways_parser = ::PbfParser.new(@pbf_file)
-    ways_counter = 0 
+    ways_counter = 0
     puts @select_tags.inspect
+    
     # Process the file until it finds any way.
     ways_parser.next until ways_parser.ways.any?
     
     # Once it found at least one way, iterate to find the remaining ways.     
     until ways_parser.ways.empty?
       ways_parser.ways.each do |way|
-        if way.key?(:tags) && has_select_tags?(way[:tags])          
-          puts way.inspect if way[:id] == 31345618
-          puts way.inspect if way[:id] == 31346056
-          puts way.inspect if way[:id] == 31346749
-          puts way.inspect if way[:id] == 31349698
-          puts way.inspect if way[:id] == 31346058
+        if ( way.key?(:tags) && has_select_tags?(way[:tags]) )  || has_select_attributes?(way)
           ways_counter += 1
         end        
       end        
