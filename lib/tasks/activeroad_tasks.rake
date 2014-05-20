@@ -12,7 +12,7 @@ namespace :active_road do
 
     # bundle exec rake "app:active_road:import:osm_pbf_data[/home/user/test.osm.pbf, true]"
     desc "Import osm data from a pbf file"
-    task :osm_pbf_data_level_db, [:file] => [:environment] do |task, args|      
+    task :osm_pbf_data, [:file] => [:environment] do |task, args|      
       begin
         puts "Import data from osm pbf file #{args.file} and with split_ways #{args.split_ways} with LevelDB"
         raise "You should provide a valid osm file" if args.file.blank?
