@@ -50,9 +50,10 @@ module ActiveRoad
     
     # distance in srid format 0.001 ~= 111.3 m à l'équateur
     # TODO : Must convert distance in meters => distance in srid
-    def self.nearest_to(location, distance = 0.003)
+    def self.nearest_to(location, distance = 0.001)
       # FIX Limit to 1 physical roads for perf, must be extended
-      [closest_to( location )]
+      pr = all_dwithin(location, distance)
+      pr == [] ? [] : [pr.first]
     end
 
   end

@@ -2,9 +2,9 @@ require 'spec_helper'
 
 describe ActiveRoad::OsmPbfImporterLevelDb do
   let(:pbf_file) { File.expand_path("../../../fixtures/test.osm.pbf", __FILE__) }
-  let!(:subject_without_data) { ActiveRoad::OsmPbfImporterLevelDb.new( "", "/tmp/osm_pbf_nodes_test_without_data_leveldb", "/tmp/osm_pbf_ways_test_without_data_leveldb", true ) }
+  let!(:subject_without_data) { ActiveRoad::OsmPbfImporterLevelDb.new( "", true, "/tmp/osm_pbf_nodes_test_without_data_leveldb", "/tmp/osm_pbf_ways_test_without_data_leveldb" ) }
   
-  subject { ActiveRoad::OsmPbfImporterLevelDb.new( pbf_file, "/tmp/osm_pbf_nodes_test_leveldb", "/tmp/osm_pbf_ways_test_leveldb", true ) }  
+  subject { ActiveRoad::OsmPbfImporterLevelDb.new( pbf_file, true, "/tmp/osm_pbf_nodes_test_leveldb", "/tmp/osm_pbf_ways_test_leveldb" ) }  
 
   it_behaves_like "an OsmPbfImporter module" do
     let(:importer) { subject }
