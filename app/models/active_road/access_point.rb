@@ -37,7 +37,7 @@ class ActiveRoad::AccessPoint
   alias_method :geometry, :point_on_road
 
   def access_to_road?(road)
-    physical_road == road
+    physical_road.id == road.id
   end
 
   def name

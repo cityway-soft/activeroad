@@ -9,18 +9,6 @@ module ActiveRoad
     has_and_belongs_to_many :physical_roads, :class_name => "ActiveRoad::PhysicalRoad",:uniq => true
     has_many :junction_conditionnal_costs, :class_name => "ActiveRoad::JunctionConditionnalCost"
 
-    %w[max_speed, max_slope].each do |key|
-      attr_accessible key
-      scope "has_#{key}", lambda { |value| where("properties @> hstore(?, ?)", key, value) }      
-      define_method(key) do
-        properties && properties[key]
-      end
-      
-      define_method("#{key}=") do |value|
-        self.properties = (properties || {}).merge(key => value)
-      end
-    end
-
     def location_on_road(road)
       (@location_on_road ||= {})[road.id] ||= road.locate_point(geometry)
     end
@@ -32,7 +20,7 @@ module ActiveRoad
     end
 
     def access_to_road?(road)
-      physical_roads.include? road
+      physical_roads.pluck(:id).include? road.id
     end
 
     def to_geometry

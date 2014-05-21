@@ -50,27 +50,9 @@ module ActiveRoad
     
     # distance in srid format 0.001 ~= 111.3 m à l'équateur
     # TODO : Must convert distance in meters => distance in srid
-    def self.nearest_to(location, distance = 0.001)
+    def self.nearest_to(location, distance = 0.003)
       # FIX Limit to 1 physical roads for perf, must be extended
-      with_in(location, distance).closest_to(location).limit(1)
-    end
-
-    def self.closest_to(location)
-      location_as_text = location.to_ewkt(false)
-      order("ST_Distance(geometry, ST_GeomFromText('#{location_as_text}', 4326))")
-    end
-
-    def self.with_in(location, distance = 0.001)
-      location_as_text = location.to_ewkt(false)
-      includes(:physical_road_conditionnal_costs).where("ST_DWithin(ST_GeomFromText(?, 4326), geometry, ?)", location_as_text, distance)
-    end
-
-    def self.all_within(other)
-      where "ST_Within(geometry, ST_GeomFromEWKT(E'#{other.as_hex_ewkb}'))"
-    end
-
-    def self.all_intersect(other)
-      where("ST_Intersects(geometry, ST_GeomFromEWKT(E'#{other.as_hex_ewkb}'))")
+      [closest_to( location )]
     end
 
   end
