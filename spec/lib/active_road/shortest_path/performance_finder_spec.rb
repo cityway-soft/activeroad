@@ -4,8 +4,8 @@ require 'spec_helper'
 #    More complex path schema       #
 #####################################
 describe "performance finder test" do       
-  let!(:from) { point(-0.0009, -0.0009) }
-  let!(:to) { point(0.3009, 0.3009) }    
+  let!(:from) { point(0, 0) }
+  let!(:to) { point(0.3, 0.3) }    
   let(:subject) { ActiveRoad::ShortestPath::Finder.new from, to, 4, [] }
   let(:graph_size) { 0.3 }
   let(:increment_coordinates) { 0.01 }
@@ -50,10 +50,19 @@ describe "performance finder test" do
   # Test to read nodes in picardie.osm.pbf data in less 34.910999522 seconds
   # Test to read nodes and create objects in picardie.osm.pbf data in less 190.617743468 seconds
   # Test to write nodes in picardie.osm.pbf data in less  seconds
+  # Grille 30 * 30
+  # 961 junctions
+  # 1802 physical_roads
   
   it "should evaluate path and profile it", :profile => true do
-    puts subject.path.inspect
-    #subject.path.count.should == graph_size_by_unit * 2 + 4
+    result = ::RubyProf.profile {      
+      subject.path.count.should == graph_size_by_unit * 2 + 4
+    }
+    puts "subject.path #{subject.path.inspect}"
+    # Print a graph profile to text
+    open("tmp/performance/callgrind.profile", "w") do |f|
+      ::RubyProf::CallTreePrinter.new(result).print(f, :min_percent => 1)
+    end
   end
 
 end

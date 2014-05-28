@@ -26,12 +26,11 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'activerecord', '3.2.18'
   s.add_dependency 'activerecord-postgres-hstore'
-  #s.add_dependency 'activerecord-postgis-adapter'
-  s.add_dependency 'dr-postgis_adapter', '0.8.4'
+  s.add_dependency 'activerecord-postgis-adapter', '~>0.6.0' 
+  s.add_dependency 'ffi-geos'
   s.add_dependency 'sqlite3', '~> 1.3.7'
   s.add_dependency 'pg', '>= 0.15.1'
   s.add_dependency 'activerecord-import', '0.4.1'
-  s.add_dependency 'georuby-ext', "0.0.5"
   s.add_dependency 'nokogiri'
   s.add_dependency 'saxerator'
   s.add_dependency 'shortest_path', '0.0.4'

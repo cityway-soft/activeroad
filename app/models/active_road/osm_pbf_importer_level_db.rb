@@ -16,6 +16,10 @@ module ActiveRoad
       @ways_database_path = ways_database_path
     end
 
+    def geos_factory
+      ActiveRoad::Base.geos_factory
+    end 
+    
     def nodes_database
       @nodes_database ||= LevelDBNative::DB.make nodes_database_path, :create_if_missing => true
     end
@@ -53,7 +57,7 @@ module ActiveRoad
       nodes_database.each { |key, value|
         nodes_counter += 1
         node = Marshal.load(value)
-        geometry = GeoRuby::SimpleFeatures::Point.from_x_y( node.lon, node.lat, 4326) if( node.lon && node.lat )
+        geometry = geos_factory.point( node.lon, node.lat ) if( node.lon && node.lat )
         
         if node.ways.present? && (node.ways.count >= 2 || node.end_of_way == true )  # Take node with at least two ways or at the end of a way
           junctions_values << [ node.id, geometry, node.tags ]
@@ -282,7 +286,7 @@ module ActiveRoad
         physical_road_tags = way.options.dup         
         physical_road_tags["first_node_id"] = way_nodes.first.id
         physical_road_tags["last_node_id"] =  way_nodes.last.id
-        physical_road_values[way.id + "-#{index}"] = {:objectid => way.id + "-#{index}", :car => way.car, :bike => way.bike, :train => way.train, :pedestrian =>  way.pedestrian, :name =>  way.name, :geometry => way_geometry, :boundary_id => nil, :tags => physical_road_tags, :conditionnal_costs => way_conditionnal_costs, :junctions => way_nodes.collect(&:id)}
+        physical_road_values["#{way.id}-#{index}"] = {:objectid => "#{way.id}-#{index}", :car => way.car, :bike => way.bike, :train => way.train, :pedestrian =>  way.pedestrian, :name =>  way.name, :geometry => way_geometry, :boundary_id => nil, :tags => physical_road_tags, :conditionnal_costs => way_conditionnal_costs, :junctions => way_nodes.collect(&:id)}
       end
 
       physical_road_values
@@ -300,7 +304,7 @@ module ActiveRoad
           end
         end
       end
-
+      
       if split_ways
         simple_ways = []
         simple_ways_not_line_string = 0
@@ -316,11 +320,11 @@ WHERE p.boundary_id IS NULL AND ST_Crosses( b.geometry, p.geometry)
 AND j1.id = jp.junction_id AND p.id = jp.physical_road_id AND ST_Equals(ST_StartPoint(p.geometry), j1.geometry)
 AND j2.id = jp2.junction_id AND p.id = jp2.physical_road_id AND ST_Equals(ST_EndPoint(p.geometry), j2.geometry)".gsub(/^( |\t)+/, "")      
         ActiveRoad::PhysicalRoad.connection.select_all( sql ).each do |result|
-          intersection_geometry = GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['intersection_geometry']}")
+          intersection_geometry = geos_factory.parse_wkt("#{result['intersection_geometry']}")
 
           # Not take in consideration point intersection!!
-          if intersection_geometry.class == GeoRuby::SimpleFeatures::LineString
-            simple_way = SimpleWay.new(result["boundary_id"], result["physical_road_id"], result["physical_road_objectid"], result["physical_road_tags"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['physical_road_geometry']}"), result["departure_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['departure_geometry']}"), result["arrival_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['arrival_geometry']}"), intersection_geometry )
+          if RGeo::Feature::LineString === intersection_geometry
+            simple_way = SimpleWay.new(result["boundary_id"], result["physical_road_id"], result["physical_road_objectid"], result["physical_road_tags"], geos_factory.parse_wkt("#{result['physical_road_geometry']}"), result["departure_objectid"], geos_factory.parse_wkt("#{result['departure_geometry']}"), result["arrival_objectid"], geos_factory.parse_wkt("#{result['arrival_geometry']}"), intersection_geometry )
             # Delete boucle line string Ex : 9938647-4
             simple_ways << simple_way if simple_way.departure != simple_way.arrival
           else
@@ -342,9 +346,9 @@ WHERE j1.id = jp.junction_id AND v.id = jp.physical_road_id AND ST_Equals(ST_Sta
 AND j2.id = jp2.junction_id AND v.id = jp2.physical_road_id AND ST_Equals(ST_EndPoint(v.geometry), j2.geometry)
 AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "") 
         ActiveRoad::PhysicalRoad.connection.select_all( sql ).each do |result|
-          difference_geometry = GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['difference_geometry']}")
-          if difference_geometry.class == GeoRuby::SimpleFeatures::LineString
-            simple_way = SimpleWay.new(nil, result["physical_road_id"], result["physical_road_objectid"], result["physical_road_tags"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['physical_road_geometry']}"), result["departure_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['departure_geometry']}"), result["arrival_objectid"], GeoRuby::SimpleFeatures::Geometry.from_ewkt("SRID=#{ActiveRoad.srid};#{result['arrival_geometry']}"), difference_geometry )
+          difference_geometry = geos_factory.parse_wkt("#{result['difference_geometry']}")
+          if RGeo::Feature::LineString === difference_geometry
+            simple_way = SimpleWay.new(nil, result["physical_road_id"], result["physical_road_objectid"], result["physical_road_tags"], geos_factory.parse_wkt("#{result['physical_road_geometry']}"), result["departure_objectid"], geos_factory.parse_wkt("#{result['departure_geometry']}"), result["arrival_objectid"], geos_factory.parse_wkt("#{result['arrival_geometry']}"), difference_geometry )
             # Delete boucle line string Ex : 9938647-4
             simple_ways << simple_way if simple_way.departure != simple_way.arrival
           else
@@ -375,8 +379,8 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
               way.next = ways.detect{ |select_way| select_way.departure == way.arrival }
             end          
           end
-        end       
-
+        end
+        
         # Save new ways and junctions
         #physical_roads ||= ActiveRoad::PhysicalRoad.where(:objectid => simple_ways_by_old_physical_road_id.keys).includes(:conditionnal_costs)
         
@@ -469,7 +473,6 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
       end
       
       def departure
-        #puts "geometry class #{geometry.class}, value #{geometry.inspect}"
         geometry.points.first if geometry
       end
 
@@ -505,10 +508,10 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
     def way_geometry(nodes)
       points = []
       nodes.each do |node|
-        points << GeoRuby::SimpleFeatures::Point.from_x_y(node.lon, node.lat, 4326)
+        points << geos_factory.point(node.lon, node.lat)
       end
 
-      GeoRuby::SimpleFeatures::LineString.from_points(points, 4326) if points.present? &&  1 < points.count     
+      geos_factory.line_string(points) if points.present? &&  1 < points.count     
     end   
 
     def find_boundary(way_geometry)
@@ -568,7 +571,7 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
                   boundary_polygons = extract_relation_polygon(outer_ways.values, inner_ways.values)
 
                   if boundary_polygons.present?
-                    boundary_geometry = GeoRuby::SimpleFeatures::MultiPolygon.from_polygons( boundary_polygons )
+                    boundary_geometry = geos_factory.multi_polygon( boundary_polygons )
                   
                     # boundaries_values << [ relation[:id], boundary_geometry, tags["name"], tags["admin_level"], tags["addr:postcode"], tags["ref:INSEE"] ]
                     # boundaries_values_size = boundaries_values.size                  

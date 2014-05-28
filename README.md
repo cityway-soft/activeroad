@@ -40,14 +40,9 @@ Example Usage
 ### Import OSM ways
 
 ```sh
-bundle exec rake 'app:active_road:import:osm_pbf_data[/home/user/test.osm.pbf, true]'
+bundle exec rake "app:active_road:import:osm_pbf_data[/home/user/test.osm.pbf]"
 
 ```
-
-* first argument :  osm file you want to use
-* second argument : true if you want splitted ways else false
-
-Actually itinerary research is optimized when ways are not splitted. Splitted ways could be tested with other tool like pg_routing
 
 ### Itinerary research
 

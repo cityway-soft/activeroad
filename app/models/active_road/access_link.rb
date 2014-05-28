@@ -1,5 +1,6 @@
 class ActiveRoad::AccessLink
-
+  include ActiveRoad::RgeoExt
+  
   attr_accessor :departure, :arrival
 
   def initialize(attributes = {})
@@ -20,16 +21,21 @@ class ActiveRoad::AccessLink
     end
   end
 
-  def length
-    @length ||= departure.to_geometry.spherical_distance arrival.to_geometry
+  def departure_geometry
+    @departure_geometry ||= RGeo::Feature::Point === departure ? departure : departure.geometry 
   end
-  # TODO Delete this hack due to postgis adapter in physical road
-  alias_method :length_in_meter, :length 
+
+  def arrival_geometry
+    @arrival_geometry ||= RGeo::Feature::Point === arrival ? arrival : arrival.geometry
+  end
+  
+  def length
+    @length ||= geometry.length
+  end
 
   def geometry
-    @geometry ||= GeoRuby::SimpleFeatures::LineString.from_points [departure.to_geometry, arrival.to_geometry]
+    @geometry ||= @@geos_factory.line_string( [departure_geometry, arrival_geometry] )
   end
-  alias_method :to_geometry, :geometry
 
   delegate :access_to_road?, :to => :arrival
 

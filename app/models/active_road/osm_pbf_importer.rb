@@ -128,51 +128,51 @@ module ActiveRoad
       ActiveRoad::StreetNumber.import(street_number_columns, street_number_values, :validate => false) if street_number_values.present?     
     end   
 
+    def nodes_junctions
+      @nodes_junctions ||= {}.tap do |nodes_junctions|
+        ActiveRoad::Junction.select([:objectid, :id, :geometry]).map { |j| nodes_junctions[j.objectid] = { :id => j.id, :geometry => j.geometry } }
+      end
+    end
+
+    def ways_physical_roads
+      @ways_physical_roads ||= {}.tap do |ways_physical_roads|
+        ActiveRoad::PhysicalRoad.select([:objectid, :id, :geometry]).map { |p| ways_physical_roads[p.objectid] = { :id => p.id, :geometry => p.geometry } }
+      end      
+    end
+    
     def backup_ways_pgsql(physical_road_values)
       # Save physical roads
-      physical_road_columns = [:objectid, :car, :bike, :train, :pedestrian, :name, :geometry, :boundary_id, :tags]
-      
-      ActiveRoad::PhysicalRoad.import(physical_road_columns, physical_road_values.values.map{ |prv| prv.values_at(:objectid, :car, :bike, :train, :pedestrian, :name, :geometry, :boundary_id, :tags) }, :validate => false)
-
-      physical_road_conditionnal_costs = []
-      physical_road_nodes = {}      
-      
-      physical_roads = ActiveRoad::PhysicalRoad.where(:marker => 0)
-      
-      physical_roads.each do |physical_road|
-        physical_road_value = physical_road_values[physical_road.objectid]
-
-        if physical_road_value.present?
-          # Prepare data to save junctions by batch
-          physical_road_nodes[ physical_road.id ] = physical_road_value[:junctions]
-        
-          # Prepare data to save conditionnal costs by batch
-          physical_road_conditionnal_costs += physical_road_value[:conditionnal_costs].collect{ |cc| cc + [physical_road.id] } if physical_road_value[:conditionnal_costs]
-        end
-      end
-      
-      nodes_junctions = {}.tap do |nodes_junctions|
-        (ActiveRoad::Junction.select([:objectid, :id]).map { |j| [j.objectid, j.id] }).each do |node_junction|
-          nodes_junctions[node_junction.first] = node_junction.last
-        end
-      end
+      physical_road_columns = [:objectid, :car, :bike, :train, :pedestrian, :name, :geometry, :boundary_id, :tags]      
+      ActiveRoad::PhysicalRoad.import(physical_road_columns, physical_road_values.values.map{ |prv| prv.values_at(:objectid, :car, :bike, :train, :pedestrian, :name, :geometry, :boundary_id, :tags) }, :validate => false)     
       
       junctions_physical_roads = []
-      physical_road_nodes.each do |physical_road, nodes|
-        nodes.each do |node|
-          # Hack : Normaly you have to take only nodes to be used!!
-          junctions_physical_roads << [ physical_road, nodes_junctions[node] ] if nodes_junctions[node].present?
-        end
-      end               
+      physical_road_conditionnal_costs = []    
+      physical_road_values.each_value do | physical_road_value |       
+        physical_road_value[:junctions].each do |physical_road_junction_value|
+          
+          junction_value = nodes_junctions[physical_road_junction_value]
 
+          if junction_value
+            # Get percentage location for a junction on a physical road
+            junction_percentage_location = ActiveRecord::Base.connection.select_value("SELECT ST_Line_Locate_Point(ST_GeomFromEWKT('#{physical_road_value[:geometry]}'), ST_GeomFromEWKT('#{junction_value[:geometry]}'))")
+            # Get junctions physical roads data
+            junctions_physical_roads << [ ways_physical_roads[ physical_road_value[:objectid] ][:id], junction_value[:id], junction_percentage_location ]
+          end
+        end
+
+        # Get physical roads conditionnal costs data
+        physical_road_conditionnal_costs += physical_road_value[:conditionnal_costs].collect{ |cc| cc + [ ways_physical_roads[ physical_road_value[:objectid] ][:id] ] } if physical_road_value[:conditionnal_costs]
+      end
+      
       # Save junctions
-      junction_physical_road_columns = [:physical_road_id, :junction_id]
+      junction_physical_road_columns = [:physical_road_id, :junction_id, :percentage_location]
       ActiveRoad::JunctionsPhysicalRoad.import(junction_physical_road_columns, junctions_physical_roads, :validate => false)
 
       # Save physical road conditionnal costs
       physical_road_conditionnal_cost_columns = [:tags, :cost, :physical_road_id]
       ActiveRoad::PhysicalRoadConditionnalCost.import(physical_road_conditionnal_cost_columns, physical_road_conditionnal_costs, :validate => false)
 
+      # Mark as treated by first step in import task
       ActiveRoad::PhysicalRoad.update_all( { :marker => 1} )
       
     end
@@ -181,12 +181,14 @@ module ActiveRoad
       Rails.logger.info "Begin to backup logical roads in PostgreSql"
       start = Time.now
 
-      ActiveRoad::PhysicalRoad.find_in_batches(batch_size: 2000) do |group|
+      ActiveRoad::PhysicalRoad.select([:id, :name, :boundary_id]).find_in_batches(batch_size: 2000) do |group|
         ActiveRoad::LogicalRoad.transaction do
           group.each do |physical_road|
             # TODO : use geographical data to know if it's the same logical road or not
-            logical_road = ActiveRoad::LogicalRoad.where(["name = :name AND boundary_id = :boundary_id", {:name => physical_road.name ? physical_road.name : "", :boundary_id => physical_road.boundary_id } ]).first_or_create!(:name => physical_road.name.present? ? physical_road.name : "", :boundary_id => physical_road.boundary_id) if physical_road.boundary_id
-            logical_road.physical_roads << physical_road if logical_road
+            if physical_road.boundary_id.present?
+              logical_road = ActiveRoad::LogicalRoad.where(["name = :name AND boundary_id = :boundary_id", {:name => physical_road.name ? physical_road.name : "", :boundary_id => physical_road.boundary_id } ]).first_or_create!(:name => physical_road.name.present? ? physical_road.name : "", :boundary_id => physical_road.boundary_id)
+              physical_road.update_attribute(:logical_road_id, logical_road.id)
+            end
           end
         end
       end
@@ -200,7 +202,7 @@ module ActiveRoad
       # TODO : Fix the case where many outer rings with many inner rings
       polygons = [].tap do |polygons|
         outer_rings.each { |outer_ring|
-          polygons << GeoRuby::SimpleFeatures::Polygon.from_linear_rings( [outer_ring] + inner_rings )
+          polygons << geos_factory.polygon( outer_ring, inner_rings )
         }
       end
     end
@@ -209,7 +211,7 @@ module ActiveRoad
       closed_ways = []
       endpoints_to_ways = EndpointToWayMap.new
       for way in ways
-        if way.closed?
+        if way.is_closed?
           closed_ways << way
           next
         end
@@ -221,13 +223,13 @@ module ActiveRoad
           for existing_way in to_join_to
             joined = join_way(joined, existing_way)
             endpoints_to_ways.remove_way(existing_way)
-            if joined.closed?
+            if joined.is_closed?
               closed_ways << joined
               break
             end
           end
 
-          if !joined.closed?
+          if !joined.is_closed?
             endpoints_to_ways.add_way(joined)
           end
         else
@@ -243,26 +245,26 @@ module ActiveRoad
     end
 
     def join_way(way, other)
-      if way.closed?
+      if way.is_closed?
         raise StandardError, "Trying to join a closed way to another"
       end
-      if other.closed?
+      if other.is_closed?
         raise StandardError, "Trying to join a way to a closed way"
       end
 
       if way.points.first == other.points.first
-        new_points = other.reverse.points[0..-2] + way.points
+        new_points = other.points.reverse[0..-2] + way.points
       elsif way.points.first == other.points.last
         new_points = other.points[0..-2] + way.points
       elsif way.points.last == other.points.first
         new_points = way.points[0..-2] + other.points
       elsif way.points.last == other.points.last
-        new_points = way.points[0..-2] + other.reverse.points
+        new_points = way.points[0..-2] + other.points.reverse
       else
         raise StandardError, "Trying to join two ways with no end point in common"
       end
 
-      GeoRuby::SimpleFeatures::LineString.from_points(new_points)
+      geos_factory.line_string(new_points)
     end
 
     class EndpointToWayMap

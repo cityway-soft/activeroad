@@ -2,7 +2,8 @@ module ActiveRoad
   class StreetNumber < ActiveRoad::Base
     serialize :tags, ActiveRecord::Coders::Hstore
     attr_accessible :objectid, :tags, :number, :geometry, :physical_road_id, :location_on_road
-
+    set_rgeo_factory_for_column(:geometry, @@geos_factory)
+    
     validates_uniqueness_of :objectid
     validates_presence_of :number, :stored_geometry
 

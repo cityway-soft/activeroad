@@ -2,7 +2,7 @@ FactoryGirl.define do
 
   factory :physical_road, :class => ActiveRoad::PhysicalRoad do
     sequence(:objectid) { |n| "physical_road::#{n}" }    
-    geometry {  GeoRuby::SimpleFeatures::LineString.from_points [GeoRuby::SimpleFeatures::Point.from_x_y(0, 0, ActiveRoad.srid), GeoRuby::SimpleFeatures::Point.from_x_y(1, 1, ActiveRoad.srid)] }
+    geometry "LINESTRING(3 4,10 50,20 25)"
   end
 
 end

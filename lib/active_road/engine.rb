@@ -3,6 +3,8 @@ module ActiveRoad
     require "active_road/migration"
 
     class Engine < ::Rails::Engine
+      #isolate_namespace ActiveRoad
+      
       config.generators do |g|
         g.test_framework :rspec
       end

@@ -90,7 +90,7 @@ shared_examples "an OsmPbfImporter module" do
   end
 
   describe "#backup_ways_pgsql" do
-    let!(:line) { line_string( "0 0,1 0" ) }
+    let!(:line) { geos_factory.line_string( [ geos_factory.point(0, 0),geos_factory.point(1, 0)] ) }
     let!(:junctions) { Array.new(2) { create(:junction) } }
     let!(:physical_road_values) {
       { "1" => { :objectid => "1", :car => true, :bike => false, :train => false, :pedestrian => false, :name => "", :length_in_meter => 1.0, :geometry => line, :boundary_id => nil, :tags => {}, :junctions => [junctions.first.objectid, junctions.last.objectid]},
@@ -163,7 +163,7 @@ shared_examples "an OsmPbfImporter module" do
   end
 
   describe "#backup_nodes_pgsql" do
-    let!(:point) { GeoRuby::SimpleFeatures::Point.from_x_y( 0, 0, 4326) }
+    let!(:point) { geos_factory.point(0, 0) }
 
     it "should save junctions in postgresql nodes_database" do         
       junctions_values = [["1", point, {}], ["2", point, {}]]
@@ -174,7 +174,7 @@ shared_examples "an OsmPbfImporter module" do
   end
 
   describe "#backup_street_numbers_pgsql" do
-    let!(:point) { GeoRuby::SimpleFeatures::Point.from_x_y( 0, 0, 4326) }
+    let!(:point) { geos_factory.point( 0, 0) }
 
     it "should save junctions in postgresql nodes_database" do         
       street_number_values = [["1", point, "7", {}], ["2", point, "7,8,9A", {"addr:street" => "Rue de Noaille"}]]
@@ -185,29 +185,71 @@ shared_examples "an OsmPbfImporter module" do
   end
 
   describe "#extract_relation_polygon" do
-    let!(:first_way_geom) { line_string( "0 0,1 1" ) }
-    let!(:second_way_geom) { line_string( "1 1,2 2" ) }
-    let!(:third_way_geom) { line_string( "2 2,0 0" ) }
+    let!(:p1) { geos_factory.point( 0, 0) }
+    let!(:p2) { geos_factory.point( 1, 1) }
+    let!(:p3) { geos_factory.point( 1, 0) }
+    let!(:first_way_geom) {  geos_factory.line_string( [p1, p2] ) }
+    let!(:second_way_geom) { geos_factory.line_string( [p2, p3] ) }
+    let!(:third_way_geom) { geos_factory.line_string(  [p3, p1] ) }
 
     it "should return an exception if way geometries are not connected" do
-      second_way_geom_not_connected = line_string( "1 1,3 3" )
+      second_way_geom_not_connected = geos_factory.line_string( [p2, p2] )
       expect { importer.extract_relation_polygon([first_way_geom, second_way_geom_not_connected, third_way_geom]) }.to raise_error
     end
 
     it "should return polygon if way geometries are connected" do
-      expect(importer.extract_relation_polygon([first_way_geom, second_way_geom, third_way_geom])).to match_array( [ polygon(point(0.0,0.0), point(1.0,1.0), point(2.0,2.0)) ] )
+      expect(importer.extract_relation_polygon([first_way_geom, second_way_geom, third_way_geom])).to match_array( [ geos_factory.polygon(geos_factory.line_string( [p1, p2, p3, p1] )) ] )
     end
 
     it "should return polygon if way geometries are connected and some of them have points in the reverse order" do
-      second_way_geom_reversed = line_string( "2 2,1 1" ) 
-      expect(importer.extract_relation_polygon([first_way_geom, second_way_geom_reversed, third_way_geom])).to match_array( [ polygon(point(0.0,0.0), point(1.0,1.0), point(2.0,2.0)) ] )
+      second_way_geom_reversed = geos_factory.line_string([ p3, p2] )
+      expect(importer.extract_relation_polygon([first_way_geom, second_way_geom_reversed, third_way_geom])).to match_array( [ geos_factory.polygon(geos_factory.line_string( [p1, p2, p3, p1] )) ] )
     end
       
   end
 
-  describe "#join_ways"
+  describe "#join_ways" do
+    let!(:p1) { geos_factory.point( 0, 0) }
+    let!(:p2) { geos_factory.point( 1, 1) }
+    let!(:p3) { geos_factory.point( 1, 0) }
 
-  describe "#join_way"
+    let(:way1) { geos_factory.line_string([ p1, p2] ) }
+    let(:way2) { geos_factory.line_string([ p2, p3] ) }
+    let(:way3) { geos_factory.line_string([ p3, p1] ) }
+    let(:way2_inversed) { geos_factory.line_string([ p3, p2] ) }
+    let(:way2_closed) { geos_factory.line_string([ p2, p3, p2] ) }
+    
+    it "should return a joined way when join 2 ways" do
+      expect( importer.join_ways([way1, way2, way3]).collect(&:as_text) ).to eq(["SRID=4326;LineString (0.0 0.0, 1.0 1.0, 1.0 0.0, 0.0 0.0)"])
+      expect( importer.join_ways([way1, way2_inversed, way3]).collect(&:as_text) ).to eq(["SRID=4326;LineString (0.0 0.0, 1.0 1.0, 1.0 0.0, 0.0 0.0)"])
+    end
+
+    it "should return StandardError when join one way and a closed way" do
+      expect{importer.join_ways([way1, way2_closed])}.to raise_error(StandardError, "Unclosed boundaries")
+    end
+    
+  end
+
+  describe "#join_way" do
+    let!(:p1) { geos_factory.point( 0, 0) }
+    let!(:p2) { geos_factory.point( 1, 1) }
+    let!(:p3) { geos_factory.point( 2, 2) }
+
+    let(:way1) { geos_factory.line_string([ p1, p2] ) }
+    let(:way2) { geos_factory.line_string([ p2, p3] ) }
+    let(:way2_inversed) { geos_factory.line_string([ p3, p2] ) }
+    let(:way2_closed) { geos_factory.line_string([ p2, p3, p2] ) }
+    
+    it "should return a joined way when join 2 ways" do
+      expect(importer.join_way(way1, way2).as_text).to eq("SRID=4326;LineString (0.0 0.0, 1.0 1.0, 2.0 2.0)")
+      expect(importer.join_way(way1, way2_inversed).as_text).to eq("SRID=4326;LineString (0.0 0.0, 1.0 1.0, 2.0 2.0)")
+    end
+
+    it "should return StandardError when join one way and a closed way" do
+      expect{importer.join_way(way1, way2_closed)}.to raise_error(StandardError, "Trying to join a way to a closed way")
+    end
+    
+  end
 
   describe ActiveRoad::OsmPbfImporter::EndpointToWayMap
   

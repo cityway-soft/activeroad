@@ -11,7 +11,7 @@ module ActiveRoad
     validates :boundary, presence: true
 
     def geometry
-      GeoRuby::SimpleFeatures::MultiLineString.from_line_strings physical_roads.map(&:geometry)
+      @@geos_factory.multi_line_string physical_roads.map(&:geometry)
     end
 
     def at(value)
@@ -30,7 +30,8 @@ module ActiveRoad
     memoize :geometry_at_number
 
     def geometry_at_location(location)
-      geometry.interpolate_point(location) if geometry
+      value =  ActiveRecord::Base.connection.select_value("SELECT ST_Line_Interpolate_Point(ST_GeomFromEWKT('#{self.geometry}'), #{location} )")		
+      value.blank? ? nil : @@geos_factory.parse_wkb(value)
     end
 
     def self.find_all_by_bounds(bounds)

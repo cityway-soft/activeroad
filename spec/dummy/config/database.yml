@@ -1,1 +1,23 @@
-../../../config/database.yml
+defaults: &defaults
+  adapter: postgis
+  encoding: unicode
+  postgis_extension: true
+  pool: 5
+  port: 5434
+  username: roads
+  password: roads0
+  su_username: roads  # substitute a superuser for the database
+  su_password: roads0  # substitute the superuser's password
+
+
+development: 
+  database: activeroads_development
+  <<: *defaults
+
+test: 
+  database: activeroads_test
+  <<: *defaults
+
+production: 
+  database: activeroads2_dev
+  <<: *defaults

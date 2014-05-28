@@ -3,7 +3,9 @@ module ActiveRoad
   class Junction < ActiveRoad::Base
     serialize :tags, ActiveRecord::Coders::Hstore
     attr_accessible :objectid, :tags, :geometry, :height, :waiting_constraint
+    set_rgeo_factory_for_column(:geometry, @@geos_factory)
 
+    
     validates_uniqueness_of :objectid
 
     has_and_belongs_to_many :physical_roads, :class_name => "ActiveRoad::PhysicalRoad",:uniq => true
@@ -23,12 +25,8 @@ module ActiveRoad
       physical_roads.pluck(:id).include? road.id
     end
 
-    def to_geometry
-      geometry
-    end
-
     def to_s
-      "Junction @#{geometry.lng},#{geometry.lat}"
+      "Junction @#{geometry.x},#{geometry.y}"
     end
 
     def name

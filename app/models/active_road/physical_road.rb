@@ -3,8 +3,10 @@ module ActiveRoad
   class PhysicalRoad < ActiveRoad::Base
     extend ::Enumerize
     extend ActiveModel::Naming
+    set_rgeo_factory_for_column(:geometry, @@geos_factory)
+    
 
-    attr_accessible :objectid, :tags, :geometry, :logical_road_id, :boundary_id, :length_in_meter, :minimum_width, :covering, :transport_mode, :slope, :cant, :physical_road_type 
+    attr_accessible :objectid, :tags, :geometry, :logical_road_id, :boundary_id, :minimum_width, :covering, :transport_mode, :slope, :cant, :physical_road_type 
     serialize :tags, ActiveRecord::Coders::Hstore
 
     # TODO : Pass covering in array mode???
@@ -23,37 +25,42 @@ module ActiveRoad
     has_and_belongs_to_many :junctions, :uniq => true
     has_many :physical_road_conditionnal_costs
 
-    acts_as_geom :geometry => :line_string
-    delegate :locate_point, :interpolate_point, :length, :to => :geometry    
-
-    before_create :update_length_in_meter
-    before_update :update_length_in_meter
-    def update_length_in_meter
-      if geometry.present?
-        spherical_factory = ::RGeo::Geographic.spherical_factory  
-        self.length_in_meter = spherical_factory.line_string(geometry.points.collect(&:to_rgeo)).length
-        #self.length_in_meter = length
-      end
+    def length
+      @length ||= geometry.length
     end
     
     def street_name
       logical_road.try(:name) or objectid
     end
 
+    def locate_point(point)
+      value =  ActiveRecord::Base.connection.select_value("SELECT ST_Line_Locate_Point(ST_GeomFromEWKT('#{self.geometry}'), ST_GeomFromEWKT('#{point}'))")
+      value.blank? ? nil : value.to_f
+    end
+
+    def interpolate_point(fraction)
+      value =  ActiveRecord::Base.connection.select_value("SELECT ST_Line_Interpolate_Point(ST_GeomFromEWKT('#{self.geometry}'), #{fraction} )")		
+      value.blank? ? nil : @@geos_factory.parse_wkb(value)
+    end
+    
     def intersection(other)
-      postgis_calculate(:intersection, [self, other])
+      st_intersection other
     end
 
     def difference(other)
-      postgis_calculate(:difference, [self, other])
+      st_difference other
     end
     
     # distance in srid format 0.001 ~= 111.3 m à l'équateur
     # TODO : Must convert distance in meters => distance in srid
     def self.nearest_to(location, distance = 0.001)
       # FIX Limit to 1 physical roads for perf, must be extended
-      pr = all_dwithin(location, distance)
+      pr = st_dwithin(location, distance)
       pr == [] ? [] : [pr.first]
+    end
+
+    def self.st_dwithin(other, margin=1)
+      where "ST_DWithin(geometry, '#{other.as_text}', #{margin})"
     end
 
   end

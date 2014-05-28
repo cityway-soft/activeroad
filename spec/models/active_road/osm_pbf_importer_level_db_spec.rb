@@ -89,7 +89,7 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
   end
 
   describe "#iterate_nodes" do
-    let!(:point) { GeoRuby::SimpleFeatures::Point.from_x_y( 0, 0, 4326) }
+    let!(:point) { geos_factory.point( 0, 0) }
 
     before :each do      
       subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 2.0, 2.0, "", ["1", "2"], false, {"junction" => "roundabout"})) )
@@ -106,17 +106,16 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     end
     
     it "should iterate nodes to save it" do
-      GeoRuby::SimpleFeatures::Point.stub :from_x_y => point
-      subject_without_data.should_receive(:backup_nodes_pgsql).exactly(1).times.with([["1", point, {"junction" => "roundabout"}], ["2", point, {}] ])
-      subject_without_data.should_receive(:backup_street_numbers_pgsql).exactly(1).times.with([ ["3", point, "7,8", {"addr:street" => "Rue de Noaille"}] ])
+      subject_without_data.should_receive(:backup_nodes_pgsql).exactly(1).times.with( [["1", geos_factory.point(2,2), {"junction" => "roundabout"}], ["2", geos_factory.point(2,2), {}]] )
+      subject_without_data.should_receive(:backup_street_numbers_pgsql).exactly(1).times.with([ ["3", geos_factory.point(2,2), "7,8", {"addr:street" => "Rue de Noaille"}] ])
       subject_without_data.iterate_nodes
     end
   end
 
   describe "#iterate_ways" do
-    let!(:line) { line_string( "0 0,2 2" ) }
-    let!(:line2) { line_string( "2 2,3 3" ) }
-    let!(:boundary) { create(:boundary, :geometry => multi_polygon( [ polygon( point(0,0), point(2,0), point(2,2), point(0,2) ) ] ) ) }
+    let!(:line) { geos_factory.line_string( [ geos_factory.point(0,0), geos_factory.point(2, 2) ] ) }
+    let!(:line2) { geos_factory.line_string( [ geos_factory.point(2,2), geos_factory.point(3, 3) ] ) }
+    let!(:boundary) { create(:boundary, :geometry => "MULTIPOLYGON(((0 0,2 0,2 2,0 2)))" ) }
     
     before :each do
       subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 0.0, 0.0, "", ["1", "2"])) )
@@ -154,7 +153,7 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     let(:nodes) { [double("node1", :id => "1", :lon => 0.0, :lat => 0.0), double("node2", :id => "2", :lon => 1.0, :lat => 1.0), double("node3", :id => "3", :lon => 2.0, :lat => 2.0)] }
     
     it "should update physical road geometry" do        
-      subject.way_geometry(nodes).should ==  GeoRuby::SimpleFeatures::LineString.from_points( [point(0.0,0.0), point(1.0,1.0), point(2.0,2.0) ])
+      subject.way_geometry(nodes).should ==  geos_factory.line_string( [geos_factory.point(0.0,0.0), geos_factory.point(1.0,1.0), geos_factory.point(2.0,2.0) ])
     end
 
   end
@@ -191,25 +190,27 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     end
 
     it "should return ways splitted" do
-      expect(subject_without_data.split_way_with_nodes(simple_way)).to include( { "1-0" => {:objectid=>"1-0", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :geometry=>line_string( "-1 1,0 1"), :boundary_id=>nil, :tags=>{"first_node_id"=>"1", "last_node_id"=>"2"}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["1", "2"]},
-                                                                                      "1-1" => {:objectid=>"1-1", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :geometry=>line_string( "0 1,1 1"), :boundary_id=>nil, :tags=>{"first_node_id"=>"2", "last_node_id"=>"3"}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["2", "3"]} } )
+      expect(subject_without_data.split_way_with_nodes(simple_way)["1-0"]).to include( :objectid=>"1-0", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :boundary_id=>nil, :tags=>{"first_node_id"=>"1", "last_node_id"=>"2"}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["1", "2"])
+      
+      expect(subject_without_data.split_way_with_nodes(simple_way)["1-1"]).to include( :objectid=>"1-1", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :boundary_id=>nil, :tags=>{"first_node_id"=>"2", "last_node_id"=>"3"}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["2", "3"] )
     end
 
     it "should return ways not splitted" do
       subject_without_data.stub :split_ways => false
-      expect(subject_without_data.split_way_with_nodes(simple_way)).to include( { "1-0" => {:objectid=>"1-0", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :geometry=>line_string( "-1 1,0 1,1 1"), :boundary_id=>nil, :tags=>{"first_node_id"=>"1", "last_node_id"=>"3"}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["1", "2", "3"]} } )
+      expect(subject_without_data.split_way_with_nodes(simple_way)["1-0"]).to include( :objectid=>"1-0", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :boundary_id=>nil, :tags=>{"first_node_id"=>"1", "last_node_id"=>"3"}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["1", "2", "3"] )
+
     end
     
   end
 
   describe "#split_way_with_boundaries" do        
-    let!(:boundary) { create(:boundary, :geometry => multi_polygon( [ polygon( point(0,0), point(2,0), point(2,2), point(0,2), point(0,0) ) ] ) ) }
-    let!(:boundary2) { create(:boundary, :geometry => multi_polygon( [ polygon( point(0,2), point(2,2), point(2,4), point(0,4) ) ] ) ) }
+    let!(:boundary) { create(:boundary, :geometry => "MULTIPOLYGON(((0 0,2 0,2 2,0 2,0 0)))" ) }
+    let!(:boundary2) { create(:boundary, :geometry => "MULTIPOLYGON(((0 2,2 2,2 4,0 4,0 2)))" ) }
     
     it "should split way in three parts" do
-      physical_road = create(:physical_road, :geometry => line_string("-1.0 1.0, 1.0 1.0, 1.0 2.0, 1.0 3.0"), :boundary_id => nil, :tags => {"bridge" => "true", "first_node_id" => "1", "last_node_id" => "2"})
-      departure = create(:junction, :geometry => point(-1.0, 1.0))
-      arrival = create(:junction, :geometry => point(1.0, 3.0))
+      physical_road = create(:physical_road, :geometry => "LINESTRING(-1.0 1.0, 1.0 1.0, 1.0 2.0, 1.0 3.0)", :boundary_id => nil, :tags => {"bridge" => "true", "first_node_id" => "1", "last_node_id" => "2"})
+      departure = create(:junction, :geometry => geos_factory.point(-1.0, 1.0))
+      arrival = create(:junction, :geometry => geos_factory.point(1.0, 3.0))
       physical_road.junctions << [departure, arrival]
       
       subject_without_data.split_way_with_boundaries
@@ -226,9 +227,9 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
 
     # Split intersection between segment on perimeter and segment in boundary
     it "should treat geometry differences with multi linestring" do
-      physical_road = create(:physical_road, :geometry => line_string("-1.0 1.0, 1.0 1.0, 1.0 2.0, -1.0 2.0"), :boundary_id => nil)
-      departure = create(:junction, :geometry => point(-1.0, 1.0))
-      arrival = create(:junction, :geometry => point(-1.0, 2.0))
+      physical_road = create(:physical_road, :geometry => "LINESTRING(-1.0 1.0, 1.0 1.0, 1.0 2.0, -1.0 2.0)", :boundary_id => nil)
+      departure = create(:junction, :geometry => geos_factory.point(-1.0, 1.0))
+      arrival = create(:junction, :geometry => geos_factory.point(-1.0, 2.0))
       physical_road.junctions << [departure, arrival]
       
       subject_without_data.split_way_with_boundaries
@@ -236,9 +237,9 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     end
 
     it "should update boundary_id" do
-      physical_road = create(:physical_road, :geometry => line_string("0.0 1.0,1.0 1.0"), :boundary_id => nil)
-      departure = create(:junction, :geometry => point(0.0, 1.0))
-      arrival = create(:junction, :geometry => point(1.0, 1.0))
+      physical_road = create(:physical_road, :geometry => "LINESTRING(0.0 1.0,1.0 1.0)", :boundary_id => nil)
+      departure = create(:junction, :geometry => geos_factory.point(0.0, 1.0))
+      arrival = create(:junction, :geometry => geos_factory.point(1.0, 1.0))
       physical_road.junctions << [departure, arrival]
       
       subject_without_data.split_way_with_boundaries
@@ -291,7 +292,11 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
       subject.backup_relations_pgsql
       ActiveRoad::Boundary.all.size.should == 1
       ActiveRoad::Boundary.first.objectid.should == "73464"
-      ActiveRoad::Boundary.first.geometry.should == multi_polygon( [ polygon( point(-54.3, 5.3), point(-54.3, 5.4), point(-54.1, 5.4), point(-54.1, 5.3), point(-54.3, 5.3) ) ] )
+      
+      ActiveRoad::Boundary.first.geometry.should == geos_factory.multi_polygon(
+            [ geos_factory.polygon(
+                                   geos_factory.line_string([geos_factory.point(-54.3, 5.3), geos_factory.point(-54.3, 5.4), geos_factory.point(-54.1, 5.4), geos_factory.point(-54.1, 5.3), geos_factory.point(-54.3, 5.3) ])
+                                   )] )
     end
 
     # it "should order ways geometry" do

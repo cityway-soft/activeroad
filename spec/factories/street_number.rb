@@ -4,7 +4,7 @@ FactoryGirl.define do
     sequence(:objectid) { |n| "streetnumber::#{n}" }
     number { rand(4000).to_i.to_s }  
     physical_road
-    geometry {  GeoRuby::SimpleFeatures::Point.from_x_y(2.2946, 48.8580, ActiveRoad.srid) }
+    geometry "POINT(6 10)"
     location_on_road { rand }
   end
 

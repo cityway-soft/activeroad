@@ -16,14 +16,29 @@
 require 'shortest_path/finder'
 
 class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
-
-  attr_accessor :speed, :physical_road_filter, :follow_way_filter, :user_weights, :request_conditionnal_costs_linker, :constraints
+  cattr_accessor :geographical_factory, :geos_factory, :cartesian_factory     
+      
+  self.geos_factory = ::RGeo::Geos.factory(:native_interface => :ffi, :srid => 4326,
+                                           :wkt_parser => {:support_ewkt => true, :default_srid => 4326},
+                                           :wkt_generator => {:type_format => :ewkt, :emit_ewkt_srid => true},
+                                           :wkb_parser => {:support_ewkb => true, :default_srid => 4326},
+                                           :wkb_generator => {:type_format => :ewkb, :emit_ewkb_srid => true}
+                                           )
+  self.geographical_factory = ::RGeo::Geographic.spherical_factory(
+                                                                   :wkt_parser => {:support_ewkt => true, :default_srid => 4326},
+                                                                   :wkt_generator => {:type_format => :ewkt, :emit_ewkt_srid => true},
+                                                                   :wkb_parser => {:support_ewkb => true, :default_srid => 4326},
+                                                                   :wkb_generator => {:type_format => :ewkb, :emit_ewkb_srid => true})
+  self.cartesian_factory = ::RGeo::Cartesian.factory()
+  
+  attr_accessor :speed, :physical_road_filter, :follow_way_filter, :user_weights, :request_conditionnal_costs_linker, :constraints, :steps
 
   def initialize(departure, arrival, speed = 4, constraints = [], follow_way_filter = {})    
     super departure, arrival
     @speed = speed * 1000 / 3600 # Convert speed in meter/second
     @constraints = constraints
     @follow_way_filter = follow_way_filter
+    @steps = 0
   end
 
   def request_conditionnal_costs_linker
@@ -32,35 +47,46 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
 
   def destination_accesses 
     @destination_accesses ||= ActiveRoad::AccessPoint.to(destination)
-  end  
+  end
+
+  def destination_geography
+    @destination_geography ||= @@geographical_factory.point(destination.x, destination.y)
+  end
 
   # Return a time in second from node to destination
   # TODO : Tenir compte de la sinuosité de la route???
   def time_heuristic(node)
     if node.respond_to?(:arrival)
-      node.arrival.to_geometry.spherical_distance(destination) / speed
+      if RGeo::Feature::Point === node.arrival # When access to arrival
+        node_geometry = node.arrival
+      else
+        node_geometry = node.arrival.geometry
+      end
     else
-      node.to_geometry.spherical_distance(destination) / speed
+      node_geometry = node # When access from departure
     end
+
+    node_geography = @@geographical_factory.point(node_geometry.x, node_geometry.y)
+    node_geography.distance(destination_geography) / speed
   end
 
   # Return a distance in meter from node to destination
-  def distance_heuristic(node)
-    if node.respond_to?(:arrival)
-      node.arrival.to_geometry.spherical_distance(destination)
-    else
-      node.to_geometry.spherical_distance(destination)
-    end
-  end
+  # def distance_heuristic(node)
+  #   if node.respond_to?(:arrival)
+  #     node.arrival.geometry.spherical_distance(destination)
+  #   else
+  #     node.geometry.spherical_distance(destination)
+  #   end
+  # end
 
   def path_weights(path)
     path_weights = 0
     
     # Add path weight
-    path_weights += path_weight(path.length_in_meter) if path.respond_to?(:length_in_meter)
+    path_weights += path_weight(path.length) if path.respond_to?(:length)
     
     # Add junction weight if it's a junction with a waiting constraint
-    if !(GeoRuby::SimpleFeatures::Point === path)  && ActiveRoad::Junction === path.departure && path.departure.waiting_constraint
+    if !(RGeo::Feature::Point === path)  && ActiveRoad::Junction === path.departure && path.departure.waiting_constraint
       path_weights += path.departure.waiting_constraint
     end
 
@@ -70,18 +96,29 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
 
     if physical_road && physical_road_conditionnal_costs
       cc_percentage = request_conditionnal_costs_linker.conditionnal_costs_sum(physical_road_conditionnal_costs)
-      path_weights += path_weight(path.length_in_meter, cc_percentage) if path.respond_to?(:length_in_meter)
+      path_weights += path_weight(path.length, cc_percentage) if path.respond_to?(:length)
     end
     
     path_weights
   end 
   
-  def path_weight( length_in_meter = 0, percentage = 1 )
-    (length_in_meter / speed) * percentage
+  def path_weight( length = 0, percentage = 1 )
+    (length / speed) * percentage
+  end
+
+  def geometries
+    # Delete point when path departure == arrival
+    path.collect{ |n| n.geometry }.select{ |g| RGeo::Feature::LineString === g }
   end
   
   def geometry
-    @geometry ||= GeoRuby::SimpleFeatures::LineString.merge path.collect{ |n| n.to_geometry }.select{ |g| GeoRuby::SimpleFeatures::LineString === g }
+    # Delete departure and arrival
+    path.pop
+    path.shift
+    # geometries.each do |p|
+    #   puts "#{p.inspect} : #{p.geometry}" if !(RGeo::Feature::LineString === p.geometry) 
+    # end
+    @geometry ||= geos_factory.line_string(geometries.collect(&:points).flatten) if path.present?
   end
 
   #-----------------------------------------
@@ -113,7 +150,7 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
 
       node_uphill = ( physical_road && physical_road.uphill) ? physical_road.uphill : 0
       node_downhill = (physical_road && physical_road.downhill) ? physical_road.downhill : 0
-      node_height = (departure.class != ActiveRoad::AccessPoint && departure && departure.height) ? departure.height : 0
+      node_height = ( !(ActiveRoad::AccessPoint === departure) && departure && departure.height) ? departure.height : 0
       
       return { :uphill => (context_uphill + node_uphill), :downhill => (context_downhill + node_downhill), :height => (context_height + node_height) }
     else
@@ -130,31 +167,38 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
     request = request && context[:height] <= follow_way_filter[:height] if follow_way_filter[:height] && context[:height].present?    
     request = request && ( search_heuristic(node) + weight ) < ( time_heuristic(source) * 4 )
   end
-
-  def ways(node, context={}) 
+  
+  def ways(node, context={})    
     paths =
-      if GeoRuby::SimpleFeatures::Point === node
+      if RGeo::Feature::Point === node
         # Search access to physical roads for departure
         ActiveRoad::AccessLink.from(node)
       else
         node.paths
       end
-
+    
     # Search for each node if they have physical roads in common with arrival
     # If true finish the trip and link to arrival
-    unless GeoRuby::SimpleFeatures::Point === node 
-      destination_accesses.select do |destination_access|
-        if node.access_to_road?(destination_access.physical_road)
+    unless RGeo::Feature::Point === node 
+      destination_accesses.select do |destination_access|        
+        if node.access_to_road?(destination_access.physical_road) && !(ActiveRoad::AccessPoint === node.arrival)
           paths << ActiveRoad::Path.new(:departure => node.arrival, :arrival => destination_access, :physical_road => destination_access.physical_road)
         end
       end
     end
+    puts "_______________"
+    puts "     STEP #{@steps}      "
+    puts "_______________"
+    #puts paths.inspect
+    #puts paths.collect(&:geometry).inspect
 
     array = paths.collect do |path|
       [ path, path_weights(path)]
     end       
+
+    @steps += 1
     
-    Hash[array]
+    Hash[array]    
   end
 
 end

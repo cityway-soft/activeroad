@@ -33,7 +33,6 @@ class ActiveRoad::AccessPoint
   def point_on_road
     @point_on_road ||= physical_road.interpolate_point location_on_road
   end
-  alias_method :to_geometry, :point_on_road
   alias_method :geometry, :point_on_road
 
   def access_to_road?(road)
@@ -41,18 +40,24 @@ class ActiveRoad::AccessPoint
   end
 
   def name
-    "Access on #{physical_road.objectid} @#{point_on_road.to_lat_lng} (for @#{location.to_lat_lng})"
+    "Access on #{physical_road.objectid} @#{point_on_road}"
   end
-
-  delegate :spherical_distance, :to => :point_on_road
 
   def to_s
     name
   end
 
+  def duplicate_junction
+    @duplicate_junction ||= physical_road.junctions.select{ |j| j.geometry == geometry }.first
+  end
+
   def paths(constraints = {})
     unless exit?
-      ActiveRoad::Path.all self, physical_road.junctions, physical_road
+      if duplicate_junction.present?
+        duplicate_junction.paths
+      else
+        ActiveRoad::Path.all self, physical_road.junctions, physical_road
+      end
     else
       [ActiveRoad::AccessLink.new(:departure => self, :arrival => location)]
     end

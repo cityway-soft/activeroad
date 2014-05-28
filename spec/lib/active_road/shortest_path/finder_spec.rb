@@ -13,26 +13,35 @@ describe ActiveRoad::ShortestPath::Finder do
     #    |                 |
     #    A-----------------B 
     #
-    let!(:ab) { create(:physical_road, :objectid => "ab", :geometry => line_string( "0.0 0.0,1.0 0.0" ) ) }
-    let!(:cd) { create(:physical_road, :objectid => "cd", :geometry => line_string( "0.0 1.0,1.0 1.0" ) ) }
-    let!(:ef) { create(:physical_road, :objectid => "ef", :geometry => line_string( "0.0 2.0,1.0 2.0" ) ) }
-    let!(:ac) { create(:physical_road, :objectid => "ac", :geometry => line_string( "0.0 0.0,0.0 1.0" ) ) }
-    let!(:bd) { create(:physical_road, :objectid => "bd", :geometry => line_string( "1.0 0.0,1.0 1.0" ) ) }
-    let!(:ce) { create(:physical_road, :objectid => "ce", :geometry => line_string( "0.0 1.0,0.0 2.0" ) ) }
-    let!(:df) { create(:physical_road, :objectid => "df", :geometry => line_string( "1.0 1.0,1.0 2.0" ) ) }
-    let!(:cf) { create(:physical_road, :objectid => "cf", :geometry => line_string( "0.0 1.0,1.0 2.0" ) ) }
+    let!(:a) { create(:junction, :objectid => "a", :geometry => geos_factory.point(0.0, 0.0) ) }
+    let!(:b) { create(:junction, :objectid => "b", :geometry => geos_factory.point(1.0, 0.0) ) }
+    let!(:c) { create(:junction, :objectid => "c", :geometry => geos_factory.point(0.0, 1.0) ) }
+    let!(:d) { create(:junction, :objectid => "d", :geometry => geos_factory.point(1.0, 1.0) ) }
+    let!(:e) { create(:junction, :objectid => "e", :geometry => geos_factory.point(0.0, 2.0) ) }
+    let!(:f) { create(:junction, :objectid => "f", :geometry => geos_factory.point(1.0, 2.0) ) }
+    
+    let!(:ab) { create(:physical_road, :objectid => "ab", :geometry => geos_factory.line_string([a.geometry, b.geometry]) ) }
+    let!(:cd) { create(:physical_road, :objectid => "cd", :geometry => geos_factory.line_string([c.geometry, d.geometry]) ) }
+    let!(:ef) { create(:physical_road, :objectid => "ef", :geometry => geos_factory.line_string([e.geometry, f.geometry]) ) }
+    let!(:ac) { create(:physical_road, :objectid => "ac", :geometry => geos_factory.line_string([a.geometry, c.geometry]) ) }
+    let!(:bd) { create(:physical_road, :objectid => "bd", :geometry => geos_factory.line_string([b.geometry, d.geometry]) ) }
+    let!(:ce) { create(:physical_road, :objectid => "ce", :geometry => geos_factory.line_string([c.geometry, e.geometry]) ) }
+    let!(:df) { create(:physical_road, :objectid => "df", :geometry => geos_factory.line_string([d.geometry, f.geometry]) ) }
+    let!(:cf) { create(:physical_road, :objectid => "cf", :geometry => geos_factory.line_string([c.geometry, f.geometry]) ) }
 
-    let!(:a) { create(:junction, :objectid => "a", :geometry => point(0.0, 0.0), :physical_roads => [ ab, ac ] ) }
-    let!(:b) { create(:junction, :objectid => "b", :geometry => point(1.0, 0.0), :physical_roads => [ ab, bd ] ) }
-    let!(:c) { create(:junction, :objectid => "c", :geometry => point(0.0, 1.0), :physical_roads => [ cd, ac, ce, cf ] ) }
-    let!(:d) { create(:junction, :objectid => "d", :geometry => point(1.0, 1.0), :physical_roads => [ cd, bd, df ] ) }
-    let!(:e) { create(:junction, :objectid => "e", :geometry => point(0.0, 2.0), :physical_roads => [ ce, ef ] ) }
-    let!(:f) { create(:junction, :objectid => "f", :geometry => point(1.0, 2.0), :physical_roads => [ ef, df, cf ] ) }
+    before :each do 
+      a.physical_roads << [ ab, ac ]
+      b.physical_roads << [ ab, bd ]
+      c.physical_roads << [ cd, ac, ce, cf ]
+      d.physical_roads << [ cd, bd, df ]
+      e.physical_roads << [ ce, ef ]
+      f.physical_roads << [ ef, df, cf ]
+    end
     
   end
   
-  let(:departure) { point(-0.0005, 0.0005) }
-  let(:arrival) { point(1.0005, 1.98) }
+  let(:departure) { geos_factory.point(-0.0005, 0.0005) }
+  let(:arrival) { geos_factory.point(1.0005, 1.98) }
   let(:speed) { 4 }
   let(:constraints) { ["bike"] }
 
@@ -58,7 +67,7 @@ describe ActiveRoad::ShortestPath::Finder do
       path[0].should == departure
       path[1].class.should == ActiveRoad::AccessLink
       path[2].physical_road.objectid.should == "ac"
-      path[3].physical_road.objectid.should == "cd"
+      path[3].physical_road.objectid.should == "cf"
       path[4].physical_road.objectid.should == "df"
       path[5].class.should == ActiveRoad::AccessLink
       path[6].should == arrival
@@ -78,22 +87,22 @@ describe ActiveRoad::ShortestPath::Finder do
     end
 
     it "should return something when no solution" do
-      departure = point(-0.01, 0.01)
+      departure = geos_factory.point(-0.01, 0.01)
       path = ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4).path
       expect(path).to eq([])      
     end
 
     it "should return something when departure or arrival are 'outside the graph'" do
-      departure = point(-0.0005, -0.0005)
+      departure = geos_factory.point(-0.0005, -0.0005)
       path = ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4).path
-      path.size.should == 8
+      path.size.should == 7
       path[0].should == departure
       path[1].class.should == ActiveRoad::AccessLink
-      path[2].physical_road.objectid.should == "ab"
-      path[3].physical_road.objectid.should == "ac"
-      path[4].physical_road.objectid.should == "cf"
-      path[6].class.should == ActiveRoad::AccessLink
-      path[7].should == arrival
+      path[2].physical_road.objectid.should == "ac"
+      path[3].physical_road.objectid.should == "cf"
+      path[4].physical_road.objectid.should == "df"
+      path[5].class.should == ActiveRoad::AccessLink
+      path[6].should == arrival
     end
     
   end
@@ -109,13 +118,13 @@ describe ActiveRoad::ShortestPath::Finder do
     
     it "should return path weight if physical road" do
       path = ActiveRoad::Path.new(:departure => create(:junction), :physical_road => create(:physical_road) ) 
-      path.stub :length_in_meter => 2
+      path.stub :length => 2
       subject.path_weights(path).should == 2 / (4 * 1000/3600)
     end
 
     it "should return path weights and node weight if nodes have weight" do
       path = ActiveRoad::Path.new(:departure => create(:junction, :waiting_constraint => 2.5), :physical_road => create(:physical_road) )
-      path.stub :length_in_meter => 2
+      path.stub :length => 2
       subject.path_weights(path).should == 2 / (4 * 1000/3600) + 2.5
     end
 
@@ -123,7 +132,7 @@ describe ActiveRoad::ShortestPath::Finder do
       physical_road = create(:physical_road)
       physical_road_conditionnal_cost = create(:physical_road_conditionnal_cost, :physical_road => physical_road, :tags => "test", :cost => 0.2)
       path = ActiveRoad::Path.new(:departure => create(:junction), :physical_road => physical_road )
-      path.stub :length_in_meter => 2
+      path.stub :length => 2
       subject.path_weights(path).should == 2 / (4 * 1000/3600) + (2 / (4 * 1000/3600)) * 0.2
     end
 
@@ -131,7 +140,7 @@ describe ActiveRoad::ShortestPath::Finder do
       physical_road = create(:physical_road)
       physical_road_conditionnal_cost = create(:physical_road_conditionnal_cost, :physical_road => physical_road, :tags => "test", :cost => Float::MAX)
       path = ActiveRoad::Path.new(:departure => create(:junction), :physical_road => physical_road )
-      path.stub :length_in_meter => 2
+      path.stub :length => 2
       subject.path_weights(path).should == Float::INFINITY
     end
 
@@ -159,7 +168,7 @@ describe ActiveRoad::ShortestPath::Finder do
     end
 
     it "should return {} if node is not a ActiveRoad::Path" do 
-      node = GeoRuby::SimpleFeatures::Point.from_x_y(0, 0)
+      node = geos_factory.point(0, 0)
       context = {}
       subject.refresh_context(node, context).should == {:uphill=>0, :downhill=>0, :height=>0}
     end
@@ -199,7 +208,7 @@ describe ActiveRoad::ShortestPath::Finder do
     let(:shortest_path) { ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4) }
 
     it "should return geometry" do
-      shortest_path.geometry.should_not == nil
+      shortest_path.geometry.should == geos_factory.parse_wkt("LINESTRING(-0.0005 0.0005, 0.0 0.0, 0.0 0.0, 0.0 1.0, 0.0 1.0, 1.0 2.0, 1.0 2.0, 1.0 1.98, 1.0 1.98, 1.0005 1.98)")
     end
   end
   

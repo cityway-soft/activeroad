@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe ActiveRoad::Junction do
 
-  subject { create(:junction_with_physical_roads) }
+  subject { create(:junction_with_physical_roads) } 
   
   it "should validate objectid uniqueness" do
     other = build :junction, :objectid => subject.objectid 
@@ -11,8 +11,9 @@ describe ActiveRoad::Junction do
 
   describe "#location_on_road" do
     it "should" do
-      # TODO Understand the result
-      subject.location_on_road(subject.physical_roads.first).should == 25.577598616424485
+      ac = create(:physical_road, :geometry => "LINESTRING(0 0, 1 0)" )
+      b = create(:junction, :geometry => "POINT(0.5 2)")
+      b.location_on_road(ac).should == 0.5
     end
   end
 
@@ -35,7 +36,7 @@ describe ActiveRoad::Junction do
   
   describe "#to_s" do
     it "should return junction description" do
-      subject.to_s.should == "Junction @#{subject.geometry.lng},#{subject.geometry.lat}"
+      subject.to_s.should == "Junction @#{subject.geometry.x},#{subject.geometry.y}"
     end
   end
 
