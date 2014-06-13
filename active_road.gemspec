@@ -21,7 +21,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "guard-rspec"
   s.add_development_dependency "guard-migrate"
   s.add_development_dependency "factory_girl_rails", ">= 4.2.1"
-  s.add_development_dependency "rspec-rails", ">= 2.14.1"
+  s.add_development_dependency "rspec-rails", "> 2.14.1", "< 3.0"
   s.add_development_dependency 'rails', '>=3.1.12'
 
   s.add_dependency 'activerecord', '3.2.18'
@@ -39,4 +39,5 @@ Gem::Specification.new do |s|
   s.add_dependency "pbf_parser", '~> 0.0.6'
   s.add_dependency "leveldb-native", '~> 0.5'
   s.add_dependency "snappy"
+  s.add_dependency 'postgres-copy'
 end

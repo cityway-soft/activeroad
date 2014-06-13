@@ -1,4 +1,5 @@
 require 'leveldb-native'
+require 'csv'
 
 module ActiveRoad
   class OsmPbfImporterLevelDb
@@ -46,7 +47,7 @@ module ActiveRoad
       start = Time.now
       nodes_counter = 0
       junctions_values = []
-      street_number_values = []    
+      street_numbers_values = []    
       nodes_database_size = nodes_database.count
       
       # traverse records by iterator      
@@ -56,29 +57,67 @@ module ActiveRoad
         geometry = GeoRuby::SimpleFeatures::Point.from_x_y( node.lon, node.lat, 4326) if( node.lon && node.lat )
         
         if node.ways.present? && (node.ways.count >= 2 || node.end_of_way == true )  # Take node with at least two ways or at the end of a way
-          junctions_values << [ node.id, geometry, node.tags ]
+          junctions_values << [ node.id, geometry.as_hex_ewkb, Time.now, Time.now ]
         end
         
-        junction_values_size = junctions_values.size
-        if junction_values_size > 0 && (junction_values_size == @@pg_batch_size || nodes_counter == nodes_database_size)
-          backup_nodes_pgsql(junctions_values)
+        # junction_values_size = junctions_values.size
+        # if junction_values_size > 0 && (junction_values_size == @@pg_batch_size || nodes_counter == nodes_database_size)
+        #   backup_nodes_pgsql(junctions_values)
           
-          #Reset
-          junctions_values = []    
-        end
+        #   #Reset
+        #   junctions_values = []    
+        # end
 
         if node.addr_housenumber.present?
-          street_number_values << [ node.id, geometry, node.addr_housenumber, node.tags ]
+          street_numbers_values << [ node.id, geometry.as_hex_ewkb, node.addr_housenumber, "#{node.tags.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
         end
 
-        street_number_values_size = street_number_values.size
-        if street_number_values_size > 0 && (street_number_values_size == @@pg_batch_size || nodes_counter == nodes_database_size)
-          backup_street_numbers_pgsql(street_number_values)
+        # street_number_values_size = street_number_values.size
+        # if street_number_values_size > 0 && (street_number_values_size == @@pg_batch_size || nodes_counter == nodes_database_size)
+        #   backup_street_numbers_pgsql(street_number_values)
           
-          #Reset
-          street_number_values = []    
-        end
+        #   #Reset
+        #   street_number_values = []    
+        # end
       }
+
+      # CSV::Converters[:hash] = lambda do |string|
+      #   hash = {}
+      #   puts string
+      #   begin
+      #     string.gsub!(/[{}]/, '')
+      #     string.split(',').each do |pair|
+      #       key,value = pair.split(/=>/)
+      #       hash[key] = value
+      #     end
+      #   rescue ArgumentError
+      #     string
+      #   end
+      # end
+
+      # converters = [:all, :hash]
+      
+      junction_columns = ["objectid", "geometry", "created_at", "updated_at"]
+      CSV.open("/tmp/junctions.csv", "wb:UTF-8") do |csv|
+        csv << junction_columns
+        junctions_values.each do |junction_values|
+          csv << junction_values
+        end        
+      end
+      ActiveRoad::Junction.transaction do                                         
+        ActiveRoad::Junction.pg_copy_from "/tmp/junctions.csv"
+      end
+      
+      street_number_columns = ["objectid", "geometry", "number", "tags", "created_at", "updated_at"]
+      CSV.open("/tmp/street_numbers.csv", "wb:UTF-8") do |csv|
+        csv << street_number_columns
+        street_numbers_values.each do |street_number_values|
+          csv << street_number_values
+        end        
+      end
+      ActiveRoad::StreetNumber.transaction do
+        ActiveRoad::StreetNumber.pg_copy_from "/tmp/street_numbers.csv"
+      end
       
       Rails.logger.info "Finish to backup #{nodes_counter} nodes in PostgreSql in #{(Time.now - start)} seconds"         
     end
@@ -227,7 +266,7 @@ module ActiveRoad
       start = Time.now
    
       ways_counter = 0 
-      physical_road_values = {}
+      physical_roads_values = {}
       ways_database_size = ways_database.count
 
       # traverse records by iterator      
@@ -236,20 +275,56 @@ module ActiveRoad
         way = Marshal.load(value)
 
         unless way.boundary.present?          
-          physical_road_values = physical_road_values.merge( split_way_with_nodes(way) )
-        end
-
-        if (physical_road_values.count >= @@pg_batch_size || (ways_database_size == ways_counter && physical_road_values.present?) )
-          backup_ways_pgsql(physical_road_values)
-          
-          # Reset  
-          physical_road_values = {}
+          physical_roads_values.merge!( split_way_with_nodes(way) )
         end
       }
 
-      # Backup the rest of the way
-      backup_ways_pgsql(physical_road_values) if physical_road_values.present?
+      # Save physical roads
+      physical_road_columns = ["objectid", "car", "bike", "train", "pedestrian", "name", "geometry", "boundary_id", "tags", "created_at", "updated_at"]
+      CSV.open("/tmp/physical_roads.csv", "wb:UTF-8") do |csv|
+        csv << physical_road_columns       
+        physical_roads_values.values.each do |physical_road_values|
+          csv << [ physical_road_values[:objectid], physical_road_values[:car], physical_road_values[:bike], physical_road_values[:train], physical_road_values[:pedestrian], physical_road_values[:name], physical_road_values[:geometry], physical_road_values[:boundary_id], "#{physical_road_values[:tags].to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
+        end        
+      end
+      ActiveRoad::PhysicalRoad.transaction do                                         
+        ActiveRoad::PhysicalRoad.pg_copy_from "/tmp/physical_roads.csv"
+      end
+
+      physical_road_from_way = Hash[ ActiveRoad::PhysicalRoad.select([:id, :objectid]).map{ |p| [p.objectid, p.id] } ]
       
+      # Save physical road conditionnal costs
+      physical_road_conditionnal_cost_columns = ["tags", "cost", "physical_road_id"]
+
+      CSV.open("/tmp/physical_road_conditionnal_costs.csv", "wb:UTF-8") do |csv|
+        csv << physical_road_conditionnal_cost_columns
+        physical_roads_values.values.each do |physical_road_values|
+          physical_road_values[:conditionnal_costs].each do |conditionnal_cost|
+            csv << conditionnal_cost + [ physical_road_from_way[physical_road_values[:objectid]] ]
+          end
+        end        
+      end
+      ActiveRoad::PhysicalRoadConditionnalCost.transaction do                                         
+        ActiveRoad::PhysicalRoadConditionnalCost.pg_copy_from "/tmp/physical_road_conditionnal_costs.csv"
+      end
+            
+      # Save physical road and junctions link
+      junction_from_node = Hash[ ActiveRoad::Junction.select([:id, :objectid]).map{ |j| [j.objectid, j.id] } ]
+      
+      junction_physical_road_columns = ["physical_road_id", "junction_id"]
+      CSV.open("/tmp/junctions_physical_roads.csv", "wb:UTF-8") do |csv|
+        csv << junction_physical_road_columns
+        physical_roads_values.values.each do |physical_road_values|
+          physical_road_values[:junctions].each do |junction_objectid|
+            junction_id = junction_from_node[junction_objectid]            
+            csv << [ physical_road_from_way[physical_road_values[:objectid]], junction_id ] if junction_id.present? # Hack normaly must have only nodes used for physical road
+          end
+        end        
+      end
+      ActiveRoad::JunctionsPhysicalRoad.transaction do                                         
+        ActiveRoad::JunctionsPhysicalRoad.pg_copy_from "/tmp/junctions_physical_roads.csv"
+      end
+            
       Rails.logger.info "Finish to backup #{ways_counter} ways in PostgreSql in #{(Time.now - start)} seconds"      
     end
 
@@ -278,11 +353,11 @@ module ActiveRoad
       physical_road_values = {}
       ways_nodes.each_with_index do |way_nodes, index|
         way_geometry = way_geometry(way_nodes)
-
+        
         physical_road_tags = way.options.dup         
         physical_road_tags["first_node_id"] = way_nodes.first.id
         physical_road_tags["last_node_id"] =  way_nodes.last.id
-        physical_road_values[way.id + "-#{index}"] = {:objectid => way.id + "-#{index}", :car => way.car, :bike => way.bike, :train => way.train, :pedestrian =>  way.pedestrian, :name =>  way.name, :geometry => way_geometry, :boundary_id => nil, :tags => physical_road_tags, :conditionnal_costs => way_conditionnal_costs, :junctions => way_nodes.collect(&:id)}
+        physical_road_values[way.id + "-#{index}"] = {:objectid => way.id + "-#{index}", :car => way.car, :bike => way.bike, :train => way.train, :pedestrian =>  way.pedestrian, :name =>  way.name, :geometry => way_geometry.as_hex_ewkb, :boundary_id => nil, :tags => physical_road_tags, :conditionnal_costs => way_conditionnal_costs, :junctions => way_nodes.collect(&:id)}
       end
 
       physical_road_values
@@ -520,77 +595,118 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
       start = Time.now
       relations_parser = ::PbfParser.new(pbf_file)
       relations_counter = 0
-      boundaries_columns = [:objectid, :geometry, :name, :admin_level, :postal_code, :insee_code]
       boundaries_values = []
       
       # Process the file until it finds any relation.
       relations_parser.next until relations_parser.relations.any?
-
-      ActiveRoad::Boundary.transaction do 
-        # Once it found at least one relation, iterate to find the remaining relations.     
-        until relations_parser.relations.empty?
-          relations_parser.relations.each do |relation|
-            relations_counter+= 1
-            
-            if relation.key?(:tags) && required_relation?(relation[:tags])
-              tags = selected_tags(relation[:tags], @@relation_selected_tags_keys)
-
-              # Use tags["admin_level"] == "8" because catholic boundaries exist!!
-              if tags["admin_level"] == "8" && tags["boundary"] == "administrative"
-                outer_ways = {}
-                inner_ways = {}
-
-                begin 
-                  relation[:members][:ways].each do |member_way|                  
-                    way_data = ways_database[ member_way[:id].to_s ]
-                    way = nil
-                    nodes = []
-                    
-                    if way_data.present?
-                      way = Marshal.load(way_data)
-                      way.nodes.each do |node_id|
-                        node = Marshal.load( nodes_database[node_id.to_s] )
-                        nodes << node
-                      end
-                    else
-                      raise StandardError, "Geometry error : impossible to find way #{member_way[:id]} for relation #{tags["name"]} with id #{relation[:id]}"                      
-                    end
-                    
-                    if  member_way[:role] == "inner"
-                      inner_ways[ member_way[:id] ] = way_geometry(nodes)
-                    elsif member_way[:role] == "outer"
-                      outer_ways[ member_way[:id] ] = way_geometry(nodes)
-                    else # Fix : lot of boundaries have no tags role
-                      outer_ways[ member_way[:id] ] = way_geometry(nodes)
-                    end
-                  end
-                
-                  boundary_polygons = extract_relation_polygon(outer_ways.values, inner_ways.values)
-
-                  if boundary_polygons.present?
-                    boundary_geometry = GeoRuby::SimpleFeatures::MultiPolygon.from_polygons( boundary_polygons )
-                  
-                    # boundaries_values << [ relation[:id], boundary_geometry, tags["name"], tags["admin_level"], tags["addr:postcode"], tags["ref:INSEE"] ]
-                    # boundaries_values_size = boundaries_values.size                  
-                  
-                    #ActiveRoad::Boundary.import(boundaries_columns, boundaries_values, :validate => false)                
-                    ActiveRoad::Boundary.create! :objectid => relation[:id], :geometry => boundary_geometry, :name => tags["name"], :admin_level => tags["admin_level"], :postal_code => tags["addr:postcode"], :insee_code => tags["ref:INSEE"]
-                  end
-                rescue StandardError => e
-                  p "Geometry error : impossible to build polygon for relation #{tags["name"]} with id #{relation[:id]} : #{e.message}"
-                end                
-              end
-            end            
-          end        
+      
+      # Once it found at least one relation, iterate to find the remaining relations.     
+      until relations_parser.relations.empty?
+        relations_parser.relations.each do |relation|
+          relations_counter+= 1
           
-          # When there's no more fileblocks to parse, #next returns false
-          # This avoids an infinit loop when the last fileblock still contains relations
-          break unless relations_parser.next        
+          if relation.key?(:tags) && required_relation?(relation[:tags])
+            tags = selected_tags(relation[:tags], @@relation_selected_tags_keys)
+            
+            # Use tags["admin_level"] == "8" because catholic boundaries exist!!
+            if tags["admin_level"] == "8" && tags["boundary"] == "administrative"
+              outer_ways = {}
+              inner_ways = {}
+              
+              begin 
+                relation[:members][:ways].each do |member_way|                  
+                  way_data = ways_database[ member_way[:id].to_s ]
+                  way = nil
+                  nodes = []
+                  
+                  if way_data.present?
+                    way = Marshal.load(way_data)
+                    way.nodes.each do |node_id|
+                      node = Marshal.load( nodes_database[node_id.to_s] )
+                      nodes << node
+                    end
+                  else
+                    raise StandardError, "Geometry error : impossible to find way #{member_way[:id]} for relation #{tags["name"]} with id #{relation[:id]}"                      
+                  end
+                  
+                  if  member_way[:role] == "inner"
+                    inner_ways[ member_way[:id] ] = way_geometry(nodes)
+                  elsif member_way[:role] == "outer"
+                    outer_ways[ member_way[:id] ] = way_geometry(nodes)
+                  else # Fix : lot of boundaries have no tags role
+                    outer_ways[ member_way[:id] ] = way_geometry(nodes)
+                  end
+                end
+                
+                boundary_polygons = extract_relation_polygon(outer_ways.values, inner_ways.values)
+                
+                if boundary_polygons.present?
+                  boundary_geometry = GeoRuby::SimpleFeatures::MultiPolygon.from_polygons( boundary_polygons ).as_hex_ewkb
+                  
+                  boundaries_values << [ relation[:id], boundary_geometry, tags["name"], tags["admin_level"], tags["addr:postcode"], tags["ref:INSEE"] ]
+                end
+              rescue StandardError => e
+                p "Geometry error : impossible to build polygon for relation #{tags["name"]} with id #{relation[:id]} : #{e.message}"
+              end                
+            end
+          end            
+        end
+        
+        # When there's no more fileblocks to parse, #next returns false
+        # This avoids an infinit loop when the last fileblock still contains relations
+        break unless relations_parser.next                 
       end
 
-      end   
+      boundary_columns = ["objectid", "geometry", "name", "admin_level", "postal_code", "insee_code"]
+      CSV.open("/tmp/boundaries.csv", "wb:UTF-8") do |csv|
+        csv << boundary_columns
+        boundaries_values.each do |boundary_values|
+          csv << boundary_values
+        end        
+      end
+      ActiveRoad::Boundary.transaction do                                         
+        ActiveRoad::Boundary.pg_copy_from "/tmp/boundaries.csv"
+      end
+      
       Rails.logger.info  "Finish to backup #{relations_counter} relations in PostgreSql  in #{(Time.now - start)} seconds"
     end
+
+    def backup_logical_roads_pgsql
+      Rails.logger.info "Begin to backup logical roads in PostgreSql"
+      start = Time.now
+
+      # sorted_physical_roads = {}.tap do |sorted_physical_roads|  
+      #   Hash[ ActiveRoad::PhysicalRoad.select([:id, :boundary_id, :name]).where("physical_roads.boundary_id IS NOT NULL").group_by(&:boundary_id)].each_pair do |boundary, physical_roads|
+      #     puts boundary.inspect
+      #     sorted_physical_roads[boundary] = physical_roads.group_by(&:name)
+      #   end
+      # end
+
+      # logical_road_columns = ["name", "boundary_id"]
+      # CSV.open("/tmp/logical_roads.csv", "wb:UTF-8") do |csv|
+      #   csv << logical_road_columns
+      #   logical_roads_values.each do |logical_road_values|
+      #     csv << logical_road_values
+      #   end        
+      # end
+      # ActiveRoad::LogicalRoad.transaction do                                         
+      #   ActiveRoad::LogicalRoad.pg_copy_from "/tmp/logical_roads.csv"
+      # end
+      
+      ActiveRoad::PhysicalRoad.find_in_batches(batch_size: 2000) do |group|
+        ActiveRoad::LogicalRoad.transaction do
+          group.each do |physical_road|
+            # TODO : use geographical data to know if it's the same logical road or not
+            logical_road = ActiveRoad::LogicalRoad.where(["name = :name AND boundary_id = :boundary_id", {:name => physical_road.name ? physical_road.name : "", :boundary_id => physical_road.boundary_id } ]).first_or_create!(:name => physical_road.name.present? ? physical_road.name : "", :boundary_id => physical_road.boundary_id) if physical_road.boundary_id
+            logical_road.physical_roads << physical_road if logical_road
+          end
+        end
+      end
+      
+      
+      Rails.logger.info "Finish to backup logical roads in PostgreSql in #{(Time.now - start)} seconds"
+    end
+    
 
   end
 end

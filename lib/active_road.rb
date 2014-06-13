@@ -8,6 +8,7 @@ require "pbf_parser"
 require "postgis_adapter"
 require "georuby-ext"
 require 'snappy'
+require 'postgres-copy'
 
 module ActiveRoad
 
