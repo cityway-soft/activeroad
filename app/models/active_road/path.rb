@@ -19,8 +19,8 @@ class ActiveRoad::Path
   def locations_on_road
     [departure, arrival].collect do |endpoint|
       location =
-        if GeoRuby::SimpleFeatures::Point === endpoint
-          road.locate_point endpoint
+        if ActiveRoad::AccessPoint === endpoint
+          road.locate_point endpoint.geometry
         else
           endpoint.location_on_road road
         end
@@ -54,11 +54,42 @@ class ActiveRoad::Path
   end
 
   def geometry_without_cache
-    sorted_locations_on_road = locations_on_road.sort
-    reverse = (sorted_locations_on_road != locations_on_road)
-    geometry = road.line_substring(sorted_locations_on_road.first, sorted_locations_on_road.last)
-    geometry = geometry.reverse if reverse
-    geometry
+    # sorted_locations_on_road = locations_on_road.sort
+    # reverse = (sorted_locations_on_road != locations_on_road)
+    # geometry = road.line_substring(sorted_locations_on_road.first, sorted_locations_on_road.last)
+    # geometry = geometry.reverse if reverse
+    # geometry
+
+    points =  physical_road.geometry.points
+    points_selected = []
+
+    if ActiveRoad::AccessPoint === departure || ActiveRoad::AccessPoint === arrival
+      sorted_locations_on_road = locations_on_road.sort    
+      reverse = (sorted_locations_on_road != locations_on_road)
+      
+      if sorted_locations_on_road == [0, 1]
+        if reverse
+          return physical_road.geometry.reverse
+        else
+          return physical_road.geometry
+        end
+      end
+      
+      return road.line_substring(sorted_locations_on_road.first, sorted_locations_on_road.last)
+    end
+
+    departure_index = points.index(departure.geometry)
+    arrival_index = points.index(arrival.geometry)
+    
+    if departure_index < arrival_index
+      points_selected = points[arrival_index..departure_index]
+    elsif arrival_index < departure_index
+      points_selected = points.reverse![arrival_index..departure_index]
+    else
+      raise StandardError, "Junction is not on the physical road"
+    end
+
+    GeoRuby::SimpleFeatures::LineString.from_points(points)
   end
 
   def geometry_with_cache

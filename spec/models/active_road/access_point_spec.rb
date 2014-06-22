@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe ActiveRoad::AccessPoint do
+describe ActiveRoad::AccessPoint, :type => :model do
   let!(:origin) { point(0, 0) }
   let!(:pr1) { create(:physical_road, :geometry => line_string( "0 0,1 1" )) }
   let!(:pr2) { create(:physical_road, :geometry => line_string( "0.002 0.002,1 1" )) }

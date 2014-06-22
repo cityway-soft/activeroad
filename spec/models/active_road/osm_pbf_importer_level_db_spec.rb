@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe ActiveRoad::OsmPbfImporterLevelDb do
+describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
   let(:pbf_file) { File.expand_path("../../../fixtures/test.osm.pbf", __FILE__) }
   let!(:subject_without_data) { ActiveRoad::OsmPbfImporterLevelDb.new( "", true, "/tmp/osm_pbf_nodes_test_without_data_leveldb", "/tmp/osm_pbf_ways_test_without_data_leveldb" ) }
   
@@ -66,25 +66,25 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
       subject_without_data.update_node_with_way(way_id, node_ids)
       
       node1 = Marshal.load(subject_without_data.nodes_database.get("1"))
-      node1.id.should ==  "1"
-      node1.lon.should == 2.0
-      node1.lat.should == 2.0
-      node1.ways.should == ["1"]
-      node1.end_of_way.should == true
+      expect(node1.id).to eq("1")
+      expect(node1.lon).to eq(2.0)
+      expect(node1.lat).to eq(2.0)
+      expect(node1.ways).to eq(["1"])
+      expect(node1.end_of_way).to eq(true)
 
       node2 = Marshal.load(subject_without_data.nodes_database.get("2"))
-      node2.id.should ==  "2"
-      node2.lon.should == 2.0
-      node2.lat.should == 2.0
-      node2.ways.should == ["1"]
-      node2.end_of_way.should == false
+      expect(node2.id).to eq("2")
+      expect(node2.lon).to eq(2.0)
+      expect(node2.lat).to eq(2.0)
+      expect(node2.ways).to eq(["1"])
+      expect(node2.end_of_way).to eq(false)
 
       node3 = Marshal.load(subject_without_data.nodes_database.get("3"))
-      node3.id.should ==  "3"
-      node3.lon.should == 2.0
-      node3.lat.should == 2.0
-      node3.ways.should == ["1"]
-      node3.end_of_way.should == true
+      expect(node3.id).to eq("3")
+      expect(node3.lon).to eq(2.0)
+      expect(node3.lat).to eq(2.0)
+      expect(node3.ways).to eq(["1"])
+      expect(node3.end_of_way).to eq(true)
     end
   end
 
@@ -117,6 +117,9 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
   describe "#iterate_ways" do
     let!(:line) { line_string( "0 0,2 2" ) }
     let!(:line2) { line_string( "2 2,3 3" ) }
+    let!(:junction1) { create(:junction, :objectid => "1", :geometry => point(0, 0) ) }
+    let!(:junction2) { create(:junction, :objectid => "2", :geometry => point(2, 2) ) }
+    let!(:junction3) { create(:junction, :objectid => "3", :geometry => point(3, 3) ) }
     let!(:boundary) { create(:boundary, :geometry => multi_polygon( [ polygon( point(0,0), point(2,0), point(2,2), point(0,2) ) ] ) ) }
     
     before :each do
@@ -154,7 +157,7 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     let(:nodes) { [double("node1", :id => "1", :lon => 0.0, :lat => 0.0), double("node2", :id => "2", :lon => 1.0, :lat => 1.0), double("node3", :id => "3", :lon => 2.0, :lat => 2.0)] }
     
     it "should update physical road geometry" do        
-      subject.way_geometry(nodes).should ==  GeoRuby::SimpleFeatures::LineString.from_points( [point(0.0,0.0), point(1.0,1.0), point(2.0,2.0) ])
+      expect(subject.way_geometry(nodes)).to eq(GeoRuby::SimpleFeatures::LineString.from_points( [point(0.0,0.0), point(1.0,1.0), point(2.0,2.0) ]))
     end
 
   end
@@ -196,7 +199,7 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     end
 
     it "should return ways not splitted" do
-      subject_without_data.stub :split_ways => false
+      allow(subject_without_data).to receive_messages :split_ways => false
       expect(subject_without_data.split_way_with_nodes(simple_way)).to include( { "1-0" => {:objectid=>"1-0", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :geometry=>line_string( "-1 1,0 1,1 1").as_hex_ewkb, :boundary_id=>nil, :tags=>{"first_node_id"=>"1", "last_node_id"=>"3"}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["1", "2", "3"]} } )
     end
     
@@ -265,18 +268,18 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     
     it "should have import all nodes in a temporary nodes_database" do  
       subject.import
-      ActiveRoad::PhysicalRoad.all.size.should == 8
-      ActiveRoad::PhysicalRoad.all.collect(&:objectid).should =~ ["3-0", "3-1", "5-0", "5-1", "5-2", "6-0", "6-1", "6-2"]
-      ActiveRoad::Boundary.all.size.should == 1
-      ActiveRoad::Boundary.all.collect(&:objectid).should =~ ["73464"]
-      ActiveRoad::PhysicalRoadConditionnalCost.all.size.should == 24
-      ActiveRoad::Junction.all.size.should == 6
-      ActiveRoad::Junction.all.collect(&:objectid).should =~ ["1", "2", "5", "8", "9", "10"]
-      ActiveRoad::StreetNumber.all.size.should == 2
-      ActiveRoad::StreetNumber.all.collect(&:objectid).should =~ ["2646260105", "2646260106"]
-      ActiveRoad::LogicalRoad.all.size.should == 2  
-      ActiveRoad::LogicalRoad.all.collect(&:name).should =~ ["Rue J. Symphorien", ""]
-      ActiveRoad::JunctionsPhysicalRoad.all.size.should == 16
+      expect(ActiveRoad::PhysicalRoad.all.size).to eq(8)
+      expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["3-0", "3-1", "5-0", "5-1", "5-2", "6-0", "6-1", "6-2"])
+      expect(ActiveRoad::Boundary.all.size).to eq(1)
+      expect(ActiveRoad::Boundary.all.collect(&:objectid)).to match_array(["73464"])
+      expect(ActiveRoad::PhysicalRoadConditionnalCost.all.size).to eq(24)
+      expect(ActiveRoad::Junction.all.size).to eq(6)
+      expect(ActiveRoad::Junction.all.collect(&:objectid)).to match_array(["1", "2", "5", "8", "9", "10"])
+      expect(ActiveRoad::StreetNumber.all.size).to eq(2)
+      expect(ActiveRoad::StreetNumber.all.collect(&:objectid)).to match_array(["2646260105", "2646260106"])
+      expect(ActiveRoad::LogicalRoad.all.size).to eq(2)  
+      expect(ActiveRoad::LogicalRoad.all.collect(&:name)).to match_array(["Rue J. Symphorien", ""])
+      expect(ActiveRoad::JunctionsPhysicalRoad.all.size).to eq(16)
     end
   end
 
@@ -289,9 +292,9 @@ describe ActiveRoad::OsmPbfImporterLevelDb do
     
     it "should backup boundary" do      
       subject.backup_relations_pgsql
-      ActiveRoad::Boundary.all.size.should == 1
-      ActiveRoad::Boundary.first.objectid.should == "73464"
-      ActiveRoad::Boundary.first.geometry.should == multi_polygon( [ polygon( point(-54.3, 5.3), point(-54.3, 5.4), point(-54.1, 5.4), point(-54.1, 5.3), point(-54.3, 5.3) ) ] )
+      expect(ActiveRoad::Boundary.all.size).to eq(1)
+      expect(ActiveRoad::Boundary.first.objectid).to eq("73464")
+      expect(ActiveRoad::Boundary.first.geometry).to eq(multi_polygon( [ polygon( point(-54.3, 5.3), point(-54.3, 5.4), point(-54.1, 5.4), point(-54.1, 5.3), point(-54.3, 5.3) ) ] ))
     end
 
     # it "should order ways geometry" do

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe ActiveRoad::Path do
+describe ActiveRoad::Path, :type => :model do
 
 
 

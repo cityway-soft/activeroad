@@ -24,6 +24,7 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
     @speed = speed * 1000 / 3600 # Convert speed in meter/second
     @constraints = constraints
     @follow_way_filter = follow_way_filter
+    @steps = 0
   end
 
   def request_conditionnal_costs_linker
@@ -131,7 +132,7 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
     request = request && ( search_heuristic(node) + weight ) < ( time_heuristic(source) * 4 )
   end
 
-  def ways(node, context={}) 
+  def ways(node, context={})    
     paths =
       if GeoRuby::SimpleFeatures::Point === node
         # Search access to physical roads for departure
@@ -144,15 +145,17 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
     # If true finish the trip and link to arrival
     unless GeoRuby::SimpleFeatures::Point === node 
       destination_accesses.select do |destination_access|
-        if node.access_to_road?(destination_access.physical_road)
+        if node.access_to_road?(destination_access.physical_road) && !(ActiveRoad::AccessPoint === node.arrival)
           paths << ActiveRoad::Path.new(:departure => node.arrival, :arrival => destination_access, :physical_road => destination_access.physical_road)
         end
       end
     end
-
+    
     array = paths.collect do |path|
       [ path, path_weights(path)]
     end       
+
+    @steps += 1
     
     Hash[array]
   end

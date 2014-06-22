@@ -1,18 +1,18 @@
 require 'spec_helper'
 
-describe ActiveRoad::Junction do
+describe ActiveRoad::Junction, :type => :model do
 
   subject { create(:junction_with_physical_roads) }
   
   it "should validate objectid uniqueness" do
     other = build :junction, :objectid => subject.objectid 
-    other.should_not be_valid
+    expect(other).not_to be_valid
   end
 
   describe "#location_on_road" do
     it "should" do
       # TODO Understand the result
-      subject.location_on_road(subject.physical_roads.first).should == 25.577598616424485
+      expect(subject.location_on_road(subject.physical_roads.first)).to eq(25.577598616424485)
     end
   end
 
@@ -28,20 +28,20 @@ describe ActiveRoad::Junction do
 
   describe "#access_on_road" do
     it "should return if junction access to road or not" do
-      subject.access_to_road?(subject.physical_roads.first).should be_true
-      subject.access_to_road?(create(:physical_road)).should be_false
+      expect(subject.access_to_road?(subject.physical_roads.first)).to be_truthy
+      expect(subject.access_to_road?(create(:physical_road))).to be_falsey
     end
   end
   
   describe "#to_s" do
     it "should return junction description" do
-      subject.to_s.should == "Junction @#{subject.geometry.lng},#{subject.geometry.lat}"
+      expect(subject.to_s).to eq("Junction @#{subject.geometry.lng},#{subject.geometry.lat}")
     end
   end
 
   describe "#name" do
     it "should return junction name" do
-      subject.name.should == subject.physical_roads.join(" - ")
+      expect(subject.name).to eq(subject.physical_roads.join(" - "))
     end
   end
   
