@@ -143,7 +143,9 @@ module ActiveRoad
       iterate_ways
 
       # Split and affect boundary to each way
-      split_way_with_boundaries
+      if split_ways
+        split_way_with_boundaries
+      end
       
       # Save logical roads from physical roads
       backup_logical_roads_pgsql
