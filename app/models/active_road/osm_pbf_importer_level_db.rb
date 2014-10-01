@@ -18,7 +18,7 @@ module ActiveRoad
     end
 
     def nodes_database
-      @nodes_database ||= LevelDBNative::DB.make nodes_database_path, :create_if_missing => true
+      @nodes_database ||= LevelDBNative::DB.make nodes_database_path, :create_if_missing => true, :block_cache_size => 16 * 1024 * 1024
     end
 
     def close_nodes_database
@@ -30,7 +30,7 @@ module ActiveRoad
     end
 
     def ways_database
-      @ways_database ||= LevelDBNative::DB.make ways_database_path, :create_if_missing => true
+      @ways_database ||= LevelDBNative::DB.make ways_database_path, :create_if_missing => true, :block_cache_size => 16 * 1024 * 1024
     end
     
     def close_ways_database
@@ -55,48 +55,16 @@ module ActiveRoad
         nodes_counter += 1
         node = Marshal.load(value)
         geometry = GeoRuby::SimpleFeatures::Point.from_x_y( node.lon, node.lat, 4326) if( node.lon && node.lat )
-        
+
         if node.ways.present? && (node.ways.count >= 2 || node.end_of_way == true )  # Take node with at least two ways or at the end of a way
           junctions_values << [ node.id, geometry.as_hex_ewkb, Time.now, Time.now ]
-        end
-        
-        # junction_values_size = junctions_values.size
-        # if junction_values_size > 0 && (junction_values_size == @@pg_batch_size || nodes_counter == nodes_database_size)
-        #   backup_nodes_pgsql(junctions_values)
-          
-        #   #Reset
-        #   junctions_values = []    
-        # end
+        end       
 
         if node.addr_housenumber.present?
           street_numbers_values << [ node.id, geometry.as_hex_ewkb, node.addr_housenumber, "#{node.tags.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
         end
-
-        # street_number_values_size = street_number_values.size
-        # if street_number_values_size > 0 && (street_number_values_size == @@pg_batch_size || nodes_counter == nodes_database_size)
-        #   backup_street_numbers_pgsql(street_number_values)
-          
-        #   #Reset
-        #   street_number_values = []    
-        # end
       }
-
-      # CSV::Converters[:hash] = lambda do |string|
-      #   hash = {}
-      #   puts string
-      #   begin
-      #     string.gsub!(/[{}]/, '')
-      #     string.split(',').each do |pair|
-      #       key,value = pair.split(/=>/)
-      #       hash[key] = value
-      #     end
-      #   rescue ArgumentError
-      #     string
-      #   end
-      # end
-
-      # converters = [:all, :hash]
-      
+        
       junction_columns = ["objectid", "geometry", "created_at", "updated_at"]
       CSV.open("/tmp/junctions.csv", "wb:UTF-8") do |csv|
         csv << junction_columns
@@ -137,18 +105,16 @@ module ActiveRoad
       backup_ways      
       
       # Save relations in boundary
-      backup_relations_pgsql
+      backup_relations_pgsql if split_ways
 
       # Save ways in physical roads
       iterate_ways
 
-      # Split and affect boundary to each way
-      if split_ways
-        split_way_with_boundaries
-      end
+      # Split and affect boundary to each way     
+      split_way_with_boundaries if split_ways
       
       # Save logical roads from physical roads
-      backup_logical_roads_pgsql
+      backup_logical_roads_pgsql if split_ways
       
       close_nodes_database
       close_ways_database
@@ -171,7 +137,7 @@ module ActiveRoad
             nodes_counter+= 1
 
             select_tags = selected_tags(node[:tags], @@nodes_selected_tags_keys)         
-            nodes_database[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat], select_tags["addr:housenumber"], [], false, select_tags))      
+            batch[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat], select_tags["addr:housenumber"], [], false, select_tags))      
           end
         end
         # When there's no more fileblocks to parse, #next returns false
@@ -192,19 +158,26 @@ module ActiveRoad
       
       # Once it found at least one way, iterate to find the remaining ways.     
       until ways_parser.ways.empty?
-        ways_parser.ways.each do |way|
-          ways_counter+= 1
-          way_id = way[:id].to_s
-          
-          if way.key?(:tags) && required_way?(way[:tags])                        
-            # Don't add way to nodes if a way is a boundary
-            select_tags = selected_tags(way[:tags], @@way_selected_tags_keys)
-            node_ids = way.key?(:refs) ? way[:refs].collect(&:to_s) : []
+        #nodes_database.batch do |batch|
+          ways_parser.ways.each do |way|
+            ways_counter+= 1
+            way_id = way[:id].to_s
             
-            if select_tags["boundary"].blank? && node_ids.present? && node_ids.size > 1
-              update_node_with_way(way_id, node_ids)
-            end        
-          end          
+            if way.key?(:tags) && required_way?(way[:tags])
+              # Don't add way to nodes if a way is a boundary
+              select_tags = selected_tags(way[:tags], @@way_selected_tags_keys)
+              node_ids = way.key?(:refs) ? way[:refs].collect(&:to_s) : []
+              
+              if select_tags["boundary"].blank? && node_ids.present? && node_ids.size > 1
+                node_ids.each do |node_id|
+                  node = Marshal.load(nodes_database[node_id])
+                  node.add_way(way_id)
+                  node.end_of_way = true if [node_ids.first, node_ids.last].include?(node_id)
+                  nodes_database[node_id] = Marshal.dump(node)
+                end
+              end        
+            end
+          #end
         end        
         
         # When there's no more fileblocks to parse, #next returns false
@@ -215,15 +188,15 @@ module ActiveRoad
       Rails.logger.info "Finish to update #{ways_counter} ways in nodes in LevelDB  in #{(Time.now - start)} seconds"
     end
 
-    def update_node_with_way(way_id, node_ids)
-      # Update node data with way id
-      node_ids.each do |node_id|
-        node = Marshal.load(nodes_database[node_id])
-        node.add_way(way_id)
-        node.end_of_way = true if [node_ids.first, node_ids.last].include?(node_id)
-        nodes_database[node_id] = Marshal.dump(node)
-      end
-    end
+    # def update_node_with_way(way_id, node_ids)
+    #   # Update node data with way id
+    #   node_ids.each do |node_id|
+    #     node = Marshal.load(nodes_database[node_id])
+    #     node.add_way(way_id)
+    #     node.end_of_way = true if [node_ids.first, node_ids.last].include?(node_id)
+    #     nodes_database[node_id] = Marshal.dump(node)
+    #   end
+    # end
     
     def backup_ways
       Rails.logger.info "Begin to backup ways in LevelDB"
@@ -236,23 +209,25 @@ module ActiveRoad
       
       # Once it found at least one way, iterate to find the remaining ways.     
       until ways_parser.ways.empty?
-        ways_parser.ways.each do |way|
-          ways_counter+= 1
-          way_id = way[:id].to_s
-          
-          if way.key?(:tags) && required_way?(way[:tags])            
-            select_tags = selected_tags(way[:tags], @@way_selected_tags_keys)
-            opt_tags = selected_tags(way[:tags], @@way_optionnal_tags_keys)
-            node_ids = way.key?(:refs) ? way[:refs].collect(&:to_s) : []
+        ways_database.batch do |batch|
+          ways_parser.ways.each do |way|
+            ways_counter+= 1
+            way_id = way[:id].to_s
+            
+            if way.key?(:tags) && required_way?(way[:tags])            
+              select_tags = selected_tags(way[:tags], @@way_selected_tags_keys)
+              opt_tags = selected_tags(way[:tags], @@way_optionnal_tags_keys)
+              node_ids = way.key?(:refs) ? way[:refs].collect(&:to_s) : []
 
-            # Add  node_id_first and node_id_last to opt_tags
-            opt_tags.merge!( { "first_node_id" => node_ids.first.to_s, "last_node_id" => node_ids.last.to_s } ) if node_ids.present?            
+              # Add  node_id_first and node_id_last to opt_tags
+              opt_tags.merge!( { "first_node_id" => node_ids.first.to_s, "last_node_id" => node_ids.last.to_s } ) if node_ids.present?            
 
-            # Don't add way if node_ids contains less than 2 nodes
-            if node_ids.present? && node_ids.size > 1
-              ways_database[ way_id ] = Marshal.dump( Way.new( way_id, node_ids, car?(opt_tags), bike?(opt_tags), train?(opt_tags), pedestrian?(opt_tags), select_tags["name"], select_tags["maxspeed"], select_tags["oneway"], select_tags["boundary"], select_tags["admin_level"], opt_tags ) )        
+              # Don't add way if node_ids contains less than 2 nodes
+              if node_ids.present? && node_ids.size > 1
+                batch[ way_id ] = Marshal.dump( Way.new( way_id, node_ids, car?(opt_tags), bike?(opt_tags), train?(opt_tags), pedestrian?(opt_tags), select_tags["name"], select_tags["maxspeed"], select_tags["oneway"], select_tags["boundary"], select_tags["admin_level"], opt_tags ) )        
+              end
             end
-          end            
+          end
         end        
         
         # When there's no more fileblocks to parse, #next returns false
@@ -275,12 +250,12 @@ module ActiveRoad
       ways_database.each { |key, value|
         ways_counter += 1        
         way = Marshal.load(value)
-
-        unless way.boundary.present?          
+        
+        unless way.boundary.present?
           physical_roads_values.merge!( split_way_with_nodes(way) )
         end
       }
-
+      
       # Save physical roads
       physical_road_columns = ["objectid", "car", "bike", "train", "pedestrian", "name", "geometry", "boundary_id", "tags", "created_at", "updated_at"]
       CSV.open("/tmp/physical_roads.csv", "wb:UTF-8") do |csv|
