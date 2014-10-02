@@ -165,7 +165,8 @@ module ActiveRoad
       
       # Once it found at least one way, iterate to find the remaining ways.     
       until ways_parser.ways.empty?
-        #nodes_database.batch do |batch|
+        nodes_readed = {}
+        nodes_database.batch do |batch|
           ways_parser.ways.each do |way|
             ways_counter+= 1
             way_id = way[:id].to_s
@@ -177,14 +178,21 @@ module ActiveRoad
               
               if select_tags["boundary"].blank? && node_ids.present? && node_ids.size > 1
                 node_ids.each do |node_id|
-                  node = Marshal.load(nodes_database[node_id])
+                  if nodes_readed.has_key?(node_id)                    
+                    node = nodes_readed[node_id]
+                  else
+                    node = Marshal.load(nodes_database[node_id])
+                  end
                   node.add_way(way_id)
                   node.end_of_way = true if [node_ids.first, node_ids.last].include?(node_id)
-                  nodes_database[node_id] = Marshal.dump(node)
+                  nodes_readed[node_id] = node
                 end
               end        
             end
-          #end
+          end
+          nodes_readed.each_pair do |node_readed_id, node_readed|
+            batch[node_readed_id] = Marshal.dump(node_readed)
+          end
         end        
         
         # When there's no more fileblocks to parse, #next returns false
