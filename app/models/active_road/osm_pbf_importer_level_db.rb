@@ -94,15 +94,25 @@ module ActiveRoad
       delete_nodes_database
       delete_ways_database
 
+      leveldb_import
+      postgres_import
+      
+      close_nodes_database
+      close_ways_database
+    end
+
+    def leveldb_import
       # Save nodes in temporary file
       backup_nodes
       # Update nodes with ways in temporary file
       update_nodes_with_way
-      # Save nodes in junctions
-      iterate_nodes
-
       # Save ways in temporary file
       backup_ways      
+    end
+      
+    def postgres_import
+      # Save nodes in junctions
+      iterate_nodes      
       
       # Save relations in boundary
       backup_relations_pgsql if split_ways
@@ -115,11 +125,8 @@ module ActiveRoad
       
       # Save logical roads from physical roads
       backup_logical_roads_pgsql if split_ways
-      
-      close_nodes_database
-      close_ways_database
     end
-
+    
     def backup_nodes
       Rails.logger.info "Begin to backup nodes in LevelDB nodes_database in #{nodes_database_path}"
       start = Time.now
