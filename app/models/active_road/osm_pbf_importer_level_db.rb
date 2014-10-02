@@ -5,8 +5,8 @@ module ActiveRoad
   class OsmPbfImporterLevelDb
     include OsmPbfImporter
 
-    @@leveldb_batch_size = 100000
-    cattr_reader :leveldb_batch_size
+    @@csv_batch_size = 100000
+    cattr_reader :csv_batch_size
 
     attr_reader :ways_database_path, :nodes_database_path, :pbf_file, :split_ways
 
@@ -50,39 +50,36 @@ module ActiveRoad
       street_numbers_values = []    
       nodes_database_size = nodes_database.count
       
-      # traverse records by iterator      
-      nodes_database.each { |key, value|
-        nodes_counter += 1
-        node = Marshal.load(value)
-        geometry = GeoRuby::SimpleFeatures::Point.from_x_y( node.lon, node.lat, 4326) if( node.lon && node.lat )
-
-        if node.ways.present? && (node.ways.count >= 2 || node.end_of_way == true )  # Take node with at least two ways or at the end of a way
-          junctions_values << [ node.id, geometry.as_hex_ewkb, Time.now, Time.now ]
-        end       
-
-        if node.addr_housenumber.present?
-          street_numbers_values << [ node.id, geometry.as_hex_ewkb, node.addr_housenumber, "#{node.tags.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
-        end
-      }
-        
+      # traverse records by iterator
       junction_columns = ["objectid", "geometry", "created_at", "updated_at"]
-      CSV.open("/tmp/junctions.csv", "wb:UTF-8") do |csv|
-        csv << junction_columns
-        junctions_values.each do |junction_values|
-          csv << junction_values
-        end        
+      street_number_columns = ["objectid", "geometry", "number", "tags", "created_at", "updated_at"]
+      
+      CSV.open("/tmp/junctions.csv", "wb:UTF-8") do |junctions_csv|        
+        CSV.open("/tmp/street_numbers.csv", "wb:UTF-8") do |street_numbers_csv|          
+          junctions_csv << junction_columns
+          street_numbers_csv << street_number_columns
+          
+          nodes_database.each { |key, value|
+            nodes_counter += 1
+            node = Marshal.load(value)
+            geometry = GeoRuby::SimpleFeatures::Point.from_x_y( node.lon, node.lat, 4326) if( node.lon && node.lat )
+            
+            if node.ways.present? && (node.ways.count >= 2 || node.end_of_way == true )  # Take node with at least two ways or at the end of a way
+              junctions_csv << [ node.id, geometry.as_hex_ewkb, Time.now, Time.now ]
+            end       
+            
+            if node.addr_housenumber.present?
+              street_numbers_csv << [ node.id, geometry.as_hex_ewkb, node.addr_housenumber, "#{node.tags.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
+            end
+              
+          }
+        end
       end
+             
       ActiveRoad::Junction.transaction do                                         
         ActiveRoad::Junction.pg_copy_from "/tmp/junctions.csv"
       end
       
-      street_number_columns = ["objectid", "geometry", "number", "tags", "created_at", "updated_at"]
-      CSV.open("/tmp/street_numbers.csv", "wb:UTF-8") do |csv|
-        csv << street_number_columns
-        street_numbers_values.each do |street_number_values|
-          csv << street_number_values
-        end        
-      end
       ActiveRoad::StreetNumber.transaction do
         ActiveRoad::StreetNumber.pg_copy_from "/tmp/street_numbers.csv"
       end
@@ -261,58 +258,56 @@ module ActiveRoad
       physical_roads_values = {}
       ways_database_size = ways_database.count
 
-      # traverse records by iterator      
-      ways_database.each { |key, value|
-        ways_counter += 1        
-        way = Marshal.load(value)
-        
-        unless way.boundary.present?
-          physical_roads_values.merge!( split_way_with_nodes(way) )
+      # traverse records by iterator
+      physical_road_columns = ["objectid", "car", "bike", "train", "pedestrian", "name", "geometry", "boundary_id", "tags", "created_at", "updated_at"]
+      physical_road_conditionnal_cost_columns = ["tags", "cost", "physical_road_id"]
+      junction_physical_road_columns = ["physical_road_id", "junction_id"]
+      physical_road_from_way = Hash[ ActiveRoad::PhysicalRoad.select([:id, :objectid]).map{ |p| [p.objectid, p.id] } ]
+      junction_from_node = Hash[ ActiveRoad::Junction.select([:id, :objectid]).map{ |j| [j.objectid, j.id] } ]
+      
+      CSV.open("/tmp/physical_roads.csv", "wb:UTF-8") do |physical_roads_csv|                
+        CSV.open("/tmp/physical_road_conditionnal_costs.csv", "wb:UTF-8") do |physical_road_conditionnal_costs_csv|
+          CSV.open("/tmp/junctions_physical_roads.csv", "wb:UTF-8") do |junctions_physical_roads_csv|
+            physical_roads_csv << physical_road_columns
+            physical_road_conditionnal_costs_csv << physical_road_conditionnal_cost_columns
+            junctions_physical_roads_csv << junction_physical_road_columns
+                        
+            ways_database.each { |key, value|
+              ways_counter += 1        
+              way = Marshal.load(value)
+              
+              unless way.boundary.present?
+                physical_roads_values = split_way_with_nodes(way)
+
+                physical_roads_values.values.each do |physical_road_values|
+                  physical_roads_csv << [ physical_road_values[:objectid], physical_road_values[:car], physical_road_values[:bike], physical_road_values[:train], physical_road_values[:pedestrian], physical_road_values[:name], physical_road_values[:geometry], physical_road_values[:boundary_id], "#{physical_road_values[:tags].to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
+                
+                  physical_road_values[:conditionnal_costs].each do |conditionnal_cost|
+                    physical_road_conditionnal_costs_csv << conditionnal_cost + [ physical_road_from_way[physical_road_values[:objectid]] ]
+                  end
+                  
+                  physical_road_values[:junctions].each do |junction_objectid|
+                    junction_id = junction_from_node[junction_objectid]            
+                    junctions_physical_roads_csv << [ physical_road_from_way[physical_road_values[:objectid]], junction_id ] if junction_id.present? # Hack normaly must have only nodes used for physical road
+                  end
+                end
+              end
+            }
+          end
         end
-      }
+      end
       
       # Save physical roads
-      physical_road_columns = ["objectid", "car", "bike", "train", "pedestrian", "name", "geometry", "boundary_id", "tags", "created_at", "updated_at"]
-      CSV.open("/tmp/physical_roads.csv", "wb:UTF-8") do |csv|
-        csv << physical_road_columns       
-        physical_roads_values.values.each do |physical_road_values|
-          csv << [ physical_road_values[:objectid], physical_road_values[:car], physical_road_values[:bike], physical_road_values[:train], physical_road_values[:pedestrian], physical_road_values[:name], physical_road_values[:geometry], physical_road_values[:boundary_id], "#{physical_road_values[:tags].to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
-        end        
-      end
       ActiveRoad::PhysicalRoad.transaction do                                         
         ActiveRoad::PhysicalRoad.pg_copy_from "/tmp/physical_roads.csv"
       end
-
-      physical_road_from_way = Hash[ ActiveRoad::PhysicalRoad.select([:id, :objectid]).map{ |p| [p.objectid, p.id] } ]
       
       # Save physical road conditionnal costs
-      physical_road_conditionnal_cost_columns = ["tags", "cost", "physical_road_id"]
-
-      CSV.open("/tmp/physical_road_conditionnal_costs.csv", "wb:UTF-8") do |csv|
-        csv << physical_road_conditionnal_cost_columns
-        physical_roads_values.values.each do |physical_road_values|
-          physical_road_values[:conditionnal_costs].each do |conditionnal_cost|
-            csv << conditionnal_cost + [ physical_road_from_way[physical_road_values[:objectid]] ]
-          end
-        end        
-      end
       ActiveRoad::PhysicalRoadConditionnalCost.transaction do                                         
         ActiveRoad::PhysicalRoadConditionnalCost.pg_copy_from "/tmp/physical_road_conditionnal_costs.csv"
       end
             
       # Save physical road and junctions link
-      junction_from_node = Hash[ ActiveRoad::Junction.select([:id, :objectid]).map{ |j| [j.objectid, j.id] } ]
-      
-      junction_physical_road_columns = ["physical_road_id", "junction_id"]
-      CSV.open("/tmp/junctions_physical_roads.csv", "wb:UTF-8") do |csv|
-        csv << junction_physical_road_columns
-        physical_roads_values.values.each do |physical_road_values|
-          physical_road_values[:junctions].each do |junction_objectid|
-            junction_id = junction_from_node[junction_objectid]            
-            csv << [ physical_road_from_way[physical_road_values[:objectid]], junction_id ] if junction_id.present? # Hack normaly must have only nodes used for physical road
-          end
-        end        
-      end
       ActiveRoad::JunctionsPhysicalRoad.transaction do                                         
         ActiveRoad::JunctionsPhysicalRoad.pg_copy_from "/tmp/junctions_physical_roads.csv"
       end
