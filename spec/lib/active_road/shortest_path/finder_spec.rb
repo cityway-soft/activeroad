@@ -41,43 +41,43 @@ describe ActiveRoad::ShortestPath::Finder do
     
     it "should find a solution between first and last road with with no constraints" do
       path = ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4).path
-      path.size.should == 8
-      path[0].should == departure
-      path[1].class.should == ActiveRoad::AccessLink
-      path[2].physical_road.objectid.should == "ab"
-      path[3].physical_road.objectid.should == "ac"
-      path[4].physical_road.objectid.should == "cf"
-      path[5].physical_road.objectid.should == "df"
-      path[6].class.should == ActiveRoad::AccessLink
-      path[7].should == arrival
+      expect(path.size).to eq(8)
+      expect(path[0]).to eq(departure)
+      expect(path[1].class).to eq(ActiveRoad::AccessLink)
+      expect(path[2].physical_road.objectid).to eq("ab")
+      expect(path[3].physical_road.objectid).to eq("ac")
+      expect(path[4].physical_road.objectid).to eq("cf")
+      expect(path[5].physical_road.objectid).to eq("df")
+      expect(path[6].class).to eq(ActiveRoad::AccessLink)
+      expect(path[7]).to eq(arrival)
     end  
 
     it "should find a solution between first and last road with constraints" do
       cf_conditionnal_costs = create(:physical_road_conditionnal_cost, :physical_road => cf, :tags => "bike", :cost => 0.7)
       path = ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4, ["bike"]).path
-      path.size.should == 8
-      path[0].should == departure
-      path[1].class.should == ActiveRoad::AccessLink
-      path[2].physical_road.objectid.should == "ab"
-      path[3].physical_road.objectid.should == "ac"
-      path[4].physical_road.objectid.should == "cd"
-      path[5].physical_road.objectid.should == "df"
-      path[6].class.should == ActiveRoad::AccessLink
-      path[7].should == arrival
+      expect(path.size).to eq(8)
+      expect(path[0]).to eq(departure)
+      expect(path[1].class).to eq(ActiveRoad::AccessLink)
+      expect(path[2].physical_road.objectid).to eq("ab")
+      expect(path[3].physical_road.objectid).to eq("ac")
+      expect(path[4].physical_road.objectid).to eq("cd")
+      expect(path[5].physical_road.objectid).to eq("df")
+      expect(path[6].class).to eq(ActiveRoad::AccessLink)
+      expect(path[7]).to eq(arrival)
     end
     
     it "should find a solution between first and last road with constraints which block the itinerary" do
       cf_conditionnal_costs = create(:physical_road_conditionnal_cost, :physical_road => cf, :tags => "bike", :cost => 0)  
       path = ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4, ["~bike"]).path
-      path.size.should == 8
-      path[0].should == departure
-      path[1].class.should == ActiveRoad::AccessLink
-      path[2].physical_road.objectid.should == "ab"
-      path[3].physical_road.objectid.should == "ac"
-      path[4].physical_road.objectid.should == "cd"
-      path[5].physical_road.objectid.should == "df"
-      path[6].class.should == ActiveRoad::AccessLink
-      path[7].should == arrival
+      expect(path.size).to eq(8)
+      expect(path[0]).to eq(departure)
+      expect(path[1].class).to eq(ActiveRoad::AccessLink)
+      expect(path[2].physical_road.objectid).to eq("ab")
+      expect(path[3].physical_road.objectid).to eq("ac")
+      expect(path[4].physical_road.objectid).to eq("cd")
+      expect(path[5].physical_road.objectid).to eq("df")
+      expect(path[6].class).to eq(ActiveRoad::AccessLink)
+      expect(path[7]).to eq(arrival)
     end
 
     it "should return something when no solution" do
@@ -89,14 +89,14 @@ describe ActiveRoad::ShortestPath::Finder do
     it "should return something when departure or arrival are 'outside the graph'" do
       departure = point(-0.0005, -0.0005)
       path = ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4).path
-      path.size.should == 8
-      path[0].should == departure
-      path[1].class.should == ActiveRoad::AccessLink
-      path[2].physical_road.objectid.should == "ab"
-      path[3].physical_road.objectid.should == "ac"
-      path[4].physical_road.objectid.should == "cf"
-      path[6].class.should == ActiveRoad::AccessLink
-      path[7].should == arrival
+      expect(path.size).to eq(8)
+      expect(path[0]).to eq(departure)
+      expect(path[1].class).to eq(ActiveRoad::AccessLink)
+      expect(path[2].physical_road.objectid).to eq("ab")
+      expect(path[3].physical_road.objectid).to eq("ac")
+      expect(path[4].physical_road.objectid).to eq("cf")
+      expect(path[6].class).to eq(ActiveRoad::AccessLink)
+      expect(path[7]).to eq(arrival)
     end
     
   end
