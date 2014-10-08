@@ -29,18 +29,24 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
 
   describe "#backup_ways" do
     before :each do
+      subject.nodes_database
+      subject.ways_database
+      
       subject.backup_nodes
+      subject.update_nodes_with_way
     end
     
     after :each do
       subject.close_nodes_database
+      subject.delete_nodes_database
       subject.close_ways_database
+      subject.delete_ways_database
     end
 
     it "should have import all ways in temporary ways_database" do
       subject.backup_ways
-      expect(subject.ways_database.count).to eq(6)
-      expect(subject.ways_database.keys).to eq(["3", "5", "6", "7", "8", "9"])
+      expect(subject.ways_database.count).to eq(11)
+      expect(subject.ways_database.keys).to eq(["3-0", "3-1", "5-0", "5-1", "5-2", "6-0", "6-1", "6-2", "7", "8", "9"])
     end
                                     
   end
@@ -127,9 +133,9 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
       subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 0.0, 0.0, "", ["1", "2"])) )
       subject_without_data.nodes_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 2.0, 2.0, "", ["1", "3"])) )
       subject_without_data.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 3.0, 3.0, "", ["1", "3"])) )
-      subject_without_data.ways_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("1", ["1", "2", "3"], true, false, false, false, "Test", "100", true, "", "", {"cycleway" => "lane"}) ) )
-      subject_without_data.ways_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("2", ["1", "2"], true, false, false, false, "Test", "100", true, "", "", {"toll" => "true"}) ) )
-      subject_without_data.ways_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("3", ["1", "2"], true, false, false, false, "Test", "100", true, "", "", {}) ) )
+      subject_without_data.ways_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("1-0", ["1", "2", "3"], true, false, false, false, "Test", "100", true, "", "", {"cycleway" => "lane"}) ) )
+      subject_without_data.ways_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("2-0", ["1", "2"], true, false, false, false, "Test", "100", true, "", "", {"toll" => "true"}) ) )
+      subject_without_data.ways_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("3-0", ["1", "2"], true, false, false, false, "Test", "100", true, "", "", {}) ) )
     end
 
     after :each do
@@ -147,10 +153,8 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
     
     it "should iterate ways to save it" do     
       subject_without_data.iterate_ways
-      expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["1-0", "1-1", "2-0", "3-0"]
+      expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["1-0", "2-0", "3-0"]
 )
-      expect(ActiveRoad::JunctionsPhysicalRoad.all.size).to eq(8)
-      expect(ActiveRoad::PhysicalRoadConditionnalCost.all.size).to eq(12)
     end
   end
 
@@ -164,9 +168,9 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
   end
   
   describe "#split_way_with_nodes" do
-    let!(:simple_way) { double("way", :id => "1", :car => false, :bike => false, :train => true, :pedestrian => true, :name => "", :nodes => ["1", "2", "3"], :geometry => nil , :options => {} ) }
-    let(:complex_way) { double("way", :id => "2", :car => false, :bike => false, :train => true, :pedestrian => true, :name => "", :nodes => ["4", "5", "6", "7", "8"], :geometry => nil , :options => {} ) }
-    let(:complex_way_boundary) { double("way", :id => "2", :car => false, :bike => false, :train => true, :pedestrian => true, :name => "", :nodes => ["4", "6", "8"], :geometry => nil , :options => {} ) }
+    let!(:simple_way) { ActiveRoad::OsmPbfImporterLevelDb::Way.new("1", ["1", "2", "3"], false, false, true, true, "SimpleWay" ) }
+    let(:complex_way) { ActiveRoad::OsmPbfImporterLevelDb::Way.new("2", ["4", "5", "6", "7", "8"], false, false, true, true, "ComplexWay" ) }
+    let(:complex_way_boundary) { ActiveRoad::OsmPbfImporterLevelDb::Way.new( "2", ["4", "6", "8"], false, false, true, true, "ComplexWayBoundary" ) }
 
     before :each do
       # Nodes for simple way
@@ -195,13 +199,43 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
     end
 
     it "should return ways splitted" do
-      expect(subject_without_data.split_way_with_nodes(simple_way)).to include( { "1-0" => {:objectid=>"1-0", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :geometry=>line_string( "-1 1,0 1").as_hex_ewkb, :boundary_id=>nil, :tags=>{"first_node_id"=>"1", "last_node_id"=>"2"}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["1", "2"]},
-                                                                                      "1-1" => {:objectid=>"1-1", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :geometry=>line_string( "0 1,1 1").as_hex_ewkb, :boundary_id=>nil, :tags=>{"first_node_id"=>"2", "last_node_id"=>"3"}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["2", "3"]} } )
+      ways_splitted = subject_without_data.split_way_with_nodes(simple_way)
+      expect(ways_splitted.size).to eq(2)
+      expect(ways_splitted.first.instance_values).to include(
+                                                             "id" => "1-0",
+                                                             "car"=> false,
+                                                             "bike" => false,
+                                                             "train" => true,
+                                                             "pedestrian" => true,
+                                                             "name" => "SimpleWay",
+                                                             "boundary" => "",
+                                                             "options" => {"first_node_id"=>"1", "last_node_id"=>"2"},
+                                                             "nodes" => ["1", "2"] )
+      expect(ways_splitted.last.instance_values).to include( "id" => "1-1",
+                                                             "car"=> false,
+                                                             "bike" => false,
+                                                             "train" => true,
+                                                             "pedestrian" => true,
+                                                             "name" => "SimpleWay",
+                                                             "boundary" => "",
+                                                             "options" => {"first_node_id"=>"2", "last_node_id"=>"3"},
+                                                             "nodes" => ["2", "3"] )
     end
 
     it "should return ways not splitted" do
       allow(subject_without_data).to receive_messages :split_ways => false
-      expect(subject_without_data.split_way_with_nodes(simple_way)).to include( { "1-0" => {:objectid=>"1-0", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :geometry=>line_string( "-1 1,0 1,1 1").as_hex_ewkb, :boundary_id=>nil, :tags=>{"first_node_id"=>"1", "last_node_id"=>"3"}, :conditionnal_costs=>[["car", Float::MAX], ["bike", Float::MAX]], :junctions=>["1", "2", "3"]} } )
+      ways_splitted = subject_without_data.split_way_with_nodes(simple_way)
+      expect(ways_splitted.size).to eq(1)
+      expect(ways_splitted.first.instance_values).to include(
+                                                             "id" => "1-0",
+                                                             "car"=> false,
+                                                             "bike" => false,
+                                                             "train" => true,
+                                                             "pedestrian" => true,
+                                                             "name" => "SimpleWay",
+                                                             "boundary" => "",
+                                                             "options" => { "first_node_id"=>"1", "last_node_id"=>"3" },
+                                                             "nodes" => ["1", "2", "3"]              )
     end
     
   end
@@ -287,17 +321,27 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
       expect(ActiveRoad::PhysicalRoad.all.size).to eq(3)
       expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["3-0", "5-0", "6-0"])
       expect(ActiveRoad::PhysicalRoadConditionnalCost.all.size).to eq(9)
-      expect(ActiveRoad::Boundary.all.size).to eq(0)
-      expect(ActiveRoad::LogicalRoad.all.size).to eq(0)  
       expect(ActiveRoad::JunctionsPhysicalRoad.all.size).to eq(11)
+      expect(ActiveRoad::Boundary.all.size).to eq(0)
+      expect(ActiveRoad::LogicalRoad.all.size).to eq(0)        
     end
   end
 
   describe "#backup_relations_pgsql" do
 
+    before :each do
+      subject.nodes_database
+      subject.ways_database
+      
+      subject.backup_nodes
+      subject.backup_ways
+    end
+    
     after :each do
       subject.close_nodes_database
+      subject.delete_nodes_database
       subject.close_ways_database
+      subject.delete_ways_database
     end
     
     it "should backup boundary" do      
