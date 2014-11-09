@@ -1,12 +1,16 @@
+defaults: &defaults
+  adapter: postgis
+  encoding: unicode
+  postgis_extension: true
+  pool: 5
+  username: postgres  
+  su_username: postgres
+
 development: 
-  adapter: postgresql
   database: activeroad
-  username: postgres
-  template: template_postgis
+  <<: *defaults
 
 test: 
-  adapter: postgresql
   database: activeroad_test
-  username: postgres
-  template: template_postgis
+  <<: *defaults
 
