@@ -1,7 +1,8 @@
 module ActiveRoad
   class LogicalRoad < ActiveRoad::Base
     #attr_accessible :objectid, :name, :boundary_id
-
+    acts_as_copy_target
+    
     has_many :physical_roads, :class_name => "ActiveRoad::PhysicalRoad", :inverse_of => :logical_road
     has_many :numbers, :through => :physical_roads, :class_name => "ActiveRoad::StreetNumber"
     belongs_to :boundary, :class_name => "ActiveRoad::Boundary"

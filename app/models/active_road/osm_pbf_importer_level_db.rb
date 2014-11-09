@@ -317,11 +317,11 @@ module ActiveRoad
       end
              
       ActiveRoad::Junction.transaction do                                         
-        ActiveRoad::Junction.pg_copy_from "/tmp/junctions.csv"
+        ActiveRoad::Junction.copy_from "/tmp/junctions.csv"
       end
       
       ActiveRoad::StreetNumber.transaction do
-        ActiveRoad::StreetNumber.pg_copy_from "/tmp/street_numbers.csv"
+        ActiveRoad::StreetNumber.copy_from "/tmp/street_numbers.csv"
       end
       
       Rails.logger.info "Finish to backup #{nodes_counter} nodes and #{street_numbers_counter} street_numbres in PostgreSql in #{display_time(Time.now - start)} seconds"         
@@ -360,7 +360,7 @@ module ActiveRoad
       
       # Save physical roads
       ActiveRoad::PhysicalRoad.transaction do                                         
-        ActiveRoad::PhysicalRoad.pg_copy_from "/tmp/physical_roads.csv"
+        ActiveRoad::PhysicalRoad.copy_from "/tmp/physical_roads.csv"
       end
 
       Rails.logger.info "Finish to backup #{ways_counter} ways in PostgreSql in #{display_time(Time.now - start)} seconds"
@@ -420,12 +420,12 @@ module ActiveRoad
       
       # Save physical road conditionnal costs
       ActiveRoad::PhysicalRoadConditionnalCost.transaction do                                         
-        ActiveRoad::PhysicalRoadConditionnalCost.pg_copy_from "/tmp/physical_road_conditionnal_costs.csv"
+        ActiveRoad::PhysicalRoadConditionnalCost.copy_from "/tmp/physical_road_conditionnal_costs.csv"
       end
 
       # Save physical road and junctions link
       ActiveRoad::JunctionsPhysicalRoad.transaction do                                         
-        ActiveRoad::JunctionsPhysicalRoad.pg_copy_from "/tmp/junctions_physical_roads.csv"
+        ActiveRoad::JunctionsPhysicalRoad.copy_from "/tmp/junctions_physical_roads.csv"
       end
 
       Rails.logger.info "Finish to backup #{junctions_physical_roads_counter} junctions_physical_roads and #{physical_road_conditionnal_costs_counter} physical_road_conditionnal_costs in PostgreSql in #{display_time(Time.now - start)} seconds"
@@ -730,7 +730,7 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
       end
       
       ActiveRoad::Boundary.transaction do                                         
-        ActiveRoad::Boundary.pg_copy_from "/tmp/boundaries.csv"
+        ActiveRoad::Boundary.copy_from "/tmp/boundaries.csv"
       end
       
       Rails.logger.info  "Finish to backup #{relations_counter} relations in PostgreSql  in #{display_time(Time.now - start)} seconds"
@@ -755,7 +755,7 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
       #   end        
       # end
       # ActiveRoad::LogicalRoad.transaction do                                         
-      #   ActiveRoad::LogicalRoad.pg_copy_from "/tmp/logical_roads.csv"
+      #   ActiveRoad::LogicalRoad.copy_from "/tmp/logical_roads.csv"
       # end
       
       ActiveRoad::PhysicalRoad.find_in_batches(batch_size: 2000) do |group|

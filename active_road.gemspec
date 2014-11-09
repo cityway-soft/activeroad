@@ -35,6 +35,6 @@ Gem::Specification.new do |s|
   s.add_dependency 'enumerize', '0.7.0'
   s.add_dependency "pbf_parser", '~> 0.0.6'
   s.add_dependency "leveldb-native", '~> 0.6'
-  s.add_dependency 'postgres-copy'
+  s.add_dependency 'postgres-copy', '~> 0.9.O'
   s.add_dependency "snappy"
 end

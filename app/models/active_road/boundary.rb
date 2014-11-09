@@ -1,6 +1,6 @@
 module ActiveRoad
   class Boundary < ActiveRoad::Base
-    #set_table_name :boundaries
+    acts_as_copy_target
     #attr_accessible :objectid, :geometry, :name, :admin_level, :postal_code, :insee_code   
     
     # Contains not take object equals on a boundary border!!

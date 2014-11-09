@@ -3,6 +3,7 @@ module ActiveRoad
   class PhysicalRoad < ActiveRoad::Base
     extend ::Enumerize
     extend ActiveModel::Naming
+    acts_as_copy_target
     set_rgeo_factory_for_column(:geometry, @@geos_factory)
     
 

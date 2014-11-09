@@ -1,6 +1,7 @@
 # A junction is a connection between 1 to n physical roads
 module ActiveRoad
   class Junction < ActiveRoad::Base
+    acts_as_copy_target
     store_accessor :tags
     #attr_accessible :objectid, :tags, :geometry, :height, :waiting_constraint
     set_rgeo_factory_for_column(:geometry, @@geos_factory)

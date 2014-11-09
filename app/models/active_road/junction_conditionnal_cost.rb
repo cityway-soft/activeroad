@@ -1,5 +1,6 @@
 module ActiveRoad
   class JunctionConditionnalCost < ActiveRoad::Base
+    acts_as_copy_target
     #attr_accessible :tags, :cost, :start_physical_road, :end_physical_road
 
     belongs_to :junction

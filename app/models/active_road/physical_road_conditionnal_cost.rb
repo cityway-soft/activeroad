@@ -1,5 +1,6 @@
 module ActiveRoad
   class PhysicalRoadConditionnalCost < ActiveRoad::Base
+    acts_as_copy_target
     #attr_accessible :tags, :cost, :physical_road_id
     
     belongs_to :physical_road
