@@ -11,13 +11,13 @@ defaults: &defaults
 
 
 development: 
-  database: activeroads_development
+  database: activeroads_rgeo_dev
   <<: *defaults
 
 test: 
-  database: activeroads_test
+  database: activeroads_rgeo_test
   <<: *defaults
 
 production: 
-  database: activeroads2_dev
+  database: activeroads_rgeo_prod
   <<: *defaults

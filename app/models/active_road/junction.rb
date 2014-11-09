@@ -1,14 +1,14 @@
 # A junction is a connection between 1 to n physical roads
 module ActiveRoad
   class Junction < ActiveRoad::Base
-    serialize :tags, ActiveRecord::Coders::Hstore
-    attr_accessible :objectid, :tags, :geometry, :height, :waiting_constraint
+    store_accessor :tags
+    #attr_accessible :objectid, :tags, :geometry, :height, :waiting_constraint
     set_rgeo_factory_for_column(:geometry, @@geos_factory)
-
     
     validates_uniqueness_of :objectid
 
-    has_and_belongs_to_many :physical_roads, :class_name => "ActiveRoad::PhysicalRoad",:uniq => true
+    has_many :physical_roads, :through => :junctions_physical_roads, :class_name => "ActiveRoad::PhysicalRoad"
+    has_many :junctions_physical_roads
     has_many :junction_conditionnal_costs, :class_name => "ActiveRoad::JunctionConditionnalCost"
 
     def location_on_road(road)

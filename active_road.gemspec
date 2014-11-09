@@ -19,23 +19,21 @@ Gem::Specification.new do |s|
   s.add_development_dependency "guard"
   s.add_development_dependency "guard-bundler"
   s.add_development_dependency "guard-rspec"
-  s.add_development_dependency "guard-migrate"
   s.add_development_dependency "factory_girl_rails", ">= 4.2.1"
-  s.add_development_dependency "rspec-rails", ">= 2.14.1"
-  s.add_development_dependency 'rails', '>=3.1.12'
+  s.add_development_dependency 'rspec-rails', '~> 3.1.0'
+  s.add_development_dependency 'rails', '>= 4.0.0'
+  s.add_development_dependency 'transpec'
 
-  s.add_dependency 'activerecord', '3.2.18'
-  s.add_dependency 'activerecord-postgres-hstore'
-  s.add_dependency 'activerecord-postgis-adapter', '~>0.6.0' 
+  s.add_dependency 'activerecord', '>= 4.0.0'
+  s.add_dependency 'activerecord-postgis-adapter', '>= 0.6.0' 
   s.add_dependency 'ffi-geos'
   s.add_dependency 'sqlite3', '~> 1.3.7'
   s.add_dependency 'pg', '>= 0.15.1'
-  s.add_dependency 'activerecord-import', '0.4.1'
+  s.add_dependency 'activerecord-import', '>= 0.5.0'
   s.add_dependency 'nokogiri'
   s.add_dependency 'saxerator'
   s.add_dependency 'shortest_path', '0.0.4'
   s.add_dependency 'enumerize', '0.7.0'
   s.add_dependency "pbf_parser", '~> 0.0.6'
-  s.add_dependency "leveldb-native", '~> 0.5'
-  s.add_dependency "snappy"
+  s.add_dependency "leveldb-native", '~> 0.6'
 end

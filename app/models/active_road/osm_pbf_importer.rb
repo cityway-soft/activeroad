@@ -134,34 +134,48 @@ module ActiveRoad
       end
     end
 
-    def ways_physical_roads
-      @ways_physical_roads ||= {}.tap do |ways_physical_roads|
-        ActiveRoad::PhysicalRoad.select([:objectid, :id, :geometry]).map { |p| ways_physical_roads[p.objectid] = { :id => p.id, :geometry => p.geometry } }
-      end      
+    # def ways_physical_roads
+    #   {}.tap do |ways_physical_roads|
+    #     ActiveRoad::PhysicalRoad.where(:marker => 0).select([:objectid, :id, :geometry]).map { |p| ways_physical_roads[p.objectid] = { :id => p.id, :geometry => p.geometry } }
+    #   end      
+    # end
+
+    def ar_connection
+      @ar_connection ||= ActiveRecord::Base.connection
     end
     
     def backup_ways_pgsql(physical_road_values)
       # Save physical roads
       physical_road_columns = [:objectid, :car, :bike, :train, :pedestrian, :name, :geometry, :boundary_id, :tags]      
       ActiveRoad::PhysicalRoad.import(physical_road_columns, physical_road_values.values.map{ |prv| prv.values_at(:objectid, :car, :bike, :train, :pedestrian, :name, :geometry, :boundary_id, :tags) }, :validate => false)     
+      ways_physical_roads = {}.tap do |ways_physical_roads|
+        ActiveRoad::PhysicalRoad.where(:marker => 0).select([:objectid, :id, :geometry]).map { |p| ways_physical_roads[p.objectid] = { :id => p.id, :geometry => p.geometry } }
+      end      
       
       junctions_physical_roads = []
       physical_road_conditionnal_costs = []    
-      physical_road_values.each_value do | physical_road_value |       
-        physical_road_value[:junctions].each do |physical_road_junction_value|
+      physical_road_values.each_value do | physical_road_value |
+        physical_road = ways_physical_roads[ physical_road_value[:objectid] ]
+
+        if physical_road
           
-          junction_value = nodes_junctions[physical_road_junction_value]
-
-          if junction_value
-            # Get percentage location for a junction on a physical road
-            junction_percentage_location = ActiveRecord::Base.connection.select_value("SELECT ST_Line_Locate_Point(ST_GeomFromEWKT('#{physical_road_value[:geometry]}'), ST_GeomFromEWKT('#{junction_value[:geometry]}'))")
-            # Get junctions physical roads data
-            junctions_physical_roads << [ ways_physical_roads[ physical_road_value[:objectid] ][:id], junction_value[:id], junction_percentage_location ]
+          physical_road_value[:junctions].each do |physical_road_junction_value|         
+            junction = nodes_junctions[physical_road_junction_value]
+                      
+            if junction
+              # Get percentage location for a junction on a physical road
+              junction_percentage_location = ar_connection.select_value("SELECT ST_Line_Locate_Point(ST_GeomFromEWKT('#{physical_road[:geometry]}'), ST_GeomFromEWKT('#{junction[:geometry]}'))") 
+              junctions_physical_roads << [ physical_road[:id], junction[:id], junction_percentage_location ]
+            else
+              Rails.logger.error "Impossible to find junction for #{physical_road_junction_value.inspect}"
+            end
           end
+          
+          # Get physical roads conditionnal costs data
+          physical_road_conditionnal_costs += physical_road_value[:conditionnal_costs].collect{ |cc| cc + [ physical_road[:id] ] } if physical_road_value[:conditionnal_costs]
+        else
+          Rails.logger.error "Impossible to find physical_road for #{physical_road_value.inspect}"
         end
-
-        # Get physical roads conditionnal costs data
-        physical_road_conditionnal_costs += physical_road_value[:conditionnal_costs].collect{ |cc| cc + [ ways_physical_roads[ physical_road_value[:objectid] ][:id] ] } if physical_road_value[:conditionnal_costs]
       end
       
       # Save junctions
@@ -173,8 +187,7 @@ module ActiveRoad
       ActiveRoad::PhysicalRoadConditionnalCost.import(physical_road_conditionnal_cost_columns, physical_road_conditionnal_costs, :validate => false)
 
       # Mark as treated by first step in import task
-      ActiveRoad::PhysicalRoad.update_all( { :marker => 1} )
-      
+      ActiveRoad::PhysicalRoad.update_all( { :marker => 1} )      
     end
 
     def backup_logical_roads_pgsql

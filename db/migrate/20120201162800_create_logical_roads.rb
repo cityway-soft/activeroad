@@ -6,7 +6,7 @@ class CreateLogicalRoads < ActiveRoad::Migration
       t.timestamps
     end
 
-    add_index :logical_roads, :objectid, :uniq => true
+    add_index :logical_roads, :objectid, :unique => true
     add_index :logical_roads, :name
   end
 

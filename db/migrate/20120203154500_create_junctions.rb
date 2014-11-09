@@ -6,7 +6,7 @@ class CreateJunctions < ActiveRoad::Migration
       t.timestamps
     end
 
-    add_index :junctions, :objectid, :uniq => true
+    add_index :junctions, :objectid, :unique => true
 
     create_table :junctions_physical_roads, :id => false do |t|
       t.belongs_to :physical_road
@@ -14,7 +14,7 @@ class CreateJunctions < ActiveRoad::Migration
     end
 
     # Generated name is too long for PostgreSQL
-    add_index :junctions_physical_roads, [:physical_road_id, :junction_id], :name => 'junctions_physical_roads_ids', :uniq => true
+    add_index :junctions_physical_roads, [:physical_road_id, :junction_id], :name => 'junctions_physical_roads_ids', :unique => true
     add_index :junctions_physical_roads, [:junction_id]
   end
 

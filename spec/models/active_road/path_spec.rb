@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe ActiveRoad::Path do
+describe ActiveRoad::Path, :type => :model do
 
   let!(:departure) { create(:junction, :geometry => "POINT(0 0)") }
   let!(:arrival) { create(:junction, :geometry => "POINT(0.5 0)") }
@@ -14,7 +14,7 @@ describe ActiveRoad::Path do
     end
 
     it "should return line substring reversed from a physical road if reverse" do
-      subject.stub :reverse => true
+      allow(subject).to receive_messages :reverse => true
       expect(subject.geometry_without_cache).to eq(geos_factory.parse_wkt("LINESTRING(0.5 0, 0 0)"))
     end   
     

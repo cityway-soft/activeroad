@@ -1,4 +1,5 @@
 require 'leveldb-native'
+require "csv"
 
 module ActiveRoad
   class OsmPbfImporterLevelDb
@@ -63,26 +64,44 @@ module ActiveRoad
           junctions_values << [ node.id, geometry, node.tags ]
         end
         
-        junction_values_size = junctions_values.size
-        if junction_values_size > 0 && (junction_values_size == @@pg_batch_size || nodes_counter == nodes_database_size)
-          backup_nodes_pgsql(junctions_values)
+        # junction_values_size = junctions_values.size
+        # if junction_values_size > 0 && (junction_values_size == @@pg_batch_size || nodes_counter == nodes_database_size)
+        #   backup_nodes_pgsql(junctions_values)
           
-          #Reset
-          junctions_values = []    
-        end
+        #   #Reset
+        #   junctions_values = []    
+        # end
 
         if node.addr_housenumber.present?
           street_number_values << [ node.id, geometry, node.addr_housenumber, node.tags ]
         end
 
-        street_number_values_size = street_number_values.size
-        if street_number_values_size > 0 && (street_number_values_size == @@pg_batch_size || nodes_counter == nodes_database_size)
-          backup_street_numbers_pgsql(street_number_values)
+        # street_number_values_size = street_number_values.size
+        # if street_number_values_size > 0 && (street_number_values_size == @@pg_batch_size || nodes_counter == nodes_database_size)
+        #   backup_street_numbers_pgsql(street_number_values)
           
-          #Reset
-          street_number_values = []    
-        end
+        #   #Reset
+        #   street_number_values = []    
+        # end
       }
+
+      junction_columns = [:objectid, :geometry, :tags]
+      ::CSV.open("/tmp/junctions.csv", options = {}) do |csv|
+        csv << junction_columns
+        junctions_values.each do |junction_values|
+          csv << junction_values
+        end        
+      end
+      ActiveRoad::Junction.pg_copy_from "/tmp/junctions.csv"
+
+      street_number_columns = [:objectid, :geometry, :number, :tags]
+      ::CSV.open("/tmp/street_numbers.csv", options = {}) do |csv|
+        csv << street_number_columns
+        street_numbers_values.each do |street_number_values|
+          csv << street_number_values
+        end        
+      end
+      ActiveRoad::StreetNumber.pg_copy_from "/tmp/street_numbers.csv"
       
       Rails.logger.info "Finish to backup #{nodes_counter} nodes in PostgreSql in #{(Time.now - start)} seconds"         
     end
@@ -279,6 +298,7 @@ module ActiveRoad
         ways_nodes = [nodes]
       end
 
+      # Not very useful when you don't want to split'
       physical_road_values = {}
       ways_nodes.each_with_index do |way_nodes, index|
         way_geometry = way_geometry(way_nodes)
@@ -529,69 +549,66 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
       # Process the file until it finds any relation.
       relations_parser.next until relations_parser.relations.any?
 
-      ActiveRoad::Boundary.transaction do 
-        # Once it found at least one relation, iterate to find the remaining relations.     
-        until relations_parser.relations.empty?
-          relations_parser.relations.each do |relation|
-            relations_counter+= 1
-            
-            if relation.key?(:tags) && required_relation?(relation[:tags])
-              tags = selected_tags(relation[:tags], @@relation_selected_tags_keys)
-
-              # Use tags["admin_level"] == "8" because catholic boundaries exist!!
-              if tags["admin_level"] == "8" && tags["boundary"] == "administrative"
-                outer_ways = {}
-                inner_ways = {}
-
-                begin 
-                  relation[:members][:ways].each do |member_way|                  
-                    way_data = ways_database[ member_way[:id].to_s ]
-                    way = nil
-                    nodes = []
-                    
-                    if way_data.present?
-                      way = Marshal.load(way_data)
-                      way.nodes.each do |node_id|
-                        node = Marshal.load( nodes_database[node_id.to_s] )
-                        nodes << node
-                      end
-                    else
-                      raise StandardError, "Geometry error : impossible to find way #{member_way[:id]} for relation #{tags["name"]} with id #{relation[:id]}"                      
-                    end
-                    
-                    if  member_way[:role] == "inner"
-                      inner_ways[ member_way[:id] ] = way_geometry(nodes)
-                    elsif member_way[:role] == "outer"
-                      outer_ways[ member_way[:id] ] = way_geometry(nodes)
-                    else # Fix : lot of boundaries have no tags role
-                      outer_ways[ member_way[:id] ] = way_geometry(nodes)
-                    end
-                  end
-                
-                  boundary_polygons = extract_relation_polygon(outer_ways.values, inner_ways.values)
-
-                  if boundary_polygons.present?
-                    boundary_geometry = geos_factory.multi_polygon( boundary_polygons )
-                  
-                    # boundaries_values << [ relation[:id], boundary_geometry, tags["name"], tags["admin_level"], tags["addr:postcode"], tags["ref:INSEE"] ]
-                    # boundaries_values_size = boundaries_values.size                  
-                  
-                    #ActiveRoad::Boundary.import(boundaries_columns, boundaries_values, :validate => false)                
-                    ActiveRoad::Boundary.create! :objectid => relation[:id], :geometry => boundary_geometry, :name => tags["name"], :admin_level => tags["admin_level"], :postal_code => tags["addr:postcode"], :insee_code => tags["ref:INSEE"]
-                  end
-                rescue StandardError => e
-                  p "Geometry error : impossible to build polygon for relation #{tags["name"]} with id #{relation[:id]} : #{e.message}"
-                end                
-              end
-            end            
-          end        
+      # Once it found at least one relation, iterate to find the remaining relations.     
+      until relations_parser.relations.empty?
+        relations_parser.relations.each do |relation|
+          relations_counter+= 1
           
-          # When there's no more fileblocks to parse, #next returns false
-          # This avoids an infinit loop when the last fileblock still contains relations
-          break unless relations_parser.next        
+          if relation.key?(:tags) && required_relation?(relation[:tags])
+            tags = selected_tags(relation[:tags], @@relation_selected_tags_keys)
+            
+            # Use tags["admin_level"] == "8" because catholic boundaries exist!!
+            if tags["admin_level"] == "8" && tags["boundary"] == "administrative"
+              outer_ways = {}
+              inner_ways = {}
+              
+              begin 
+                relation[:members][:ways].each do |member_way|                  
+                  way_data = ways_database[ member_way[:id].to_s ]
+                  way = nil
+                  nodes = []
+                  
+                  if way_data.present?
+                    way = Marshal.load(way_data)
+                    way.nodes.each do |node_id|
+                      node = Marshal.load( nodes_database[node_id.to_s] )
+                      nodes << node
+                    end
+                  else
+                    raise StandardError, "Geometry error : impossible to find way #{member_way[:id]} for relation #{tags["name"]} with id #{relation[:id]}"                      
+                  end
+                  
+                  if  member_way[:role] == "inner"
+                    inner_ways[ member_way[:id] ] = way_geometry(nodes)
+                  elsif member_way[:role] == "outer"
+                    outer_ways[ member_way[:id] ] = way_geometry(nodes)
+                  else # Fix : lot of boundaries have no tags role
+                    outer_ways[ member_way[:id] ] = way_geometry(nodes)
+                  end
+                end
+                
+                boundary_polygons = extract_relation_polygon(outer_ways.values, inner_ways.values)
+                
+                if boundary_polygons.present?
+                  boundary_geometry = geos_factory.multi_polygon( boundary_polygons )
+                  
+                  boundaries_values << [ relation[:id], boundary_geometry, tags["name"], tags["admin_level"], tags["addr:postcode"], tags["ref:INSEE"] ]
+                end
+              rescue StandardError => e
+                Rails.logger.error "Geometry error : impossible to build polygon for relation #{tags["name"]} with id #{relation[:id]} : #{e.message}"
+              end                
+            end
+          end            
+        end             
+        
+        # When there's no more fileblocks to parse, #next returns false
+        # This avoids an infinit loop when the last fileblock still contains relations
+        break unless relations_parser.next        
       end
 
-      end   
+      boundaries_columns = [:objectid, :geometry, :name, :admin_level, :postal_code, :insee_code]      
+      ActiveRoad::Boundary.import(boundaries_columns, boundaries_values, :validate => false) 
+      
       Rails.logger.info  "Finish to backup #{relations_counter} relations in PostgreSql  in #{(Time.now - start)} seconds"
     end
 

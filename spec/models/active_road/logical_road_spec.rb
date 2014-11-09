@@ -1,12 +1,12 @@
 require 'spec_helper'
 
-describe ActiveRoad::LogicalRoad do
+describe ActiveRoad::LogicalRoad, :type => :model do
 
   let(:boundary) { create(:boundary)}
   subject { create(:logical_road, :boundary_id => boundary.id) }
 
   it "should have a name" do
-    subject.should respond_to(:name)
+    expect(subject).to respond_to(:name)
   end
 
   describe "at" do
@@ -17,8 +17,8 @@ describe ActiveRoad::LogicalRoad do
       let(:number) { create :street_number, :physical_road => physical_road }
 
       it "should return the number geometry" do
-        subject.at(number.number).should == number.geometry
-        subject.name.should_not be_nil
+        expect(subject.at(number.number)).to eq(number.geometry)
+        expect(subject.name).not_to be_nil
       end
 
     end

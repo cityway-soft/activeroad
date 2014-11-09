@@ -56,7 +56,7 @@ describe "performance finder test" do
   
   it "should evaluate path and profile it", :profile => true do
     result = ::RubyProf.profile {      
-      subject.path.count.should == graph_size_by_unit * 2 + 4
+      expect(subject.path.count).to eq(graph_size_by_unit * 2 + 4)
     }
     puts "subject.path #{subject.path.inspect}"
     # Print a graph profile to text

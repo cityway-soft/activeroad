@@ -1,7 +1,7 @@
 module ActiveRoad
   class Boundary < ActiveRoad::Base
     #set_table_name :boundaries
-    attr_accessible :objectid, :geometry, :name, :admin_level, :postal_code, :insee_code   
+    #attr_accessible :objectid, :geometry, :name, :admin_level, :postal_code, :insee_code   
     
     # Contains not take object equals on a boundary border!!
     def self.first_contains(other)

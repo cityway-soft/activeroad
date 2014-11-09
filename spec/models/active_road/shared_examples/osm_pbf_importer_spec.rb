@@ -2,78 +2,78 @@ shared_examples "an OsmPbfImporter module" do
 
   describe "#pedestrian?" do
     it "should return true when tag key is highway and tag value is good" do
-      importer.pedestrian?({"highway" => "pedestrian"}).should be_true
-      importer.pedestrian?({"highway" => "path"}).should be_true
+      expect(importer.pedestrian?({"highway" => "pedestrian"})).to be_truthy
+      expect(importer.pedestrian?({"highway" => "path"})).to be_truthy
     end
 
     it "should return false when tag key is not highway or tag value is not good" do
-      importer.pedestrian?({"highway" => "residential"}).should be_false
+      expect(importer.pedestrian?({"highway" => "residential"})).to be_falsey
     end    
   end
 
   describe "#bike?" do
     it "should return true when tag key is highway and tag value is good" do
-      importer.bike?({"highway" => "cycleway"}).should be_true
-      importer.bike?({"cycleway:right" => "lane"}).should be_true
-      importer.bike?({"cycleway:left" => "lane"}).should be_true
-      importer.bike?({"cycleway" => "lane"}).should be_true
+      expect(importer.bike?({"highway" => "cycleway"})).to be_truthy
+      expect(importer.bike?({"cycleway:right" => "lane"})).to be_truthy
+      expect(importer.bike?({"cycleway:left" => "lane"})).to be_truthy
+      expect(importer.bike?({"cycleway" => "lane"})).to be_truthy
     end
 
     it "should return false when tag key is not highway or tag value is not good" do
-      importer.bike?({"highway" => "residential"}).should be_false
+      expect(importer.bike?({"highway" => "residential"})).to be_falsey
     end    
   end
 
   describe "#train?" do
     it "should return true when tag key is railway and tag value is good" do
-      importer.train?({"railway" => "rail"}).should be_true
-      importer.train?({"railway" => "tram"}).should be_true
+      expect(importer.train?({"railway" => "rail"})).to be_truthy
+      expect(importer.train?({"railway" => "tram"})).to be_truthy
     end
 
     it "should return false when tag key is not railway or tag value is not good" do
-      importer.train?({"highway" => "residential"}).should be_false
+      expect(importer.train?({"highway" => "residential"})).to be_falsey
     end    
   end
   
   describe "#car?" do
     it "should return true when tag key is highway and tag value is good" do
-      importer.car?({"highway" => "motorway"}).should be_true
-      importer.car?({"highway" => "secondary"}).should be_true
+      expect(importer.car?({"highway" => "motorway"})).to be_truthy
+      expect(importer.car?({"highway" => "secondary"})).to be_truthy
     end
 
     it "should return false when tag key is not highway or tag value is not good" do
-      importer.car?({"highway" => "railway"}).should be_false
+      expect(importer.car?({"highway" => "railway"})).to be_falsey
     end    
   end
   
   describe "#required_way?" do
     it "should return true when tag key is highway or railway" do 
       tags = {"highway" => "primary"} 
-      importer.required_way?(tags).should be_true
+      expect(importer.required_way?(tags)).to be_truthy
     end
 
     it "should return false when no tag key with highway or railway" do 
       tags =  {"maxspeed" => "100", "bike" => "oneway"} 
-      importer.required_way?(tags).should  be_false
+      expect(importer.required_way?(tags)).to  be_falsey
     end
   end
 
   describe "#selected_tags" do
     it "should return true when " do 
       tags = {"highway" => "primary", "name" => "Rue montparnasse", "bridge" => "true", "other_tag" => "other_tag"} 
-      importer.selected_tags(tags, ActiveRoad::OsmPbfImporter.way_selected_tags_keys).should == {"name" => "Rue montparnasse" }
+      expect(importer.selected_tags(tags, ActiveRoad::OsmPbfImporter.way_selected_tags_keys)).to eq({"name" => "Rue montparnasse" })
     end
   end
 
   describe "#required_relation?" do
     it "should return true when tag key is boundary" do 
       tags = {"boundary" => "administrative"} 
-      importer.required_relation?(tags).should be_true
+      expect(importer.required_relation?(tags)).to be_truthy
     end
 
     it "should return false when no tag key with highway or railway" do 
       tags =  {"other" => "100"} 
-      importer.required_relation?(tags).should  be_false
+      expect(importer.required_relation?(tags)).to  be_falsey
     end
   end
 
@@ -81,11 +81,11 @@ shared_examples "an OsmPbfImporter module" do
     let(:physical_road) { create(:physical_road) }
 
     it "should return conditionnal cost with pedestrian, bike and train to infinity when tag key is car" do
-      importer.physical_road_conditionnal_costs( ActiveRoad::OsmPbfImporter::Way.new("", [], true) ).should == [["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]]
+      expect(importer.physical_road_conditionnal_costs( ActiveRoad::OsmPbfImporter::Way.new("", [], true) )).to eq([["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]])
     end
 
     it "should return conditionnal cost with pedestrian, bike, car and train to infinity when tag key is nothing" do   
-      importer.physical_road_conditionnal_costs( ActiveRoad::OsmPbfImporter::Way.new("", []) ).should == [ ["car", Float::MAX], ["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]]
+      expect(importer.physical_road_conditionnal_costs( ActiveRoad::OsmPbfImporter::Way.new("", []) )).to eq([ ["car", Float::MAX], ["pedestrian", Float::MAX], ["bike", Float::MAX], ["train", Float::MAX]])
     end
   end
 
@@ -98,7 +98,7 @@ shared_examples "an OsmPbfImporter module" do
     
     it "should save physical roads in postgresql database" do  
       importer.backup_ways_pgsql(physical_road_values)
-      expect(ActiveRoad::PhysicalRoad.all.size.should).to eq(2)
+      expect(ActiveRoad::PhysicalRoad.all.size).to eq(2)
       expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["1", "2"])
     end
 
@@ -262,22 +262,22 @@ shared_examples "an OsmPbfImporter module" do
     it "should return a node object when unmarhalling a dump of node object" do
       data = Marshal.dump(node)
       object = Marshal.load(data)
-      object.should be_an_instance_of(ActiveRoad::OsmPbfImporter::Node)
-      object.id.should == node.id
-      object.lon.should == node.lon
-      object.lat.should == node.lat
-      object.ways.should == node.ways
+      expect(object).to be_an_instance_of(ActiveRoad::OsmPbfImporter::Node)
+      expect(object.id).to eq(node.id)
+      expect(object.lon).to eq(node.lon)
+      expect(object.lat).to eq(node.lat)
+      expect(object.ways).to eq(node.ways)
     end
 
     it "should return a node object with ways when we add a way" do
       node.add_way("1223344")
       data = Marshal.dump(node)
       object = Marshal.load(data)
-      object.should be_an_instance_of(ActiveRoad::OsmPbfImporter::Node)
-      object.id.should == node.id
-      object.lon.should == node.lon
-      object.lat.should == node.lat
-      object.ways.should == [ "1223344" ]
+      expect(object).to be_an_instance_of(ActiveRoad::OsmPbfImporter::Node)
+      expect(object.id).to eq(node.id)
+      expect(object.lon).to eq(node.lon)
+      expect(object.lat).to eq(node.lat)
+      expect(object.ways).to eq([ "1223344" ])
     end
 
   end

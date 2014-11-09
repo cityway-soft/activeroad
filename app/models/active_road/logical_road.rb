@@ -1,7 +1,6 @@
 module ActiveRoad
   class LogicalRoad < ActiveRoad::Base
-    extend ActiveSupport::Memoizable
-    attr_accessible :objectid, :name, :boundary_id
+    #attr_accessible :objectid, :name, :boundary_id
 
     has_many :physical_roads, :class_name => "ActiveRoad::PhysicalRoad", :inverse_of => :logical_road
     has_many :numbers, :through => :physical_roads, :class_name => "ActiveRoad::StreetNumber"
@@ -23,11 +22,10 @@ module ActiveRoad
     end
 
     def geometry_at_number(number)
-      numbers.find_or_initialize_by_number(number.to_s).tap do |number|
+      @geometry_at_number ||= numbers.find_or_initialize_by_number(number.to_s).tap do |number|
         number.road = self
       end.geometry if number.present?
     end
-    memoize :geometry_at_number
 
     def geometry_at_location(location)
       value =  ActiveRecord::Base.connection.select_value("SELECT ST_Line_Interpolate_Point(ST_GeomFromEWKT('#{self.geometry}'), #{location} )")		

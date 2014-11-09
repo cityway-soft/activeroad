@@ -6,8 +6,8 @@ module ActiveRoad
     set_rgeo_factory_for_column(:geometry, @@geos_factory)
     
 
-    attr_accessible :objectid, :tags, :geometry, :logical_road_id, :boundary_id, :minimum_width, :covering, :transport_mode, :slope, :cant, :physical_road_type 
-    serialize :tags, ActiveRecord::Coders::Hstore
+    #attr_accessible :objectid, :tags, :geometry, :logical_road_id, :boundary_id, :minimum_width, :covering, :transport_mode, :slope, :cant, :physical_road_type 
+    store_accessor :tags
 
     # TODO : Pass covering in array mode???
     enumerize :covering, :in => [:slippery_gravel, :gravel, :asphalt_road, :asphalt_road_damaged, :pavement, :irregular_pavement, :slippery_pavement]
@@ -22,7 +22,9 @@ module ActiveRoad
     has_many :numbers, :class_name => "ActiveRoad::StreetNumber", :inverse_of => :physical_road
     belongs_to :logical_road, :class_name => "ActiveRoad::LogicalRoad"
     belongs_to :boundary, :class_name => "ActiveRoad::Boundary"
-    has_and_belongs_to_many :junctions, :uniq => true
+    has_many :junctions, :through => :junctions_physical_roads, :class_name => "ActiveRoad::Junction"
+    has_many :junctions_physical_roads
+    
     has_many :physical_road_conditionnal_costs
 
     def length
@@ -34,12 +36,12 @@ module ActiveRoad
     end
 
     def locate_point(point)
-      value =  ActiveRecord::Base.connection.select_value("SELECT ST_Line_Locate_Point(ST_GeomFromEWKT('#{self.geometry}'), ST_GeomFromEWKT('#{point}'))")
+      value =  ar_connection.select_value("SELECT ST_Line_Locate_Point(ST_GeomFromEWKT('#{self.geometry}'), ST_GeomFromEWKT('#{point}'))")
       value.blank? ? nil : value.to_f
     end
 
     def interpolate_point(fraction)
-      value =  ActiveRecord::Base.connection.select_value("SELECT ST_Line_Interpolate_Point(ST_GeomFromEWKT('#{self.geometry}'), #{fraction} )")		
+      value =  ar_connection.select_value("SELECT ST_Line_Interpolate_Point(ST_GeomFromEWKT('#{self.geometry}'), #{fraction} )")		
       value.blank? ? nil : @@geos_factory.parse_wkb(value)
     end
     

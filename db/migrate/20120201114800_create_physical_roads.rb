@@ -7,7 +7,7 @@ class CreatePhysicalRoads < ActiveRoad::Migration
       t.timestamps
     end
 
-    add_index :physical_roads, :objectid, :uniq => true
+    add_index :physical_roads, :objectid, :unique => true
     add_index :physical_roads, :logical_road_id
   end
 

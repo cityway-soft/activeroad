@@ -186,9 +186,9 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
         end
       end
     end
-    puts "_______________"
-    puts "     STEP #{@steps}      "
-    puts "_______________"
+    # puts "_______________"
+    # puts "     STEP #{@steps}      "
+    # puts "_______________"
     #puts paths.inspect
     #puts paths.collect(&:geometry).inspect
 
