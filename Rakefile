@@ -40,7 +40,7 @@ task :spec => "app:db:test:prepare"
 
 namespace :ci do
   task :prepare do
-    cp "config/database.yml.ci", "config/database.yml"
+    cp "travis/database.yml.ci", "config/database.yml"
   end
   task :build => ["db:migrate", "spec"]
 end
