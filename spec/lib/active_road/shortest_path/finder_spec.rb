@@ -95,6 +95,7 @@ describe ActiveRoad::ShortestPath::Finder do
     it "should return something when departure or arrival are 'outside the graph'" do
       departure = geos_factory.point(-0.0005, -0.0005)
       path = ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4).path
+
       expect(path.size).to eq(7)
       expect(path[0]).to eq(departure)
       expect(path[1].class).to eq(ActiveRoad::AccessLink)
@@ -118,12 +119,14 @@ describe ActiveRoad::ShortestPath::Finder do
     
     it "should return path weight if physical road" do
       path = ActiveRoad::Path.new(:departure => create(:junction), :physical_road => create(:physical_road) ) 
+      
       allow(path).to receive_messages :length => 2
       expect(subject.path_weights(path)).to eq(2 / (4 * 1000/3600))
     end
 
     it "should return path weights and node weight if nodes have weight" do
       path = ActiveRoad::Path.new(:departure => create(:junction, :waiting_constraint => 2.5), :physical_road => create(:physical_road) )
+      
       allow(path).to receive_messages :length => 2
       expect(subject.path_weights(path)).to eq(2 / (4 * 1000/3600) + 2.5)
     end
@@ -132,6 +135,7 @@ describe ActiveRoad::ShortestPath::Finder do
       physical_road = create(:physical_road)
       physical_road_conditionnal_cost = create(:physical_road_conditionnal_cost, :physical_road => physical_road, :tags => "test", :cost => 0.2)
       path = ActiveRoad::Path.new(:departure => create(:junction), :physical_road => physical_road )
+
       allow(path).to receive_messages :length => 2
       expect(subject.path_weights(path)).to eq(2 / (4 * 1000/3600) + (2 / (4 * 1000/3600)) * 0.2)
     end
@@ -140,6 +144,7 @@ describe ActiveRoad::ShortestPath::Finder do
       physical_road = create(:physical_road)
       physical_road_conditionnal_cost = create(:physical_road_conditionnal_cost, :physical_road => physical_road, :tags => "test", :cost => Float::MAX)
       path = ActiveRoad::Path.new(:departure => create(:junction), :physical_road => physical_road )
+      
       allow(path).to receive_messages :length => 2
       expect(subject.path_weights(path)).to eq(Float::INFINITY)
     end

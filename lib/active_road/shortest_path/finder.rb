@@ -186,6 +186,7 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
         end
       end
     end
+    
     # puts "_______________"
     # puts "     STEP #{@steps}      "
     # puts "_______________"

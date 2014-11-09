@@ -6,6 +6,7 @@ require "activerecord-import"
 require "enumerize"
 require "pbf_parser"
 require "thor"
+require 'postgres-copy'
 
 module ActiveRoad
 
