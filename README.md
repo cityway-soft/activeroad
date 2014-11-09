@@ -17,7 +17,7 @@ External Deps
 -------------
 On Debian/Ubuntu/Kubuntu OS : 
 ```sh
- sudo apt-get install git postgresql postgis build-essential ruby-dev libproj-dev libgeos-dev libffi-dev zlib1g-dev libxslt1-dev libxml2-dev libbz2-dev libleveldb-dev
+ sudo apt-get install git postgresql postgis build-essential ruby-dev libproj-dev libgeos-dev libffi-dev zlib1g-dev libxslt1-dev libxml2-dev libbz2-dev libleveldb-dev libsnappy-dev
 ```
 
 Installation
