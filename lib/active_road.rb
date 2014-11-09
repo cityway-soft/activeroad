@@ -7,6 +7,7 @@ require "enumerize"
 require "pbf_parser"
 require "thor"
 require 'postgres-copy'
+require 'snappy'
 
 module ActiveRoad
 
