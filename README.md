@@ -31,8 +31,8 @@ This package is available in RubyGems and can be installed with:
 More Information
 ----------------
  
-More information can be found on the [project website on GitHub](http://github.com/dryade/activeroad). 
-There is extensive usage documentation available [on the wiki](https://github.com/dryade/activeroad/wiki).
+More information can be found on the [project website on GitHub](http://github.com/cityway-transdev/activeroad). 
+There is extensive usage documentation available [on the wiki](https://github.com/cityway-transdev/activeroad/wiki).
 
 Example Usage 
 ------------
@@ -93,4 +93,4 @@ This project is licensed under the MIT license, a copy of which can be found in 
 Support
 -------
  
-Users looking for support should file an issue on the GitHub issue tracking page (https://github.com/dryade/activeroad/issues), or file a pull request (https://github.com/dryade/activeroad/pulls) if you have a fix available.
+Users looking for support should file an issue on the GitHub issue tracking page (https://github.com/cityway-transdev/activeroad/issues), or file a pull request (https://github.com/cityway-transdev/activeroad/pulls) if you have a fix available.
