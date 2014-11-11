@@ -1,5 +1,5 @@
 # ActiveRoad
-[![Build Status](https://travis-ci.org/dryade/activeroad.png)](http://travis-ci.org/dryade/activeroad?branch=master) [![Dependency Status](https://gemnasium.com/dryade/activeroad.png)](https://gemnasium.com/dryade/activeroad) [![Code Climate](https://codeclimate.com/github/dryade/activeroad.png)](https://codeclimate.com/github/dryade/activeroad) [![Coverage Status](https://img.shields.io/coveralls/dryade/activeroad.svg)](https://coveralls.io/r/dryade/activeroad?branch=master)
+[![Build Status](https://travis-ci.org/cityway-transdev/activeroad.png)](http://travis-ci.org/cityway-transdev/activeroad?branch=master) [![Dependency Status](https://gemnasium.com/cityway-transdev/activeroad.png)](https://gemnasium.com/cityway-transdev/activeroad) [![Code Climate](https://codeclimate.com/github/cityway-transdev/activeroad.png)](https://codeclimate.com/github/cityway-transdev/activeroad) [![Coverage Status](https://img.shields.io/coveralls/cityway-transdev/activeroad.svg)](https://coveralls.io/r/cityway-transdev/activeroad?branch=master)
 
 Rails engine with a model for transport networks which includes
  - import osm ways             
