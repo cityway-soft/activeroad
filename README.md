@@ -1,9 +1,10 @@
 # ActiveRoad
-[![Build Status](https://travis-ci.org/dryade/activeroad.png)](http://travis-ci.org/dryade/activeroad?branch=master) [![Dependency Status](https://gemnasium.com/dryade/activeroad.png)](https://gemnasium.com/dryade/activeroad) [![Code Climate](https://codeclimate.com/github/dryade/activeroad.png)](https://codeclimate.com/github/dryade/activeroad) [![Coverage Status](https://img.shields.io/coveralls/dryade/activeroad.svg)](https://coveralls.io/r/dryade/activeroad?branch=master)
+[![Build Status](https://travis-ci.org/cityway-transdev/activeroad.png)](http://travis-ci.org/cityway-transdev/activeroad?branch=master) [![Dependency Status](https://gemnasium.com/cityway-transdev/activeroad.png)](https://gemnasium.com/cityway-transdev/activeroad) [![Code Climate](https://codeclimate.com/github/cityway-transdev/activeroad.png)](https://codeclimate.com/github/cityway-transdev/activeroad) [![Coverage Status](https://img.shields.io/coveralls/cityway-transdev/activeroad.svg)](https://coveralls.io/r/cityway-transdev/activeroad?branch=master)
 
-Rails engine with a model for transport networks which includes
- - import osm ways             
- - an itinerary research
+ActiveRoads is a rails engine with a specific models for transport networks. It allows to : 
+ - import osm ways form openstreetmap datas (PBF file format)             
+ - make an itinerary research
+The goal of this project is not to make the faster itinerary search engine like [OSRM](http://map.project-osrm.org/) or [OpenTripPlanner](http://www.opentripplanner.org/) but the more flexible because it doesn't need to binarize datas.    
 
 Requirements
 ------------
@@ -17,7 +18,7 @@ External Deps
 -------------
 On Debian/Ubuntu/Kubuntu OS : 
 ```sh
- sudo apt-get install git postgresql postgis build-essential ruby-dev libproj-dev libgeos-dev libffi-dev zlib1g-dev libxslt1-dev libxml2-dev libbz2-dev libleveldb-dev
+ sudo apt-get install git postgresql postgis build-essential ruby-dev libproj-dev libgeos-dev libffi-dev zlib1g-dev libxslt1-dev libxml2-dev libbz2-dev libleveldb-dev libsnappy-dev
 ```
 
 Installation
@@ -31,8 +32,8 @@ This package is available in RubyGems and can be installed with:
 More Information
 ----------------
  
-More information can be found on the [project website on GitHub](http://github.com/dryade/activeroad). 
-There is extensive usage documentation available [on the wiki](https://github.com/dryade/activeroad/wiki).
+More information can be found on the [project website on GitHub](http://github.com/cityway-transdev/activeroad). 
+There is extensive usage documentation available [on the wiki](https://github.com/cityway-transdev/activeroad/wiki).
 
 Example Usage 
 ------------
@@ -40,14 +41,9 @@ Example Usage
 ### Import OSM ways
 
 ```sh
-bundle exec rake 'app:active_road:import:osm_pbf_data[/home/user/test.osm.pbf, true]'
+bundle exec rake "app:active_road:import:osm_pbf_data[/home/user/test.osm.pbf]"
 
 ```
-
-* first argument :  osm file you want to use
-* second argument : true if you want splitted ways else false
-
-Actually itinerary research is optimized when ways are not splitted. Splitted ways could be tested with other tool like pg_routing
 
 ### Itinerary research
 
@@ -98,4 +94,4 @@ This project is licensed under the MIT license, a copy of which can be found in 
 Support
 -------
  
-Users looking for support should file an issue on the GitHub issue tracking page (https://github.com/dryade/activeroad/issues), or file a pull request (https://github.com/dryade/activeroad/pulls) if you have a fix available.
+Users looking for support should file an issue on the GitHub issue tracking page (https://github.com/cityway-transdev/activeroad/issues), or file a pull request (https://github.com/cityway-transdev/activeroad/pulls) if you have a fix available.
