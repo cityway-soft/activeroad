@@ -2,7 +2,6 @@ require "active_road/engine"
 require 'erb'
 require 'saxerator'
 require "activerecord-postgres-hstore"
-require "activerecord-import"
 require "enumerize"
 require "pbf_parser"
 require "postgis_adapter"
