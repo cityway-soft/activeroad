@@ -49,12 +49,12 @@ shared_examples "an OsmPbfImporter module" do
   describe "#required_way?" do
     it "should return true when tag key is highway or railway" do 
       tags = {"highway" => "primary"} 
-      expect(importer.required_way?(tags)).to be_truthy
+      expect(importer.required_way?(ActiveRoad::OsmPbfImporter::way_required_tags_keys, tags)).to be_truthy
     end
 
     it "should return false when no tag key with highway or railway" do 
       tags =  {"maxspeed" => "100", "bike" => "oneway"} 
-      expect(importer.required_way?(tags)).to  be_falsey
+      expect(importer.required_way?(ActiveRoad::OsmPbfImporter::way_required_tags_keys, tags)).to  be_falsey
     end
   end
 
