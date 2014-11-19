@@ -752,37 +752,31 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
     def backup_logical_roads_pgsql
       Rails.logger.info "Begin to backup logical roads in PostgreSql"
       start = Time.now
+      logical_roads_counter = 0
 
-      # sorted_physical_roads = {}.tap do |sorted_physical_roads|  
-      #   Hash[ ActiveRoad::PhysicalRoad.select([:id, :boundary_id, :name]).where("physical_roads.boundary_id IS NOT NULL").group_by(&:boundary_id)].each_pair do |boundary, physical_roads|
-      #     puts boundary.inspect
-      #     sorted_physical_roads[boundary] = physical_roads.group_by(&:name)
-      #   end
-      # end
-
-      # logical_road_columns = ["name", "boundary_id"]
-      # CSV.open("/tmp/logical_roads.csv", "wb:UTF-8") do |csv|
-      #   csv << logical_road_columns
-      #   logical_roads_values.each do |logical_road_values|
-      #     csv << logical_road_values
-      #   end        
-      # end
-      # ActiveRoad::LogicalRoad.transaction do                                         
-      #   ActiveRoad::LogicalRoad.pg_copy_from "/tmp/logical_roads.csv"
-      # end
-      
-      ActiveRoad::PhysicalRoad.find_in_batches(batch_size: 2000) do |group|
+      saved_name = nil
+      saved_boundary = nil
+      saved_logical_road = nil
+      ActiveRoad::PhysicalRoad.where("physical_roads.name IS NOT NULL OR physical_roads.boundary_id IS NOT NULL").select("name,boundary_id,id").order(:boundary_id,:name).find_in_batches(batch_size: 2000) do |group|
         ActiveRoad::LogicalRoad.transaction do
           group.each do |physical_road|
-            # TODO : use geographical data to know if it's the same logical road or not
-            logical_road = ActiveRoad::LogicalRoad.where(["name = :name AND boundary_id = :boundary_id", {:name => physical_road.name ? physical_road.name : "", :boundary_id => physical_road.boundary_id } ]).first_or_create!(:name => physical_road.name.present? ? physical_road.name : "", :boundary_id => physical_road.boundary_id) if physical_road.boundary_id
-            logical_road.physical_roads << physical_road if logical_road
+            not_same_name = (saved_name != physical_road.name)
+            not_same_boundary = (saved_boundary != physical_road.boundary_id)
+            
+            saved_name = physical_road.name if not_same_name
+            saved_boundary = physical_road.boundary_id if not_same_boundary
+
+            if not_same_name || not_same_boundary
+              logical_roads_counter += 1
+              saved_logical_road = ActiveRoad::LogicalRoad.create(:name => saved_name, :boundary_id => saved_boundary)
+            end
+            
+            physical_road.update_column(:logical_road_id, saved_logical_road.id) if saved_logical_road.present?
           end
         end
       end
-      
-      
-      Rails.logger.info "Finish to backup logical roads in PostgreSql in #{ display_time(Time.now - start)} seconds"
+            
+      Rails.logger.info "Finish to backup #{logical_roads_counter} logical roads in PostgreSql in #{ display_time(Time.now - start)} seconds"
     end
     
 

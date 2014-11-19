@@ -8,7 +8,7 @@ module ActiveRoad
     belongs_to :boundary, :class_name => "ActiveRoad::Boundary"
 
     #validates_uniqueness_of :objectid
-    validates :boundary, presence: true
+    #validates :boundary, presence: true
 
     def geometry
       GeoRuby::SimpleFeatures::MultiLineString.from_line_strings physical_roads.map(&:geometry)

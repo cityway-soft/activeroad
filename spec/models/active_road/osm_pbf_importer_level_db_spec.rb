@@ -308,7 +308,7 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
       expect(ActiveRoad::Boundary.all.size).to eq(1)
       expect(ActiveRoad::Boundary.all.collect(&:objectid)).to match_array(["73464"])     
       expect(ActiveRoad::LogicalRoad.all.size).to eq(2)  
-      expect(ActiveRoad::LogicalRoad.all.collect(&:name)).to match_array(["Rue J. Symphorien", ""])
+      expect(ActiveRoad::LogicalRoad.all.collect(&:name)).to match_array(["Rue J. Symphorien", nil])
       expect(ActiveRoad::JunctionsPhysicalRoad.all.size).to eq(16)
     end
 
