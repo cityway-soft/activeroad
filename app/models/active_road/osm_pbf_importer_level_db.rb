@@ -10,13 +10,14 @@ module ActiveRoad
 
     attr_reader :ways_database_path, :nodes_database_path, :physical_roads_database_path, :junctions_database_path, :pbf_file, :split_ways
 
-    def initialize(pbf_file, split_ways = false, nodes_database_path = "/tmp/osm_pbf_nodes_leveldb", ways_database_path = "/tmp/osm_pbf_ways_leveldb")
+    def initialize(pbf_file, split_ways = false, prefix_path = "/tmp/")
       @pbf_file = pbf_file
       @split_ways = split_ways
-      @nodes_database_path = nodes_database_path
-      @ways_database_path = ways_database_path
-      @junctions_database_path = "/tmp/osm_pbf_junctions_leveldb"
-      @physical_roads_database_path = "/tmp/osm_pbf_physical_roads_leveldb"
+      FileUtils.mkdir_p(prefix_path) if !Dir.exists?(prefix_path)
+      @nodes_database_path = prefix_path + "osm_pbf_nodes_leveldb"
+      @ways_database_path = prefix_path + "osm_pbf_ways_leveldb"
+      @junctions_database_path = prefix_path + "osm_pbf_junctions_leveldb"
+      @physical_roads_database_path = prefix_path + "osm_pbf_physical_roads_leveldb"
     end
 
     def nodes_database
@@ -320,7 +321,7 @@ module ActiveRoad
         ActiveRoad::StreetNumber.pg_copy_from "/tmp/street_numbers.csv"
       end
       
-      Rails.logger.info "Finish to backup #{nodes_counter} nodes and #{street_numbers_counter} street_numbres in PostgreSql in #{display_time(Time.now - start)} seconds"         
+      Rails.logger.info "Finish to backup #{nodes_counter} nodes and #{street_numbers_counter} street numbers in PostgreSql in #{display_time(Time.now - start)} seconds"         
     end
 
     def iterate_ways
