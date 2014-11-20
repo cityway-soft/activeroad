@@ -14,7 +14,7 @@ module ActiveRoad
       @road ||= road
     end
 
-    #before_validation :compute_locate_on_road, :on => :create
+    before_validation :compute_locate_on_road, :on => :create
 
     def stored_geometry
       read_attribute :geometry
@@ -25,11 +25,11 @@ module ActiveRoad
     end
 
     def computed_geometry
-      road.at computed_location_on_road
+      road.at estimated_location_on_road
     end
 
     def location_on_road
-      stored_location_on_road or computed_location_on_road
+      stored_location_on_road or estimated_location_on_road
     end
 
     def stored_location_on_road
@@ -43,7 +43,7 @@ module ActiveRoad
     end
 
     # TODO rename into estimated_location_on_road
-    def computed_location_on_road
+    def estimated_location_on_road
       if previous and self.next
         number_ratio = (number.to_i - previous.number.to_i) / (self.next.number.to_i - previous.number.to_i).to_f
         previous.location_on_road + number_ratio * (self.next.location_on_road - previous.location_on_road)
