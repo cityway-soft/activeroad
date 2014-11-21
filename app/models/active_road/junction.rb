@@ -9,14 +9,16 @@ module ActiveRoad
     has_and_belongs_to_many :physical_roads, :class_name => "ActiveRoad::PhysicalRoad",:uniq => true
     has_many :junction_conditionnal_costs, :class_name => "ActiveRoad::JunctionConditionnalCost"
 
+    acts_as_geom :geometry => :point
+
     def location_on_road(road)
       (@location_on_road ||= {})[road.id] ||= road.locate_point(geometry)
     end
 
     def paths
-      physical_roads.includes(:junctions, :physical_road_conditionnal_costs).collect do |physical_road|
-        ActiveRoad::Path.all self, (physical_road.junctions - [self]), physical_road
-      end.flatten
+      physical_roads.includes(:junctions, :physical_road_conditionnal_costs).flat_map do |physical_road|
+        ActiveRoad::Path.all( self, (physical_road.junctions - [self]), physical_road )
+      end
     end
 
     def access_to_road?(road)
