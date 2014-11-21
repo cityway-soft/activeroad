@@ -26,7 +26,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rspec-rails", '~> 3.1.0'
   s.add_development_dependency 'rails', '>=3.1.12'
 
-  s.add_dependency 'activerecord', '3.2.18'
+  s.add_dependency 'activerecord', '~> 3.2.18'
   s.add_dependency 'activerecord-postgres-hstore'
   s.add_dependency 'dr-postgis_adapter', '0.8.4'
   s.add_dependency 'pg', '>= 0.15.1'
