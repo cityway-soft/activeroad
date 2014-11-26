@@ -21,14 +21,12 @@ Gem::Specification.new do |s|
   s.add_development_dependency "guard-rspec"
   s.add_development_dependency "factory_girl_rails", ">= 4.2.1"
   s.add_development_dependency 'rspec-rails', '~> 3.1.0'
-  s.add_development_dependency 'rails', '>= 4.0.0'
+  s.add_development_dependency 'rails', '>= 4.0.0', "< 4.2.0"
 
-  s.add_dependency 'activerecord', '>= 4.0.0'
-  s.add_dependency 'activerecord-postgis-adapter', '>= 0.6.0' 
-  s.add_dependency 'ffi-geos'
-  s.add_dependency 'sqlite3', '~> 1.3.7'
-  s.add_dependency 'pg', '>= 0.15.1'
-  s.add_dependency 'activerecord-import', '>= 0.5.0'
+  s.add_dependency 'activerecord', '>= 4.0.0', "< 4.2.0"
+  s.add_dependency 'activerecord-postgis-adapter', '>= 2.2.0' 
+  s.add_dependency 'pg', '~> 0.17.1'
+  s.add_dependency 'ffi-geos', '~> 1.0.0'
   s.add_dependency 'nokogiri'
   s.add_dependency 'saxerator'
   s.add_dependency 'shortest_path', '0.0.4'
@@ -37,4 +35,5 @@ Gem::Specification.new do |s|
   s.add_dependency "leveldb-native", '~> 0.6'
   s.add_dependency 'postgres-copy', '~> 0.9.O'
   s.add_dependency "snappy"
+  s.add_dependency "squeel"
 end

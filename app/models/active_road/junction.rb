@@ -17,9 +17,9 @@ module ActiveRoad
     end
 
     def paths
-      physical_roads.includes(:junctions, :physical_road_conditionnal_costs).collect do |physical_road|
-        ActiveRoad::Path.all self, (physical_road.junctions - [self]), physical_road
-      end.flatten
+      physical_roads.includes(:junctions, :physical_road_conditionnal_costs).flat_map do |physical_road|
+        ActiveRoad::Path.all( self, (physical_road.junctions - [self]), physical_road )
+      end
     end
 
     def access_to_road?(road)

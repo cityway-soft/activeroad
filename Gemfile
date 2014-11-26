@@ -18,3 +18,9 @@ group :development, :test do
   gem "ruby-prof"
   gem "bullet"
 end
+
+group :production do
+  gem "SyslogLogger", "1.4.0"
+  gem "daemons"
+  gem "dalli"
+end

@@ -100,4 +100,21 @@
   <node id="2646260106" visible="true" version="1" changeset="20308566" timestamp="2014-01-31T22:19:31Z" user="Denis_Helfer" uid="22165" lat="47.7388654" lon="7.3908514">
     <tag k="addr:housenumber" v="7"/>
   </node>
+  <node id="904865073" visible="true" version="1" changeset="20308566" timestamp="2014-01-31T22:19:31Z" user="Denis_Helfer" uid="22165" lat="47" lon="7"></node>
+  <node id="904862755" visible="true" version="1" changeset="20308566" timestamp="2014-01-31T22:19:31Z" user="Denis_Helfer" uid="22165" lat="47" lon="7.001"></node>
+  <node id="904860556" visible="true" version="1" changeset="20308566" timestamp="2014-01-31T22:19:31Z" user="Denis_Helfer" uid="22165" lat="47.001" lon="7.001"></node>
+  <node id="904864930" visible="true" version="1" changeset="20308566" timestamp="2014-01-31T22:19:31Z" user="Denis_Helfer" uid="22165" lat="47.001" lon="7"></node>     
+  <way id="76809952" visible="true" version="2" changeset="24752595" timestamp="2014-08-14T18:56:27Z" user="brandon_macuser" uid="51600">
+    <nd ref="904865073"/>
+    <nd ref="904862755"/>
+    <nd ref="904860556"/>
+    <nd ref="904864930"/>
+    <tag k="addr:city" v="City of Oshawa"/>
+    <tag k="addr:housenumber" v="200"/>
+    <tag k="addr:street" v="Kingsway College Drive"/>
+    <tag k="amenity" v="school"/>
+    <tag k="building" v="yes"/>
+    <tag k="name" v="Auditorium"/>
+    <tag k="source" v="CanVec 6.0 - NRCan"/>
+  </way>
 </osm>

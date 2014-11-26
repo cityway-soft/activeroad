@@ -2,10 +2,10 @@ require 'spec_helper'
 
 describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
   let(:pbf_file) { File.expand_path("../../../fixtures/test.osm.pbf", __FILE__) }
-  let!(:subject_without_data) { ActiveRoad::OsmPbfImporterLevelDb.new( "", true, "/tmp/osm_pbf_nodes_test_without_data_leveldb", "/tmp/osm_pbf_ways_test_without_data_leveldb" ) }
-  let!(:subject_without_split) { ActiveRoad::OsmPbfImporterLevelDb.new( pbf_file, false, "/tmp/osm_pbf_nodes_test_leveldb", "/tmp/osm_pbf_ways_test_leveldb" ) }
+  let!(:subject_without_data) { ActiveRoad::OsmPbfImporterLevelDb.new( "", true, "/tmp/test/without_data/" ) }
+  let!(:subject_without_split) { ActiveRoad::OsmPbfImporterLevelDb.new( pbf_file, false, "/tmp/test/without_split/" ) }
   
-  subject { ActiveRoad::OsmPbfImporterLevelDb.new( pbf_file, true, "/tmp/osm_pbf_nodes_test_leveldb", "/tmp/osm_pbf_ways_test_leveldb" ) }  
+  subject { ActiveRoad::OsmPbfImporterLevelDb.new( pbf_file, true, "/tmp/test/basic/" ) }  
 
   it_behaves_like "an OsmPbfImporter module" do
     let(:importer) { subject }
@@ -45,8 +45,8 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
 
     it "should have import all ways in temporary ways_database" do
       subject.backup_ways
-      expect(subject.ways_database.count).to eq(11)
-      expect(subject.ways_database.keys).to eq(["3-0", "3-1", "5-0", "5-1", "5-2", "6-0", "6-1", "6-2", "7", "8", "9"])
+      expect(subject.ways_database.count).to eq(13)
+      expect(subject.ways_database.keys).to eq(["2", "3-0", "3-1", "5-0", "5-1", "5-2", "6-0", "6-1", "6-2", "7","76809952", "8", "9"])
     end
                                     
   end
@@ -133,9 +133,9 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
       subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 0.0, 0.0, "", ["1", "2"])) )
       subject_without_data.nodes_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 2.0, 2.0, "", ["1", "3"])) )
       subject_without_data.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 3.0, 3.0, "", ["1", "3"])) )
-      subject_without_data.ways_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("1-0", ["1", "2", "3"], true, false, false, false, "Test", "100", true, "", "", {"cycleway" => "lane"}) ) )
-      subject_without_data.ways_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("2-0", ["1", "2"], true, false, false, false, "Test", "100", true, "", "", {"toll" => "true"}) ) )
-      subject_without_data.ways_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("3-0", ["1", "2"], true, false, false, false, "Test", "100", true, "", "", {}) ) )
+      subject_without_data.ways_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("1-0", ["1", "2", "3"], true, false, false, false, "Test", "100", true, "", "", "", {"cycleway" => "lane"}) ) )
+      subject_without_data.ways_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("2-0", ["1", "2"], true, false, false, false, "Test", "100", true, "", "", "", {"toll" => "true"}) ) )
+      subject_without_data.ways_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("3-0", ["1", "2"], true, false, false, false, "Test", "100", true, "", "", "", {}) ) )
     end
 
     after :each do
@@ -300,15 +300,15 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
       subject.import
       expect(ActiveRoad::Junction.all.size).to eq(6)
       expect(ActiveRoad::Junction.all.collect(&:objectid)).to match_array(["1", "2", "5", "8", "9", "10"])
-      expect(ActiveRoad::StreetNumber.all.size).to eq(2)
-      expect(ActiveRoad::StreetNumber.all.collect(&:objectid)).to match_array(["2646260105", "2646260106"])
+      expect(ActiveRoad::StreetNumber.all.size).to eq(4)
+      expect(ActiveRoad::StreetNumber.all.collect(&:objectid)).to match_array(["2646260105", "2646260106", "76809952", "2"])
       expect(ActiveRoad::PhysicalRoad.all.size).to eq(8)
       expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["3-0", "3-1", "5-0", "5-1", "5-2", "6-0", "6-1", "6-2"])
       expect(ActiveRoad::PhysicalRoadConditionnalCost.all.size).to eq(24)
       expect(ActiveRoad::Boundary.all.size).to eq(1)
       expect(ActiveRoad::Boundary.all.collect(&:objectid)).to match_array(["73464"])     
       expect(ActiveRoad::LogicalRoad.all.size).to eq(2)  
-      expect(ActiveRoad::LogicalRoad.all.collect(&:name)).to match_array(["Rue J. Symphorien", ""])
+      expect(ActiveRoad::LogicalRoad.all.collect(&:name)).to match_array(["Rue J. Symphorien", nil])
       expect(ActiveRoad::JunctionsPhysicalRoad.all.size).to eq(16)
     end
 
@@ -316,8 +316,8 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
       subject_without_split.import
       expect(ActiveRoad::Junction.all.size).to eq(6)
       expect(ActiveRoad::Junction.all.collect(&:objectid)).to match_array(["1", "2", "5", "8", "9", "10"])
-      expect(ActiveRoad::StreetNumber.all.size).to eq(2)
-      expect(ActiveRoad::StreetNumber.all.collect(&:objectid)).to match_array(["2646260105", "2646260106"])
+      expect(ActiveRoad::StreetNumber.all.size).to eq(4)
+      expect(ActiveRoad::StreetNumber.all.collect(&:objectid)).to match_array(["2646260105", "2646260106", "76809952", "2"])
       expect(ActiveRoad::PhysicalRoad.all.size).to eq(3)
       expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["3-0", "5-0", "6-0"])
       expect(ActiveRoad::PhysicalRoadConditionnalCost.all.size).to eq(9)

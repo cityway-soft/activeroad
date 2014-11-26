@@ -4,13 +4,19 @@ module ActiveRoad
     @@relation_required_tags_keys = ["boundary", "admin_level"]
     @@relation_selected_tags_keys = ["boundary", "admin_level", "ref:INSEE", "name", "addr:postcode", "type"]
     mattr_reader :relation_required_tags_keys
-    mattr_reader :relation_selected_tags_keys
+    mattr_reader :relation_selected_tags_keys    
 
-    @@way_required_tags_keys = ["highway", "railway", "boundary", "admin_level"]
-    @@way_selected_tags_keys = [ "name", "maxspeed", "oneway", "boundary", "admin_level" ]
+    @@way_required_tags_keys = ["highway", "railway", "boundary", "admin_level", "addr:housenumber"]
+    @@way_for_physical_road_required_tags_keys = ["highway", "railway"]
+    @@way_for_boundary_required_tags_keys = ["boundary", "admin_level"]
+    @@way_for_street_number_required_tags_keys = ["addr:housenumber"]
+    @@way_selected_tags_keys = [ "name", "maxspeed", "oneway", "boundary", "admin_level", "addr:housenumber" ]
     # Add first_node_id and last_node_id
-    @@way_optionnal_tags_keys = ["highway", "maxspeed", "bridge", "tunnel", "toll", "cycleway", "cycleway-right", "cycleway-left", "cycleway-both", "oneway:bicycle", "oneway", "bicycle", "segregated", "foot", "lanes", "lanes:forward", "lanes:forward:bus", "busway:right", "busway:left", "oneway_bus", "boundary", "admin_level", "access", "construction", "junction"]
+    @@way_optionnal_tags_keys = ["highway", "maxspeed", "bridge", "tunnel", "toll", "cycleway", "cycleway-right", "cycleway-left", "cycleway-both", "oneway:bicycle", "oneway", "bicycle", "segregated", "foot", "lanes", "lanes:forward", "lanes:forward:bus", "busway:right", "busway:left", "oneway_bus", "boundary", "admin_level", "access", "construction", "junction", "motor_vehicle", "psv", "bus", "addr:city", "addr:country", "addr:state", "addr:street"]
     mattr_reader :way_required_tags_keys
+    mattr_reader :way_for_physical_road_required_tags_keys
+    mattr_reader :way_for_boundary_required_tags_keys
+    mattr_reader :way_for_street_number_required_tags_keys
     mattr_reader :way_selected_tags_keys
     mattr_reader :way_optionnal_tags_keys
 
@@ -69,8 +75,8 @@ module ActiveRoad
       end
     end
 
-    def required_way?(tags)
-      @@way_required_tags_keys.each do |require_tag_key|
+    def required_way?(required_tags, tags)
+      required_tags.each do |require_tag_key|
         if tags.keys.include?(require_tag_key)
           return true
         end
@@ -252,9 +258,9 @@ module ActiveRoad
     end
 
     class Way
-      attr_accessor :id, :nodes, :car, :bike, :train, :pedestrian, :name, :maxspeed, :oneway, :boundary, :admin_level, :options
+      attr_accessor :id, :nodes, :car, :bike, :train, :pedestrian, :name, :maxspeed, :oneway, :boundary, :admin_level, :addr_housenumber, :options
 
-      def initialize(id, nodes = [], car = false, bike = false, train = false, pedestrian = false, name = "", maxspeed = 0, oneway = false, boundary = "", admin_level = "", options = {})
+      def initialize(id, nodes = [], car = false, bike = false, train = false, pedestrian = false, name = "", maxspeed = 0, oneway = false, boundary = "", admin_level = "", addr_housenumber = "", options = {})
         @id = id
         @nodes = nodes
         @car = car
@@ -266,6 +272,7 @@ module ActiveRoad
         @oneway = oneway
         @boundary = boundary
         @admin_level = admin_level
+        @addr_housenumber = addr_housenumber
         @options = options
       end
 
@@ -274,11 +281,11 @@ module ActiveRoad
       end
 
       def marshal_dump
-        [@id, @nodes, @car, @bike, @train, @pedestrian, @name, @maxspeed, @oneway, @boundary, @admin_level, @options]
+        [@id, @nodes, @car, @bike, @train, @pedestrian, @name, @maxspeed, @oneway, @boundary, @admin_level, @addr_housenumber, @options]
       end
 
       def marshal_load array
-        @id, @nodes, @car, @bike, @train, @pedestrian, @name, @maxspeed, @oneway, @boundary, @admin_level, @options = array
+        @id, @nodes, @car, @bike, @train, @pedestrian, @name, @maxspeed, @oneway, @boundary, @admin_level, @addr_housenumber, @options = array
       end
     end
 
