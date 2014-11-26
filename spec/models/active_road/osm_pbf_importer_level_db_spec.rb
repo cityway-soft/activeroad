@@ -2,10 +2,10 @@ require 'spec_helper'
 
 describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
   let(:pbf_file) { File.expand_path("../../../fixtures/test.osm.pbf", __FILE__) }
-  let!(:subject_without_data) { ActiveRoad::OsmPbfImporterLevelDb.new( "", true, "/tmp/test/without_data/" ) }
-  let!(:subject_without_split) { ActiveRoad::OsmPbfImporterLevelDb.new( pbf_file, false, "/tmp/test/without_split/" ) }
+  let!(:subject_without_data) { ActiveRoad::OsmPbfImporterLevelDb.new( "", true, false, "/tmp/test/without_data/" ) }
+  let!(:subject_without_split) { ActiveRoad::OsmPbfImporterLevelDb.new( pbf_file, false, false, "/tmp/test/without_split/" ) }
   
-  subject { ActiveRoad::OsmPbfImporterLevelDb.new( pbf_file, true, "/tmp/test/basic/" ) }  
+  subject { ActiveRoad::OsmPbfImporterLevelDb.new( pbf_file, true, false, "/tmp/test/basic/" ) }  
 
   it_behaves_like "an OsmPbfImporter module" do
     let(:importer) { subject }
@@ -223,7 +223,7 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
     end
 
     it "should return ways not splitted" do
-      allow(subject_without_data).to receive_messages :split_ways => false
+      allow(subject_without_data).to receive_messages :ways_split => false
       ways_splitted = subject_without_data.split_way_with_nodes(simple_way)
       expect(ways_splitted.size).to eq(1)
       expect(ways_splitted.first.instance_values).to include(
@@ -305,11 +305,11 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
       expect(ActiveRoad::PhysicalRoad.all.size).to eq(8)
       expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["3-0", "3-1", "5-0", "5-1", "5-2", "6-0", "6-1", "6-2"])
       expect(ActiveRoad::PhysicalRoadConditionnalCost.all.size).to eq(24)
+      expect(ActiveRoad::JunctionsPhysicalRoad.all.size).to eq(16)
       expect(ActiveRoad::Boundary.all.size).to eq(1)
       expect(ActiveRoad::Boundary.all.collect(&:objectid)).to match_array(["73464"])     
-      expect(ActiveRoad::LogicalRoad.all.size).to eq(2)  
-      expect(ActiveRoad::LogicalRoad.all.collect(&:name)).to match_array(["Rue J. Symphorien", nil])
-      expect(ActiveRoad::JunctionsPhysicalRoad.all.size).to eq(16)
+      expect(ActiveRoad::LogicalRoad.all.size).to eq(1)  
+      expect(ActiveRoad::LogicalRoad.all.collect(&:name)).to match_array(["Rue J. Symphorien"])
     end
 
     it "should import only ways, nodes and street number when no split" do  
@@ -322,8 +322,9 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
       expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["3-0", "5-0", "6-0"])
       expect(ActiveRoad::PhysicalRoadConditionnalCost.all.size).to eq(9)
       expect(ActiveRoad::JunctionsPhysicalRoad.all.size).to eq(11)
-      expect(ActiveRoad::Boundary.all.size).to eq(0)
-      expect(ActiveRoad::LogicalRoad.all.size).to eq(0)        
+      expect(ActiveRoad::Boundary.all.size).to eq(1)
+      expect(ActiveRoad::LogicalRoad.all.size).to eq(1)
+      expect(ActiveRoad::LogicalRoad.all.collect(&:name)).to match_array(["Rue J. Symphorien"])
     end
   end
 
