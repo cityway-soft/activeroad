@@ -10,7 +10,124 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
   it_behaves_like "an OsmPbfImporter module" do
     let(:importer) { subject }
   end
+
+  describe "#import" do
+    
+    it "should import all datas when split" do  
+      subject.import
+      expect(ActiveRoad::Junction.all.size).to eq(6)
+      expect(ActiveRoad::Junction.all.collect(&:objectid)).to match_array(["1", "2", "5", "8", "9", "10"])
+      expect(ActiveRoad::StreetNumber.all.size).to eq(4)
+      expect(ActiveRoad::StreetNumber.all.collect(&:objectid)).to match_array(["2646260105", "2646260106", "76809952", "2"])
+      expect(ActiveRoad::PhysicalRoad.all.size).to eq(8)
+      expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["3-0", "3-1", "5-0", "5-1", "5-2", "6-0", "6-1", "6-2"])
+      expect(ActiveRoad::PhysicalRoadConditionnalCost.all.size).to eq(24)
+      expect(ActiveRoad::JunctionsPhysicalRoad.all.size).to eq(16)
+      expect(ActiveRoad::Boundary.all.size).to eq(1)
+      expect(ActiveRoad::Boundary.all.collect(&:objectid)).to match_array(["73464"])     
+      expect(ActiveRoad::LogicalRoad.all.size).to eq(1)  
+      expect(ActiveRoad::LogicalRoad.all.collect(&:name)).to match_array(["Rue J. Symphorien"])
+    end
+
+    it "should import only ways, nodes and street number when no split" do  
+      subject_without_split.import
+      expect(ActiveRoad::Junction.all.size).to eq(6)
+      expect(ActiveRoad::Junction.all.collect(&:objectid)).to match_array(["1", "2", "5", "8", "9", "10"])
+      expect(ActiveRoad::StreetNumber.all.size).to eq(4)
+      expect(ActiveRoad::StreetNumber.all.collect(&:objectid)).to match_array(["2646260105", "2646260106", "76809952", "2"])
+      expect(ActiveRoad::PhysicalRoad.all.size).to eq(3)
+      expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["3-0", "5-0", "6-0"])
+      expect(ActiveRoad::PhysicalRoadConditionnalCost.all.size).to eq(9)
+      expect(ActiveRoad::JunctionsPhysicalRoad.all.size).to eq(11)
+      expect(ActiveRoad::Boundary.all.size).to eq(1)
+      expect(ActiveRoad::LogicalRoad.all.size).to eq(1)
+      expect(ActiveRoad::LogicalRoad.all.collect(&:name)).to match_array(["Rue J. Symphorien"])
+    end
+  end
+
+  describe "#pedestrian?" do
+    it "should return true when tag key is highway and tag value is good" do
+      expect(subject.pedestrian?({"highway" => "pedestrian"})).to be_truthy
+      expect(subject.pedestrian?({"highway" => "path"})).to be_truthy
+    end
+
+    it "should return false when tag key is not highway or tag value is not good" do
+      expect(subject.pedestrian?({"highway" => "residential"})).to be_falsey
+    end    
+  end
+
+  describe "#bike?" do
+    it "should return true when tag key is highway and tag value is good" do
+      expect(subject.bike?({"highway" => "cycleway"})).to be_truthy
+      expect(subject.bike?({"cycleway:right" => "lane"})).to be_truthy
+      expect(subject.bike?({"cycleway:left" => "lane"})).to be_truthy
+      expect(subject.bike?({"cycleway" => "lane"})).to be_truthy
+    end
+
+    it "should return false when tag key is not highway or tag value is not good" do
+      expect(subject.bike?({"highway" => "residential"})).to be_falsey
+    end    
+  end
+
+  describe "#train?" do
+    it "should return true when tag key is railway and tag value is good" do
+      expect(subject.train?({"railway" => "rail"})).to be_truthy
+      expect(subject.train?({"railway" => "tram"})).to be_truthy
+    end
+
+    it "should return false when tag key is not railway or tag value is not good" do
+      expect(subject.train?({"highway" => "residential"})).to be_falsey
+    end    
+  end
   
+  describe "#car?" do
+    it "should return true when tag key is highway and tag value is good" do
+      expect(subject.car?({"highway" => "motorway"})).to be_truthy
+      expect(subject.car?({"highway" => "secondary"})).to be_truthy
+    end
+
+    it "should return false when tag key is not highway or tag value is not good" do
+      expect(subject.car?({"highway" => "railway"})).to be_falsey
+    end    
+  end
+
+  describe "#required_way?" do
+    it "should return true when tag key is highway or railway" do 
+      tags = {"highway" => "primary"} 
+      expect(subject.required_way?(ActiveRoad::OsmPbfImporter::way_required_tags_keys, tags)).to be_truthy
+    end
+
+    it "should return false when no tag key with highway or railway" do 
+      tags =  {"maxspeed" => "100", "bike" => "oneway"} 
+      expect(subject.required_way?(ActiveRoad::OsmPbfImporter::way_required_tags_keys, tags)).to  be_falsey
+    end
+  end
+
+  describe "#required_relation?" do
+    it "should return true when tag key is boundary" do 
+      tags = {"boundary" => "administrative"} 
+      expect(subject.required_relation?(tags)).to be_truthy
+    end
+
+    it "should return false when no tag key with highway or railway" do 
+      tags =  {"other" => "100"} 
+      expect(subject.required_relation?(tags)).to  be_falsey
+    end
+  end
+
+  describe "#selected_tags" do
+    it "should return true when " do 
+      tags = {"highway" => "primary", "name" => "Rue montparnasse", "bridge" => "true", "other_tag" => "other_tag"} 
+      expect(subject.selected_tags(tags, ActiveRoad::OsmPbfImporter.way_selected_tags_keys)).to eq({"name" => "Rue montparnasse" })
+    end
+  end
+  
+  describe "#backup_nodes" do
+
+    it "should test backup_nodes"
+    
+  end
+    
   describe "#update_nodes_with_way" do
     before :each do
       subject.backup_nodes
@@ -20,10 +137,10 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
       subject.close_nodes_database
     end
 
-    it "should have call update_node_with_way n times" do
+    it "should have call update_node_with_way n times" #do
       #expect(subject).to receive(:update_node_with_way).exactly(3).times   
-      subject.update_nodes_with_way
-    end
+      #subject.update_nodes_with_way
+    #end
                                     
   end
 
@@ -51,111 +168,33 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
                                     
   end
   
-  # describe "#update_node_with_way" do
-  #   let(:way_id) { "1" }
-  #   let(:node_ids) { ["1", "2", "3"] }
+  describe ActiveRoad::OsmPbfImporterLevelDb::Way
+  
+  describe ActiveRoad::OsmPbfImporterLevelDb::Node do
     
-  #   before :each do 
-  #     subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 2.0, 2.0)) )
-  #     subject_without_data.nodes_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 2.0, 2.0)) )
-  #     subject_without_data.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 2.0, 2.0)) )
-  #   end
+    let(:node) { ActiveRoad::OsmPbfImporterLevelDb::Node.new("122323131", 34.2, 12.5) } 
 
-  #   after :each do
-  #     subject_without_data.nodes_database.delete("1")
-  #     subject_without_data.nodes_database.delete("2")
-  #     subject_without_data.nodes_database.delete("3")
-
-  #     subject_without_data.close_nodes_database
-  #   end
-
-  #   it "should have update all nodes with way in the temporary nodes_database" do
-  #     subject_without_data.update_node_with_way(way_id, node_ids)
-      
-  #     node1 = Marshal.load(subject_without_data.nodes_database.get("1"))
-  #     expect(node1.id).to eq("1")
-  #     expect(node1.lon).to eq(2.0)
-  #     expect(node1.lat).to eq(2.0)
-  #     expect(node1.ways).to eq(["1"])
-  #     expect(node1.end_of_way).to eq(true)
-
-  #     node2 = Marshal.load(subject_without_data.nodes_database.get("2"))
-  #     expect(node2.id).to eq("2")
-  #     expect(node2.lon).to eq(2.0)
-  #     expect(node2.lat).to eq(2.0)
-  #     expect(node2.ways).to eq(["1"])
-  #     expect(node2.end_of_way).to eq(false)
-
-  #     node3 = Marshal.load(subject_without_data.nodes_database.get("3"))
-  #     expect(node3.id).to eq("3")
-  #     expect(node3.lon).to eq(2.0)
-  #     expect(node3.lat).to eq(2.0)
-  #     expect(node3.ways).to eq(["1"])
-  #     expect(node3.end_of_way).to eq(true)
-  #   end
-  # end
-
-  describe "#iterate_nodes" do
-    let!(:point) { geos_factory.point( 0, 0) }
-
-    before :each do      
-      subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 2.0, 2.0, "", ["1", "2"], false, {"junction" => "roundabout"})) )
-      subject_without_data.nodes_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 2.0, 2.0, "", ["1", "3"])) )
-      subject_without_data.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 2.0, 2.0, "7,8", [], false, {"addr:street" => "Rue de Noaille"})) )
+    it "should return a node object when unmarhalling a dump of node object" do
+      data = Marshal.dump(node)
+      object = Marshal.load(data)
+      expect(object).to be_an_instance_of(ActiveRoad::OsmPbfImporterLevelDb::Node)
+      expect(object.id).to eq(node.id)
+      expect(object.lon).to eq(node.lon)
+      expect(object.lat).to eq(node.lat)
+      expect(object.ways).to eq(node.ways)
     end
 
-    after :each do
-      subject_without_data.nodes_database.delete("1")
-      subject_without_data.nodes_database.delete("2")
-      subject_without_data.nodes_database.delete("3")
-
-      subject_without_data.close_nodes_database
-    end
-    
-    it "should iterate nodes to save it" do
-      # GeoRuby::SimpleFeatures::Point.stub :from_x_y => point
-      # subject_without_data.should_receive(:backup_nodes_pgsql).exactly(1).times.with([["1", point, {"junction" => "roundabout"}], ["2", point, {}] ])
-      # subject_without_data.should_receive(:backup_street_numbers_pgsql).exactly(1).times.with([ ["3", point, "7,8", {"addr:street" => "Rue de Noaille"}] ])
-      subject_without_data.iterate_nodes
-      expect(ActiveRoad::Junction.all.collect(&:objectid)).to match_array(["1", "2"])
-    end
-  end
-
-  describe "#iterate_ways" do
-    let!(:line) { geos_factory.parse_wkt( "LINESTRING(0 0,2 2)" ) }
-    let!(:line2) { geos_factory.parse_wkt( "LINESTRING(2 2,3 3)" ) }
-    let!(:junction1) { create(:junction, :objectid => "1", :geometry => geos_factory.point(0, 0) ) }
-    let!(:junction2) { create(:junction, :objectid => "2", :geometry => geos_factory.point(2, 2) ) }
-    let!(:junction3) { create(:junction, :objectid => "3", :geometry => geos_factory.point(3, 3) ) }
-    let!(:boundary) { create(:boundary, :geometry => geos_factory.parse_wkt( "MULTIPOLYGON(((0 0,2 0,2 2,0 2)))") ) }
-    
-    before :each do
-      subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 0.0, 0.0, "", ["1", "2"])) )
-      subject_without_data.nodes_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 2.0, 2.0, "", ["1", "3"])) )
-      subject_without_data.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 3.0, 3.0, "", ["1", "3"])) )
-      subject_without_data.ways_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("1-0", ["1", "2", "3"], true, false, false, false, "Test", "100", true, "", "", "", {"cycleway" => "lane"}) ) )
-      subject_without_data.ways_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("2-0", ["1", "2"], true, false, false, false, "Test", "100", true, "", "", "", {"toll" => "true"}) ) )
-      subject_without_data.ways_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("3-0", ["1", "2"], true, false, false, false, "Test", "100", true, "", "", "", {}) ) )
+    it "should return a node object with ways when we add a way" do
+      node.add_way("1223344")
+      data = Marshal.dump(node)
+      object = Marshal.load(data)
+      expect(object).to be_an_instance_of(ActiveRoad::OsmPbfImporterLevelDb::Node)
+      expect(object.id).to eq(node.id)
+      expect(object.lon).to eq(node.lon)
+      expect(object.lat).to eq(node.lat)
+      expect(object.ways).to eq([ "1223344" ])
     end
 
-    after :each do
-      subject_without_data.nodes_database.delete("1")
-      subject_without_data.nodes_database.delete("2")
-      subject_without_data.nodes_database.delete("3")
-
-      subject_without_data.ways_database.delete("1")
-      subject_without_data.ways_database.delete("2")
-      subject_without_data.ways_database.delete("3")
-
-      subject_without_data.close_nodes_database
-      subject_without_data.close_ways_database
-    end
-    
-    it "should iterate ways to save it" do     
-      subject_without_data.iterate_ways
-      expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["1-0", "2-0", "3-0"]
-)
-    end
   end
 
   describe "#way_geometry" do
@@ -238,174 +277,6 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
                                                              "nodes" => ["1", "2", "3"]              )
     end
     
-  end
-
-  describe "#split_way_with_boundaries" do        
-    let!(:boundary) { create(:boundary, :geometry => "MULTIPOLYGON(((0 0,2 0,2 2,0 2,0 0)))" ) }
-    let!(:boundary2) { create(:boundary, :geometry => "MULTIPOLYGON(((0 2,2 2,2 4,0 4,0 2)))" ) }
-    
-    it "should split way in three parts" do
-      physical_road = create(:physical_road, :geometry => "LINESTRING(-1.0 1.0, 1.0 1.0, 1.0 2.0, 1.0 3.0)", :boundary_id => nil, :tags => {"bridge" => "true", "first_node_id" => "1", "last_node_id" => "2"})
-      departure = create(:junction, :geometry => geos_factory.point(-1.0, 1.0))
-      arrival = create(:junction, :geometry => geos_factory.point(1.0, 3.0))
-      physical_road.junctions << [departure, arrival]
-      
-      subject_without_data.split_way_with_boundaries
-      expect(ActiveRoad::PhysicalRoad.all.size).to eq(3)
-      expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["#{physical_road.objectid}-0", "#{physical_road.objectid}-1", "#{physical_road.objectid}-2"])
-
-      expect(ActiveRoad::Junction.all.size).to eq(4)
-      expect(ActiveRoad::Junction.all.collect(&:objectid)).to match_array(["#{departure.objectid}", "#{departure.objectid}-#{arrival.objectid}-0", "#{departure.objectid}-#{arrival.objectid}-1", "#{arrival.objectid}"])
-
-      expect(ActiveRoad::PhysicalRoad.all.collect(&:boundary_id)).to match_array([nil, boundary.id, boundary2.id])
-      expect(ActiveRoad::PhysicalRoad.all.collect(&:tags)).to match_array( [{"bridge"=>"true", "last_node_id"=>"#{departure.objectid}-#{arrival.objectid}-0", "first_node_id"=>"#{departure.objectid}"}, {"bridge"=>"true", "last_node_id"=>"#{departure.objectid}-#{arrival.objectid}-1", "first_node_id"=>"#{departure.objectid}-#{arrival.objectid}-0"}, {"bridge"=>"true", "last_node_id"=>"#{arrival.objectid}", "first_node_id"=>"#{departure.objectid}-#{arrival.objectid}-1"}] )
-      
-    end
-
-    # Split intersection between segment on perimeter and segment in boundary
-    it "should treat geometry differences with multi linestring" do
-      physical_road = create(:physical_road, :geometry => "LINESTRING(-1.0 1.0, 1.0 1.0, 1.0 2.0, -1.0 2.0)", :boundary_id => nil)
-      departure = create(:junction, :geometry => geos_factory.point(-1.0, 1.0))
-      arrival = create(:junction, :geometry => geos_factory.point(-1.0, 2.0))
-      physical_road.junctions << [departure, arrival]
-      
-      subject_without_data.split_way_with_boundaries
-      expect(ActiveRoad::PhysicalRoad.all.size).to eq(4)
-    end
-
-    it "should update boundary_id" do
-      physical_road = create(:physical_road, :geometry => "LINESTRING(0.0 1.0,1.0 1.0)", :boundary_id => nil)
-      departure = create(:junction, :geometry => geos_factory.point(0.0, 1.0))
-      arrival = create(:junction, :geometry => geos_factory.point(1.0, 1.0))
-      physical_road.junctions << [departure, arrival]
-      
-      subject_without_data.split_way_with_boundaries
-      expect(ActiveRoad::PhysicalRoad.all.size).to eq(1)
-      expect(ActiveRoad::PhysicalRoad.all.collect(&:boundary_id)).to match_array([boundary.id])      
-    end
-
-    #     it "should return ways splitted with boundary" do
-    #   boundary = create(:boundary, :geometry => multi_polygon( [ polygon( point(0,0), point(2,0), point(2,2), point(0,2) ) ] ) )
-    #   boundary2 = create(:boundary, :geometry => multi_polygon( [ polygon( point(0,2), point(2,2), point(2,4), point(0,4) ) ] ) )        
-    #   expect(subject_without_data.split_way_with_nodes(complex_way_boundary)).to match_array( [{:objectid=>"2-0", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :length_in_meter=>111302.53586533663, :geometry=>line_string("-1.0 1.0,0.0 1.0"), :boundary_id=>nil, :tags=>{}, :conditionnal_costs=>[["car", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308]], :junctions=>["4", "5"]},
-    #                                                                            {:objectid=>"2-1", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :length_in_meter=>111319.4907932736, :geometry=>line_string("0.0 1.0,1.0 1.0"), :boundary_id=>boundary.id, :tags=>{}, :conditionnal_costs=>[["car", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308]], :junctions=>["5", "6-8-0"]},
-    #                                                                            {:objectid=>"2-2", :car=>false, :bike=>false, :train=>true, :pedestrian=>true, :name=>"", :length_in_meter=>111319.49079327364, :geometry=>line_string("1.0 2.0,1.0 3.0"), :boundary_id=>boundary2.id, :tags=>{}, :conditionnal_costs=>[["car", 1.7976931348623157e+308], ["bike", 1.7976931348623157e+308]], :junctions=>["6-8-0", "6-8-1"]}] )
-    # end
-                                       
-  end
-
-  describe "#import" do
-    
-    it "should import all datas when split" do  
-      subject.import
-      expect(ActiveRoad::Junction.all.size).to eq(6)
-      expect(ActiveRoad::Junction.all.collect(&:objectid)).to match_array(["1", "2", "5", "8", "9", "10"])
-      expect(ActiveRoad::StreetNumber.all.size).to eq(4)
-      expect(ActiveRoad::StreetNumber.all.collect(&:objectid)).to match_array(["2646260105", "2646260106", "76809952", "2"])
-      expect(ActiveRoad::PhysicalRoad.all.size).to eq(8)
-      expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["3-0", "3-1", "5-0", "5-1", "5-2", "6-0", "6-1", "6-2"])
-      expect(ActiveRoad::PhysicalRoadConditionnalCost.all.size).to eq(24)
-      expect(ActiveRoad::JunctionsPhysicalRoad.all.size).to eq(16)
-      expect(ActiveRoad::Boundary.all.size).to eq(1)
-      expect(ActiveRoad::Boundary.all.collect(&:objectid)).to match_array(["73464"])     
-      expect(ActiveRoad::LogicalRoad.all.size).to eq(1)  
-      expect(ActiveRoad::LogicalRoad.all.collect(&:name)).to match_array(["Rue J. Symphorien"])
-    end
-
-    it "should import only ways, nodes and street number when no split" do  
-      subject_without_split.import
-      expect(ActiveRoad::Junction.all.size).to eq(6)
-      expect(ActiveRoad::Junction.all.collect(&:objectid)).to match_array(["1", "2", "5", "8", "9", "10"])
-      expect(ActiveRoad::StreetNumber.all.size).to eq(4)
-      expect(ActiveRoad::StreetNumber.all.collect(&:objectid)).to match_array(["2646260105", "2646260106", "76809952", "2"])
-      expect(ActiveRoad::PhysicalRoad.all.size).to eq(3)
-      expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["3-0", "5-0", "6-0"])
-      expect(ActiveRoad::PhysicalRoadConditionnalCost.all.size).to eq(9)
-      expect(ActiveRoad::JunctionsPhysicalRoad.all.size).to eq(11)
-      expect(ActiveRoad::Boundary.all.size).to eq(1)
-      expect(ActiveRoad::LogicalRoad.all.size).to eq(1)
-      expect(ActiveRoad::LogicalRoad.all.collect(&:name)).to match_array(["Rue J. Symphorien"])
-    end
-  end
-
-  describe "#backup_relations_pgsql" do
-
-    before :each do
-      subject.nodes_database
-      subject.ways_database
-      
-      subject.backup_nodes
-      subject.backup_ways
-    end
-    
-    after :each do
-      subject.close_nodes_database
-      subject.delete_nodes_database
-      subject.close_ways_database
-      subject.delete_ways_database
-    end
-    
-    it "should backup boundary" do      
-      subject.backup_relations_pgsql
-      expect(ActiveRoad::Boundary.all.size).to eq(1)
-      expect(ActiveRoad::Boundary.first.objectid).to eq("73464")
-      expect(ActiveRoad::Boundary.first.geometry).to eq(geos_factory.parse_wkt( "MULTIPOLYGON(((-54.3 5.3,-54.3 5.4,-54.1 5.4,-54.1 5.3,-54.3 5.3 ) ))" ) )
-    end
-
-    # it "should order ways geometry" do
-    #   let(:first) { line_string( "0 0,1 1" ) }
-    #   let(:second) { line_string( "2 2,1 1" ) }
-    #   let(:second_ordered) { line_string( "2 2,1 1" ) }
-    #   let(:third) { line_string( "2 2,3 3" ) }
-    #   expect(subject.order_ways_geometry( [first, second, last] )).to match_array( [first, second_ordered, third] )
-    # end
-    
-  end
-
-  describe "#backup_logical_roads_pgsql" do
-    let!(:boundary) { create(:boundary) }
-
-    it "should not create a logical road if physical road has no boundary" do
-      physical_road = create(:physical_road, :boundary_id => nil)
-      subject.backup_logical_roads_pgsql
-      expect(ActiveRoad::LogicalRoad.all.size).to eq(0)
-      expect(ActiveRoad::PhysicalRoad.all.collect(&:logical_road_id)).to match_array([nil])
-    end
-    
-    it "should create a logical road with no name and a boundary if physical road has no name but a boundary" do
-      physical_road = create(:physical_road, :boundary_id => boundary.id)
-      subject.backup_logical_roads_pgsql
-      expect(ActiveRoad::LogicalRoad.all.size).to eq(1)
-      expect(ActiveRoad::LogicalRoad.first.attributes).to include( "boundary_id" => boundary.id )
-      expect(ActiveRoad::PhysicalRoad.all.collect(&:logical_road_id)).to match_array(ActiveRoad::LogicalRoad.all.collect(&:id))
-    end
-    
-    it "should create a logical road with no name and a boundary if physical roads has no name but a boundary" do
-      physical_road = create(:physical_road, :boundary_id => boundary.id)
-      physical_road2 = create(:physical_road, :boundary_id => boundary.id)
-      subject.backup_logical_roads_pgsql
-      expect(ActiveRoad::LogicalRoad.all.size).to eq(1)
-      expect(ActiveRoad::LogicalRoad.first.attributes).to include( "boundary_id" => boundary.id )
-      expect(ActiveRoad::PhysicalRoad.all.collect(&:logical_road_id)).to match_array([ActiveRoad::LogicalRoad.first.id, ActiveRoad::LogicalRoad.first.id])
-    end
-
-    it "should create a logical road with a name and a boundary if physical road has a name and a boundary" do
-      physical_road = create(:physical_road, :boundary_id => boundary.id, :name => "Test")
-      subject.backup_logical_roads_pgsql
-      expect(ActiveRoad::LogicalRoad.all.size).to eq(1)
-      expect(ActiveRoad::LogicalRoad.first.attributes).to include( "boundary_id" => boundary.id, "name" => "Test" )
-      expect(ActiveRoad::PhysicalRoad.all.collect(&:logical_road_id)).to match_array([ActiveRoad::LogicalRoad.first.id])
-    end
-
-    it "should create one logical road with a name and a boundary if physical roads have same name and a boundary" do
-      physical_road = create(:physical_road, :boundary_id => boundary.id, :name => "Test")
-      physical_road = create(:physical_road, :boundary_id => boundary.id, :name => "Test")
-      subject.backup_logical_roads_pgsql
-      expect(ActiveRoad::LogicalRoad.all.size).to eq(1)
-      expect(ActiveRoad::LogicalRoad.first.attributes).to include( "boundary_id" => boundary.id, "name" => "Test" )
-      expect(ActiveRoad::PhysicalRoad.all.collect(&:logical_road_id)).to match_array([ActiveRoad::LogicalRoad.first.id, ActiveRoad::LogicalRoad.first.id])
-    end
-    
-  end
+  end  
 
 end

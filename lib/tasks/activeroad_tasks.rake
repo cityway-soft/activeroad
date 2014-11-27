@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+require "csv"
+
 namespace :active_road do
 
   desc 'This rebuilds environment db'
@@ -41,7 +43,50 @@ namespace :active_road do
     end
 
   end
-  
+
+  namespace :report do
+
+    desc "Create csv file reports to list invalid street numbers"
+    task :invalid_street_numbers => [:environment] do |task, args|
+      FileUtils.mkdir_p("/tmp/reports") if !Dir.exists?("/tmp/reports")      
+      street_number_without_road_counter = street_number_far_from_road_counter = 0
+            
+      CSV.open("/tmp/reports/street_number_without_road.csv", "wb:UTF-8") do |street_numbers_csv|
+        street_numbers_csv << ["id", "objectid", "geometry"]
+        
+        ActiveRoad::StreetNumber.where("physical_road_id IS NULL").each do |street_number|
+          street_number_without_road_counter += 1
+          street_numbers_csv << [street_number.id, street_number.objectid, street_number.geometry]
+        end
+      end
+
+      puts "You can see #{street_number_without_road_counter} street number without road in /tmp/reports/street_number_without_road.csv"
+            
+      CSV.open("/tmp/reports/street_number_far_from_road.csv", "wb:UTF-8") do |street_numbers_csv|
+        street_numbers_csv << ["id", "objectid", "geometry"]
+        
+        ActiveRoad::StreetNumber.joins(:physical_road).where("st_distance(street_numbers.geometry, physical_roads.geometry, true) > 100 AND street_numbers.physical_road_id = physical_roads.id AND street_numbers.physical_road_id IS NOT NULL").each do |street_number|
+          street_number_far_from_road_counter += 1
+          street_numbers_csv << [street_number.id, street_number.objectid, street_number.geometry]
+        end
+      end
+
+      puts "You can see #{street_number_far_from_road_counter} street number without road in /tmp/reports/street_number_far_from_road.csv"
+      
+    end
+
+    desc "Count objects in database"
+    task :database_statistics => [:environment] do |task, args|
+      puts "physical_roads : #{ActiveRoad::PhysicalRoad.count} elements"
+      puts "junctions : #{ActiveRoad::Junction.count} elements"
+      puts "street_numbers : #{ActiveRoad::StreetNumber.count} elements"
+      puts "boundaries : #{ActiveRoad::Boundary.count} elements"
+      puts "logical_roads : #{ActiveRoad::LogicalRoad.count} elements"
+    end
+    
+  end
+
+  desc "Launch an itinerary search"
   task :itinerary, [:from, :to, :speed, :constraints] => [:environment] do |task, args|      
     puts "Search an itinerary"
     raise "You should provide arguments" if args.from.blank? || args.to.blank? || args.speed.blank?
@@ -56,5 +101,5 @@ namespace :active_road do
     end    
     puts "Itinerary research finished in #{(Time.now - start)} seconds"
   end
-
+  
 end

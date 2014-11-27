@@ -1,107 +1,33 @@
 module ActiveRoad
   module OsmPbfImporter
 
+    @@pg_batch_size = 10000 # Not Rails.logger.debug a high value because postgres failed to allocate memory
+    mattr_reader :pg_batch_size
+
+    @@csv_batch_size = 100000
+    mattr_reader :csv_batch_size
+
     @@relation_required_tags_keys = ["boundary", "admin_level"]
     @@relation_selected_tags_keys = ["boundary", "admin_level", "ref:INSEE", "name", "addr:postcode", "type"]
-    mattr_reader :relation_required_tags_keys
-    mattr_reader :relation_selected_tags_keys    
+    mattr_reader :relation_required_tags_keys, :relation_selected_tags_keys    
 
-    @@way_required_tags_keys = ["highway", "railway", "boundary", "admin_level", "addr:housenumber"]
+    @@way_required_tags_keys = ["highway", "railway", "boundary", "admin_level", "addr:housenumber", "addr:interpolation"]
     @@way_for_physical_road_required_tags_keys = ["highway", "railway"]
     @@way_for_boundary_required_tags_keys = ["boundary", "admin_level"]
     @@way_for_street_number_required_tags_keys = ["addr:housenumber"]
-    @@way_selected_tags_keys = [ "name", "maxspeed", "oneway", "boundary", "admin_level", "addr:housenumber" ]
+    @@way_selected_tags_keys = [ "name", "maxspeed", "oneway", "boundary", "admin_level", "addr:housenumber", "addr:interpolation" ]
     # Add first_node_id and last_node_id
-    @@way_optionnal_tags_keys = ["highway", "maxspeed", "bridge", "tunnel", "toll", "cycleway", "cycleway-right", "cycleway-left", "cycleway-both", "oneway:bicycle", "oneway", "bicycle", "segregated", "foot", "lanes", "lanes:forward", "lanes:forward:bus", "busway:right", "busway:left", "oneway_bus", "boundary", "admin_level", "access", "construction", "junction", "motor_vehicle", "psv", "bus", "addr:city", "addr:country", "addr:state", "addr:street"]
-    mattr_reader :way_required_tags_keys
-    mattr_reader :way_for_physical_road_required_tags_keys
-    mattr_reader :way_for_boundary_required_tags_keys
-    mattr_reader :way_for_street_number_required_tags_keys
-    mattr_reader :way_selected_tags_keys
-    mattr_reader :way_optionnal_tags_keys
+    @@way_optionnal_tags_keys = ["highway", "maxspeed", "bridge", "tunnel", "toll", "cycleway", "cycleway-right", "cycleway-left", "cycleway-both", "oneway:bicycle", "oneway", "bicycle", "segregated", "foot", "lanes", "lanes:forward", "lanes:forward:bus", "busway:right", "busway:left", "oneway_bus", "boundary", "admin_level", "access", "construction", "junction", "motor_vehicle", "psv", "bus", "addr:city", "addr:country", "addr:state", "addr:street", "addr:interpolation"]
+    mattr_reader :way_required_tags_keys, :way_for_physical_road_required_tags_keys, :way_for_boundary_required_tags_keys, :way_for_street_number_required_tags_keys, :way_selected_tags_keys, :way_optionnal_tags_keys
 
     @@nodes_selected_tags_keys = [ "addr:housenumber", "addr:city", "addr:postcode", "addr:street" ]
     mattr_reader :nodes_selected_tags_keys
-
-    @@pg_batch_size = 10000 # Not Rails.logger.debug a high value because postgres failed to allocate memory
-    mattr_reader :pg_batch_size
 
     def self.included(base)
       base.extend(ClassMethods)
     end
 
     module ClassMethods
-    end
-
-    def pedestrian?(tags)
-      highway_tag_values = %w{pedestrian footway path steps}
-      if tags["highway"].present? && highway_tag_values.include?(tags["highway"])
-        true
-      else
-        false
-      end
-    end
-
-    # http://wiki.openstreetmap.org/wiki/FR:Cycleway
-    # http://wiki.openstreetmap.org/wiki/FR:Bicycle
-    def bike?(tags)
-      highway_tag_values = %w{cycleway}
-      bike_tags_keys = ["cycleway:left", "cycleway:right", "cycleway", "cycleway:left"]
-
-      if (tags["highway"].present? && highway_tag_values.include?(tags["highway"])) || (bike_tags_keys & tags.keys).present?
-        true
-      else
-        false
-      end
-    end
-
-    # http://wiki.openstreetmap.org/wiki/Key:railway
-    def train?(tags)
-      railway_tag_values = %w{rail tram funicular light_rail subway}
-      if tags["railway"].present? && railway_tag_values.include?(tags["railway"])
-        true
-      else
-        false
-      end
-    end
-
-    # http://wiki.openstreetmap.org/wiki/FR:France_roads_tagging
-    def car?(tags)
-      highway_tag_values = %w{motorway trunk trunk_link primary secondary tertiary motorway_link primary_link unclassified service road residential track}
-      if tags["highway"].present? && highway_tag_values.include?(tags["highway"])
-        true
-      else
-        false
-      end
-    end
-
-    def required_way?(required_tags, tags)
-      required_tags.each do |require_tag_key|
-        if tags.keys.include?(require_tag_key)
-          return true
-        end
-      end
-      return false
-    end
-
-    def required_relation?(tags)
-      @@relation_required_tags_keys.each do |require_tag_key|
-        if tags.keys.include?(require_tag_key)
-          return true
-        end
-      end
-      return false
-    end
-
-    # Return an hash with tag_key => tag_value for osm attributes
-    def selected_tags(tags, selected_tags_keys)
-      {}.tap do |selected_tags|
-        tags.each do |key, value|
-          if selected_tags_keys.include?(key)
-            selected_tags[key] = value
-          end
-        end           
-      end
     end
 
     # def extract_tag_value(tag_value)
@@ -112,6 +38,294 @@ module ActiveRoad
     #   else 0    
     #   end     
     # end
+    
+    def save_junctions
+      Rails.logger.debug "Begin to save junctions in PostgreSql"
+      
+      start = Time.now
+      junctions_counter = 0
+      
+      # traverse records by iterator
+      junction_columns = ["objectid", "geometry", "created_at", "updated_at"]
+      
+      CSV.open("/tmp/junctions.csv", "wb:UTF-8") do |junctions_csv|                
+        junctions_csv << junction_columns
+        
+        nodes_database.each { |key, value|            
+          node = Marshal.load(value)            
+          
+          if node.ways.present? && (node.ways.count >= 2 || node.end_of_way == true )  # Take node with at least two ways or at the end of a way
+            junctions_counter += 1
+            
+            geometry = geos_factory.point( node.lon, node.lat, 4326) if( node.lon && node.lat )
+            junctions_csv << [ node.id, geometry.as_text, Time.now, Time.now ]
+          end                   
+          
+        }
+      end
+             
+      ActiveRoad::Junction.transaction do                                         
+        ActiveRoad::Junction.copy_from "/tmp/junctions.csv"
+      end
+      
+      Rails.logger.info "Finish to backup #{junctions_counter} junctions in PostgreSql in #{display_time(Time.now - start)} seconds"         
+    end
+
+    def backup_relations_pgsql
+      Rails.logger.info "Begin to backup relations in PostgreSql"
+      start = Time.now
+      relations_parser = ::PbfParser.new(pbf_file)
+      boundaries_counter = 0
+      
+      # traverse records by iterator
+      boundary_columns = ["objectid", "geometry", "name", "admin_level", "postal_code", "insee_code"]     
+      
+      # Process the file until it finds any relation.
+      relations_parser.next until relations_parser.relations.any?
+      
+      # Once it found at least one relation, iterate to find the remaining relations.
+      CSV.open("/tmp/boundaries.csv", "wb:UTF-8") do |boundary_csv|       
+        boundary_csv << boundary_columns
+
+        until relations_parser.relations.empty?
+          relations_parser.relations.each do |relation|
+            
+            if relation.key?(:tags) && required_relation?(relation[:tags])
+              tags = selected_tags(relation[:tags], @@relation_selected_tags_keys)
+              
+              # Use tags["admin_level"] == "8" because catholic boundaries exist!!
+              if tags["admin_level"] == "8" && tags["boundary"] == "administrative"
+                boundaries_counter += 1
+                outer_ways = {}
+                inner_ways = {}
+                
+                begin 
+                  relation[:members][:ways].each do |member_way|                  
+                    way_data = ways_database[ member_way[:id].to_s ]
+                    way = nil
+                    nodes = []
+                    
+                    if way_data.present?
+                      way = Marshal.load(way_data)
+                      way.nodes.each do |node_id|
+                        node = Marshal.load( nodes_database[node_id.to_s] )
+                        nodes << node
+                      end
+                    else
+                      raise StandardError, "Geometry error : impossible to find way #{member_way[:id]} for relation #{tags["name"]} with id #{relation[:id]}"                      
+                    end
+                    
+                    if  member_way[:role] == "inner"
+                      inner_ways[ member_way[:id] ] = way_geometry(nodes)
+                    elsif member_way[:role] == "outer"
+                      outer_ways[ member_way[:id] ] = way_geometry(nodes)
+                    else # Fix : lot of boundaries have no tags role
+                      outer_ways[ member_way[:id] ] = way_geometry(nodes)
+                    end
+                  end
+                  
+                  boundary_polygons = extract_relation_polygon(outer_ways.values, inner_ways.values)
+                  
+                  if boundary_polygons.present?
+                    boundary_geometry = geos_factory.multi_polygon( boundary_polygons ).as_text
+                    
+                    boundary_csv << [ relation[:id], boundary_geometry, tags["name"], tags["admin_level"], tags["addr:postcode"], tags["ref:INSEE"] ]
+                  end
+                rescue StandardError => e
+                  Rails.logger.error "Geometry error : impossible to build polygon for relation #{tags["name"]} with id #{relation[:id]} : #{e.message}"
+                end
+              end
+            end
+          end
+          
+          # When there's no more fileblocks to parse, #next returns false
+          # This avoids an infinit loop when the last fileblock still contains relations
+          break unless relations_parser.next                 
+        end
+      end
+      
+      ActiveRoad::Boundary.transaction do                                         
+        ActiveRoad::Boundary.copy_from "/tmp/boundaries.csv"
+      end
+      
+      Rails.logger.info  "Finish to backup #{boundaries_counter} boundaries in PostgreSql  in #{display_time(Time.now - start)} seconds"
+    end
+
+    def save_physical_roads
+      Rails.logger.info "Begin to save physical_roads in PostgreSql"
+      start = Time.now
+   
+      ways_counter = 0
+
+      # traverse records by iterator
+      physical_road_columns = ["objectid", "car", "bike", "train", "pedestrian", "name", "geometry", "boundary_id", "tags", "created_at", "updated_at"]
+      
+      CSV.open("/tmp/physical_roads.csv", "wb:UTF-8") do |physical_roads_csv|
+        physical_roads_csv << physical_road_columns
+          
+        ways_database.each { |key, value|          
+          way = Marshal.load(value)
+          
+          unless way.boundary.present? || way.addr_housenumber.present? || way.addr_interpolation.present? # Use ways not used in relation for boundaries or for addresses
+            ways_counter += 1
+            
+            nodes = []
+            way.nodes.each_with_index do |node_id, index|
+              node = Marshal.load( nodes_database[node_id.to_s] )
+              nodes << node                
+            end
+            way_geometry = way_geometry(nodes)                                   
+            
+            way_boundary = way.boundary.present? ? way.boundary.to_i : nil
+            physical_roads_csv << [ way.id, way.car, way.bike, way.train, way.pedestrian, way.name, way_geometry.as_text, way_boundary, "#{way.options.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
+          end
+        }
+      end
+      
+      # Save physical roads
+      ActiveRoad::PhysicalRoad.transaction do                                         
+        ActiveRoad::PhysicalRoad.copy_from "/tmp/physical_roads.csv"
+      end
+
+      Rails.logger.info "Finish to save #{ways_counter} physical_roads in PostgreSql in #{display_time(Time.now - start)} seconds"
+    end
+
+    def save_physical_road_conditionnal_costs_and_junctions
+      Rails.logger.info "Begin to backup ways in PostgreSql"
+      
+      start = Time.now
+      physical_road_conditionnal_costs_counter = junctions_physical_roads_counter = 0
+      physical_road_conditionnal_cost_columns = ["tags", "cost", "physical_road_id"]
+      junction_physical_road_columns = ["physical_road_id", "junction_id"]
+      
+      CSV.open("/tmp/physical_road_conditionnal_costs.csv", "wb:UTF-8") do |physical_road_conditionnal_costs_csv|
+        CSV.open("/tmp/junctions_physical_roads.csv", "wb:UTF-8") do |junctions_physical_roads_csv|
+          physical_road_conditionnal_costs_csv << physical_road_conditionnal_cost_columns
+          junctions_physical_roads_csv << junction_physical_road_columns
+          
+          ways_database.each { |key, value|
+            way = Marshal.load(value)
+
+            # Save physical road conditionnal cost not for boundaries or street numbers
+            unless way.boundary.present? || way.addr_housenumber.present?
+              way_conditionnal_costs = physical_road_conditionnal_costs(way)
+              way_conditionnal_costs.each do |way_conditionnal_cost|
+                physical_road_conditionnal_costs_counter += 1
+                physical_road_conditionnal_costs_csv << way_conditionnal_cost + [ physical_roads_database[way.id] ]
+              end
+
+              way.nodes.uniq.each do |node_id|
+                junction_id = junctions_database[node_id]
+                junctions_physical_roads_counter += 1
+                junctions_physical_roads_csv << [ physical_roads_database[way.id], junction_id ] if junction_id.present?
+              end
+            end
+          }
+        end
+      end
+      
+      # Save physical road conditionnal costs
+      ActiveRoad::PhysicalRoadConditionnalCost.transaction do                                         
+        ActiveRoad::PhysicalRoadConditionnalCost.copy_from "/tmp/physical_road_conditionnal_costs.csv"
+      end
+
+      # Save physical road and junctions link
+      ActiveRoad::JunctionsPhysicalRoad.transaction do                                         
+        ActiveRoad::JunctionsPhysicalRoad.copy_from "/tmp/junctions_physical_roads.csv"
+      end
+
+      Rails.logger.info "Finish to backup #{junctions_physical_roads_counter} junctions_physical_roads and #{physical_road_conditionnal_costs_counter} physical_road_conditionnal_costs in PostgreSql in #{display_time(Time.now - start)} seconds"
+    end
+
+    def save_street_numbers_from_nodes
+
+      Rails.logger.debug "Begin to save street_numbers in PostgreSql"
+      
+      start = Time.now
+      street_numbers_counter = 0
+      
+      # traverse records by iterator
+      street_number_columns = ["objectid", "geometry", "number", "street", "city", "state", "country", "location_on_road", "physical_road_id", "tags", "created_at", "updated_at"]
+      
+      CSV.open("/tmp/street_numbers.csv", "wb:UTF-8") do |street_numbers_csv|                  
+        street_numbers_csv << street_number_columns
+        
+        nodes_database.each { |key, value|            
+          node = Marshal.load(value)          
+          
+          if node.addr_housenumber.present?
+            street_numbers_counter += 1
+            
+            geometry = geos_factory.point( node.lon, node.lat, 4326) if( node.lon && node.lat )
+            physical_road = ActiveRoad::StreetNumber.computed_linked_road(geometry, node.tags["addr:street"])
+            physical_road_id = physical_road.present? ? physical_road.id : nil
+            location_on_road = physical_road_id.present? ? ActiveRoad::StreetNumber.computed_location_on_road(physical_road.geometry, geometry) : nil
+            
+            street_numbers_csv << [ node.id, geometry.as_text, node.addr_housenumber, node.tags["addr:street"], node.tags["addr:city"], node.tags["addr:state"], node.tags["addr:country"], location_on_road, physical_road_id, "#{node.tags.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
+          end
+          
+        }
+      end
+      
+      ActiveRoad::StreetNumber.transaction do
+        ActiveRoad::StreetNumber.copy_from "/tmp/street_numbers.csv"
+      end
+      
+      Rails.logger.info "Finish to save #{street_numbers_counter} street numbers in PostgreSql in #{display_time(Time.now - start)} seconds"         
+      
+    end
+
+    def save_street_numbers_from_ways
+      Rails.logger.info "Begin to save street_numbers from ways in PostgreSql"
+      start = Time.now
+   
+      street_numbers_counter = 0
+
+      # traverse records by iterator
+      street_number_columns = ["objectid", "geometry", "number", "street", "city", "state", "country", "location_on_road", "physical_road_id", "tags", "created_at", "updated_at"]
+      
+      CSV.open("/tmp/street_numbers2.csv", "wb:UTF-8") do |street_numbers_csv|          
+        street_numbers_csv << street_number_columns
+        
+        ways_database.each { |key, value|          
+          way = Marshal.load(value)
+          
+          if way.addr_housenumber.present?
+            nodes = []
+            way.nodes.each_with_index do |node_id, index|
+              node = Marshal.load( nodes_database[node_id.to_s] )
+              nodes << node                
+            end
+            way_geometry = way_geometry(nodes)
+            
+            street_numbers_counter += 1
+            geometry = way_geometry.envelope.centroid
+            
+            physical_road = ActiveRoad::StreetNumber.computed_linked_road(geometry, way.options["addr:street"])
+            physical_road_id = physical_road.present? ? physical_road.id : nil
+            location_on_road = physical_road_id.present? ? ActiveRoad::StreetNumber.computed_location_on_road(physical_road.geometry, geometry) : nil
+            
+            street_numbers_csv << [ way.id, geometry.as_text, way.addr_housenumber, way.options["addr:street"], way.options["addr:city"], way.options["addr:state"], way.options["addr:country"], location_on_road, physical_road_id, "#{way.options.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
+          elsif way.addr_interpolation.present?  # If ways with address interpolation
+            # Get the first name of the extremities nodes
+            #way_name = [nodes.first.tags["addr:street"], nodes.last.tags["addr:street"]].compact.first
+            #way_middle_geometry = ActiveRecord::Base.c
+            
+            # Find the closest physical road from the middle of the way geometry
+            #physical_road_id = ActiveRoad::StreetNumber.computed_linked_road(geometry, way_name)
+            
+            # Link extremities node to the physical road previously founded
+          
+          end
+        }
+      end     
+      
+      ActiveRoad::StreetNumber.transaction do                                         
+        ActiveRoad::StreetNumber.copy_from "/tmp/street_numbers2.csv"        
+      end
+
+      Rails.logger.info "Finish to save #{street_numbers_counter} street numbers from ways in PostgreSql in #{display_time(Time.now - start)} seconds"
+    end
 
     def physical_road_conditionnal_costs(way)
       [].tap do |prcc|        
@@ -120,7 +334,219 @@ module ActiveRoad
         prcc << [ "bike", Float::MAX] if !way.bike
         prcc << [ "train", Float::MAX] if !way.train
       end
-    end            
+    end
+    
+    def split_way_with_boundaries
+      Rails.logger.info "Begin to split and affect boundaries to ways in PostgreSql"
+      start = Time.now
+
+      # Update physical roads entirely contains in boundaries
+      ActiveRoad::PhysicalRoad.connection.select_all("SELECT physical_road.id AS physical_road_id, boundary.id AS boundary_id FROM physical_roads physical_road, boundaries boundary WHERE ST_Covers( boundary.geometry, physical_road.geometry)").each_slice(@@pg_batch_size) do |group|
+        ActiveRoad::PhysicalRoad.transaction do 
+          group.each do |element|
+            ActiveRoad::PhysicalRoad.update(element["physical_road_id"], :boundary_id => element["boundary_id"])
+          end
+        end
+      end
+
+      simple_ways = []
+      simple_ways_not_line_string = 0
+
+      # Fix : Produce 2 ways when way is tangent to boundary borders for each boundary
+      # Get geometries in boundary      
+      sql = "SELECT b.id AS boundary_id, p.id AS physical_road_id, p.objectid AS physical_road_objectid, p.tags AS physical_road_tags, ST_AsText(p.geometry) AS physical_road_geometry, 
+j1.objectid AS departure_objectid, ST_AsText(j1.geometry) AS departure_geometry, 
+j2.objectid AS arrival_objectid, ST_AsText(j2.geometry) AS arrival_geometry, 
+ST_AsText( (ST_Dump(ST_Intersection( p.geometry , b.geometry))).geom ) AS intersection_geometry 
+FROM physical_roads p, boundaries b, junctions j1, junctions j2, junctions_physical_roads jp, junctions_physical_roads jp2 
+WHERE p.boundary_id IS NULL AND ST_Crosses( b.geometry, p.geometry)
+AND j1.id = jp.junction_id AND p.id = jp.physical_road_id AND ST_Equals(ST_StartPoint(p.geometry), j1.geometry)
+AND j2.id = jp2.junction_id AND p.id = jp2.physical_road_id AND ST_Equals(ST_EndPoint(p.geometry), j2.geometry)".gsub(/^( |\t)+/, "")      
+      ActiveRoad::PhysicalRoad.connection.select_all( sql ).each do |result|
+        intersection_geometry = geos_factory.parse_wkt("#{result['intersection_geometry']}")
+
+        # Not take in consideration point intersection!!
+        if RGeo::Feature::LineString === intersection_geometry
+          simple_way = SimpleWay.new(result["boundary_id"], result["physical_road_id"], result["physical_road_objectid"], result["physical_road_tags"], geos_factory.parse_wkt("#{result['physical_road_geometry']}"), result["departure_objectid"], geos_factory.parse_wkt("#{result['departure_geometry']}"), result["arrival_objectid"], geos_factory.parse_wkt("#{result['arrival_geometry']}"), intersection_geometry )
+          # Delete boucle line string Ex : 9938647-4
+          simple_ways << simple_way if simple_way.departure != simple_way.arrival
+        else
+          simple_ways_not_line_string += 1
+        end
+      end
+      
+      # Get geometries not in boundaries      
+      sql = "SELECT ST_AsText( (ST_Dump(difference_geometry)).geom ) AS difference_geometry, v.id AS physical_road_id, v.objectid AS physical_road_objectid, v.tags AS physical_road_tags, ST_AsText(v.geometry) AS physical_road_geometry,
+j1.objectid AS departure_objectid, ST_AsText(j1.geometry) AS departure_geometry, 
+j2.objectid AS arrival_objectid, ST_AsText(j2.geometry) AS arrival_geometry
+FROM 
+( SELECT pr.id, pr.objectid, pr.tags, pr.geometry, pr.boundary_id, ST_Difference( pr.geometry, ST_Union( b.geometry)) as difference_geometry 
+FROM physical_roads pr, boundaries b 
+WHERE pr.boundary_id IS NULL AND ST_Crosses( b.geometry, pr.geometry)
+GROUP BY pr.id, pr.geometry) v, 
+junctions j1, junctions j2, junctions_physical_roads jp, junctions_physical_roads jp2
+WHERE j1.id = jp.junction_id AND v.id = jp.physical_road_id AND ST_Equals(ST_StartPoint(v.geometry), j1.geometry)
+AND j2.id = jp2.junction_id AND v.id = jp2.physical_road_id AND ST_Equals(ST_EndPoint(v.geometry), j2.geometry)
+AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "") 
+      ActiveRoad::PhysicalRoad.connection.select_all( sql ).each do |result|
+        difference_geometry = geos_factory.parse_wkt("#{result['difference_geometry']}")
+        if RGeo::Feature::LineString === difference_geometry
+          simple_way = SimpleWay.new(nil, result["physical_road_id"], result["physical_road_objectid"], result["physical_road_tags"], geos_factory.parse_wkt("#{result['physical_road_geometry']}"), result["departure_objectid"], geos_factory.parse_wkt("#{result['departure_geometry']}"), result["arrival_objectid"], geos_factory.parse_wkt("#{result['arrival_geometry']}"), difference_geometry )
+          # Delete boucle line string Ex : 9938647-4
+          simple_ways << simple_way if simple_way.departure != simple_way.arrival
+        else
+          simple_ways_not_line_string += 1
+        end
+      end
+      
+      # Prepare reordering ways         
+      simple_ways_by_old_physical_road_id = simple_ways.group_by{|sw| sw.old_physical_road_id}
+
+      # Hack : in the code we take the first one which has an intersection point and it deletes
+      # dual segment tangent on the boundary borders 
+      simple_ways_by_old_physical_road_id.each do |old_physical_road_id, ways|
+        ways.each do |way|
+          if way.departure == way.old_departure_geometry
+            way.departure_objectid = way.old_departure_objectid
+            way.previous = nil
+          else
+            way.departure_objectid = way.default_departure_objectid
+            way.previous = ways.detect{ |select_way| select_way.arrival == way.departure }
+          end
+          
+          if way.arrival == way.old_arrival_geometry
+            way.arrival_objectid = way.old_arrival_objectid
+            way.next = nil 
+          else
+            way.arrival_objectid = way.default_arrival_objectid
+            way.next = ways.detect{ |select_way| select_way.departure == way.arrival }
+          end          
+        end
+      end
+      
+      # Save new ways and junctions
+      #physical_roads ||= ActiveRoad::PhysicalRoad.where(:objectid => simple_ways_by_old_physical_road_id.keys).includes(:conditionnal_costs)
+      
+      simple_ways_by_old_physical_road_id.each_slice(1000) { |group|
+        ActiveRoad::PhysicalRoad.transaction do            
+          
+          group.each do |old_physical_road_id, ways|
+            #puts ways.sort.inspect             
+            next_way = ways.detect{ |select_way| select_way.previous == nil }
+            way_counter = 0
+            junction_counter = 0
+
+            
+            while next_way != nil
+              start = Time.now
+
+              #old_physical_road = physical_roads.where(:id => old_physical_road_id)               
+              #physical_road.conditionnal_costs = old_physical_road.conditionnal_costs
+
+              # Create departure
+              if next_way.previous != nil
+                departure = ActiveRoad::Junction.where(:objectid => "#{next_way.departure_objectid}-#{junction_counter}").first_or_create( :geometry => next_way.departure )
+                junction_counter += 1
+              else
+                departure = ActiveRoad::Junction.find_by_objectid(next_way.departure_objectid) 
+              end
+              
+              # Create arrival
+              if next_way.next != nil
+                arrival = ActiveRoad::Junction.where(:objectid => "#{next_way.arrival_objectid}-#{junction_counter}").first_or_create( :geometry => next_way.arrival )
+              else
+                arrival = ActiveRoad::Junction.find_by_objectid(next_way.arrival_objectid)
+              end
+
+              old_physical_road_tags = next_way.old_physical_road_tags_hash
+              old_physical_road_tags["first_node_id"] = departure.objectid
+              old_physical_road_tags["last_node_id"] =  arrival.objectid 
+              
+              physical_road = ActiveRoad::PhysicalRoad.create! :objectid => "#{next_way.old_physical_road_objectid}-#{way_counter}", :boundary_id => next_way.boundary_id, :geometry => next_way.geometry, :tags => old_physical_road_tags
+              
+              # Add departure and arrival to physical road
+              physical_road.junctions << [departure, arrival]
+
+              way_counter += 1
+
+              if way_counter > ways.size
+                Rails.logger.error "Infinite boucle when save physical road splitted with boundaries"
+                raise Exception.new "Infinite boucle when save physical road splitted with boundaries"
+              end
+              
+              next_way = next_way.next                                
+            end
+            
+          end
+        end
+      }
+      
+      # Delete old ways
+      ActiveRoad::PhysicalRoad.destroy(simple_ways_by_old_physical_road_id.keys)
+      
+      Rails.logger.info "Finish to split and affect boundaries to ways in PostgreSql in #{display_time(Time.now - start)} seconds"
+    end
+
+    class SimpleWay
+      include Comparable
+      attr_accessor :boundary_id, :old_physical_road_id, :old_physical_road_objectid, :old_physical_road_tags, :old_physical_road_geometry, :old_departure_objectid, :old_departure_geometry, :old_arrival_objectid, :old_arrival_geometry, :departure_objectid, :arrival_objectid, :geometry, :next, :previous
+        
+      def initialize(boundary_id, old_physical_road_id, old_physical_road_objectid, old_physical_road_tags, old_physical_road_geometry, old_departure_objectid, old_departure_geometry, old_arrival_objectid, old_arrival_geometry, geometry)
+        @boundary_id = boundary_id
+        @old_physical_road_id = old_physical_road_id
+        @old_physical_road_objectid = old_physical_road_objectid
+        @old_physical_road_tags = old_physical_road_tags || ""
+        @old_physical_road_geometry = old_physical_road_geometry
+        @old_departure_objectid = old_departure_objectid
+        @old_departure_geometry = old_departure_geometry
+        @old_arrival_objectid = old_arrival_objectid
+        @old_arrival_geometry = old_arrival_geometry
+        @geometry = geometry       
+      end
+
+      def old_physical_road_tags_hash
+        #Fix tags build from string
+        tags = {}.tap do |tags| 
+          old_physical_road_tags.split(',').each do |pair|                    
+            key, value = pair.split("=>")
+            tags[key.gsub(/\W/, "")] = value.gsub(/\W/, "")
+          end
+        end
+      end
+      
+      def departure
+        #puts "geometry class #{geometry.class}, value #{geometry.inspect}"
+        geometry.points.first if geometry
+      end
+
+      def arrival
+        geometry.points.last if geometry
+      end      
+      
+      def default_departure_objectid
+        "#{old_departure_objectid}-#{old_arrival_objectid}"
+      end
+      
+      def default_arrival_objectid
+        "#{old_departure_objectid}-#{old_arrival_objectid}"
+      end
+
+      def <=>(another)
+        # puts "self : #{self.departure.inspect}, #{self.arrival.inspect}"
+        # puts "another : #{another.departure.inspect}, #{another.arrival.inspect}"
+        # puts old_physical_road_geometry.points.inspect
+        # puts old_physical_road_geometry.points.index(another.arrival).inspect
+        # puts old_physical_road_geometry.points.index(self.departure).inspect
+        if self.departure == another.arrival || old_physical_road_geometry.points.index(another.arrival) < old_physical_road_geometry.points.index(self.departure)         
+          1
+        elsif self.arrival == another.departure || old_physical_road_geometry.points.index(self.arrival) < old_physical_road_geometry.points.index(another.departure)
+          -1
+        else
+          nil
+        end
+      end
+      
+    end
 
     def extract_relation_polygon(outer_geometries, inner_geometries = [])
       outer_rings = join_ways(outer_geometries)
@@ -227,66 +653,34 @@ module ActiveRoad
 
     end
 
-    class Node
-      attr_accessor :id, :lon, :lat, :ways, :end_of_way, :addr_housenumber, :tags
+    def backup_logical_roads_pgsql
+      Rails.logger.info "Begin to backup logical roads in PostgreSql"
+      start = Time.now
+      logical_roads_counter = 0
 
-      def initialize(id, lon, lat, addr_housenumber = "", ways = [], end_of_way = false, tags = {} )
-        @id = id
-        @lon = lon
-        @lat = lat
-        @addr_housenumber = addr_housenumber
-        @ways = ways
-        @end_of_way = end_of_way
-        @tags = tags
+      saved_name = nil
+      saved_boundary = nil
+      saved_logical_road = nil
+      ActiveRoad::PhysicalRoad.where("physical_roads.name IS NOT NULL OR physical_roads.boundary_id IS NOT NULL").select("name,boundary_id,id").order(:boundary_id,:name).find_in_batches(batch_size: 2000) do |group|
+        ActiveRoad::LogicalRoad.transaction do
+          group.each do |physical_road|
+            not_same_name = (saved_name != physical_road.name)
+            not_same_boundary = (saved_boundary != physical_road.boundary_id)
+            
+            saved_name = physical_road.name if not_same_name
+            saved_boundary = physical_road.boundary_id if not_same_boundary
+
+            if not_same_name || not_same_boundary
+              logical_roads_counter += 1
+              saved_logical_road = ActiveRoad::LogicalRoad.create(:name => saved_name, :boundary_id => saved_boundary)
+            end
+            
+            physical_road.update_column(:logical_road_id, saved_logical_road.id) if saved_logical_road.present?
+          end
+        end
       end
-
-      def add_way(id)
-        @ways << id
-      end
-
-      def marshal_dump
-        [@id, @lon, @lat, @addr_housenumber, @ways, @end_of_way, @tags]
-      end
-
-      def marshal_load array
-        @id, @lon, @lat, @addr_housenumber, @ways, @end_of_way, @tags = array
-      end
-
-      def used?
-        ( ways.present? && ways.size > 1 ) || end_of_way
-      end
-    end
-
-    class Way
-      attr_accessor :id, :nodes, :car, :bike, :train, :pedestrian, :name, :maxspeed, :oneway, :boundary, :admin_level, :addr_housenumber, :options
-
-      def initialize(id, nodes = [], car = false, bike = false, train = false, pedestrian = false, name = "", maxspeed = 0, oneway = false, boundary = "", admin_level = "", addr_housenumber = "", options = {})
-        @id = id
-        @nodes = nodes
-        @car = car
-        @bike = bike
-        @train = train
-        @pedestrian = pedestrian
-        @name = name
-        @maxspeed = maxspeed
-        @oneway = oneway
-        @boundary = boundary
-        @admin_level = admin_level
-        @addr_housenumber = addr_housenumber
-        @options = options
-      end
-
-      def add_node(id)
-        @nodes << id
-      end
-
-      def marshal_dump
-        [@id, @nodes, @car, @bike, @train, @pedestrian, @name, @maxspeed, @oneway, @boundary, @admin_level, @addr_housenumber, @options]
-      end
-
-      def marshal_load array
-        @id, @nodes, @car, @bike, @train, @pedestrian, @name, @maxspeed, @oneway, @boundary, @admin_level, @addr_housenumber, @options = array
-      end
+            
+      Rails.logger.info "Finish to backup #{logical_roads_counter} logical roads in PostgreSql in #{ display_time(Time.now - start)} seconds"
     end
 
   end
