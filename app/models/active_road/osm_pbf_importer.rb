@@ -312,8 +312,8 @@ module ActiveRoad
               way_name = [nodes.first.tags["addr:street"], nodes.last.tags["addr:street"]].compact.first
 
               # Find the closest physical road from the middle of the way geometry
-              physical_road = ActiveRoad::PhysicalRoad.joins( "JOIN ( SELECT ST_LineInterpolatePoint('#{ way_geometry}', 0.5 ) geometry ) p ON ST_DWithin( physical_roads.geometry, p.geometry, 0.0011)").where("name = ?", way_name).first if way_name.present?
-              physical_road = ActiveRoad::PhysicalRoad.joins( "JOIN ( SELECT ST_LineInterpolatePoint('#{ way_geometry}', 0.5 ) geometry ) p ON ST_DWithin( physical_roads.geometry, p.geometry, 0.0011)").first if physical_road.blank?
+              physical_road = ActiveRoad::PhysicalRoad.joins( "JOIN ( SELECT ST_LineInterpolatePoint('#{ way_geometry}', 0.5 ) geometry ) p ON ST_DWithin( physical_roads.geometry, p.geometry, 0.0011)").where("name = ?", way_name).order("ST_Distance(p.geometry, physical_roads.geometry)").first if way_name.present?
+              physical_road = ActiveRoad::PhysicalRoad.joins( "JOIN ( SELECT ST_LineInterpolatePoint('#{ way_geometry}', 0.5 ) geometry ) p ON ST_DWithin( physical_roads.geometry, p.geometry, 0.0011)").order("ST_Distance(p.geometry, physical_roads.geometry)").first if physical_road.blank?
             
               physical_road_id = physical_road.present? ? physical_road.id : nil
               

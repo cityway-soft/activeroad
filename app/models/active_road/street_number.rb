@@ -19,9 +19,9 @@ module ActiveRoad
     end        
 
     def self.computed_linked_road(street_number_geometry, street_number_street = "")
-      estimated_linked_road = ActiveRoad::PhysicalRoad.where("name = ? AND ST_DWithin(geometry, ?, 0.0011)", street_number_street, street_number_geometry).first if street_number_street.present?
+      estimated_linked_road = ActiveRoad::PhysicalRoad.where("name = ? AND ST_DWithin(geometry, ?, 0.0011)", street_number_street, street_number_geometry).order("ST_Distance('#{street_number_geometry}', physical_roads.geometry)").first if street_number_street.present?
 
-      estimated_linked_road = ActiveRoad::PhysicalRoad.where( "ST_DWithin(geometry, ? , 0.0011)", street_number_geometry).first if estimated_linked_road.blank?
+      estimated_linked_road = ActiveRoad::PhysicalRoad.where( "ST_DWithin(geometry, ? , 0.0011)", street_number_geometry).order("ST_Distance('#{street_number_geometry}', physical_roads.geometry)").first if estimated_linked_road.blank?
       
       estimated_linked_road if estimated_linked_road.present?
     end
