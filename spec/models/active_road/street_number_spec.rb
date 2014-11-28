@@ -10,10 +10,10 @@ describe ActiveRoad::StreetNumber do
   end
 
   describe ".computed_linked_road" do
-    let(:pr) { create(:physical_road, :geometry => "LINESTRING(0 0,1 0)", :name => "Rue de l'Armée") }
-    let(:street_number_closed) { create(:street_number, :geometry => "POINT(0.1 0.001)", :physical_road => pr) }
-    let(:street_number_same_name) { create(:street_number, :geometry => "POINT(0.1 0.001)", :physical_road => pr, :street => "Rue de l'Armée" ) }    
-    let(:street_number_nok) { create(:street_number, :geometry => "POINT(0.1 1)", :physical_road => pr) }    
+    let!(:pr) { create(:physical_road, :geometry => "LINESTRING(0 0,1 0)", :name => "Rue de l'Armée") }
+    let!(:street_number_closed) { create(:street_number, :geometry => "POINT(0.1 0.001)", :physical_road => pr) }
+    let!(:street_number_same_name) { create(:street_number, :geometry => "POINT(0.1 0.001)", :physical_road => pr, :street => "Rue de l'Armée" ) }    
+    let!(:street_number_nok) { create(:street_number, :geometry => "POINT(0.1 1)", :physical_road => pr) }    
     
     it "should find physical_road if street number has same name and closed to it" do
       expect(ActiveRoad::StreetNumber.computed_linked_road(street_number_same_name.geometry, street_number_same_name.street)).to eq(pr)

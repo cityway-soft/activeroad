@@ -289,8 +289,8 @@ module ActiveRoad
         
         ways_database.each { |key, value|          
           way = Marshal.load(value)
-          
-          if way.addr_housenumber.present?
+
+          if way.addr_housenumber.present? || way.addr_interpolation.present?            
             nodes = []
             way.nodes.each_with_index do |node_id, index|
               node = Marshal.load( nodes_database[node_id.to_s] )
@@ -298,24 +298,33 @@ module ActiveRoad
             end
             way_geometry = way_geometry(nodes)
             
-            street_numbers_counter += 1
-            geometry = way_geometry.envelope.centroid
+            if way.addr_housenumber.present?            
+              street_numbers_counter += 1
+              geometry = way_geometry.envelope.centroid
+              
+              physical_road = ActiveRoad::StreetNumber.computed_linked_road(geometry, way.options["addr:street"])
+              physical_road_id = physical_road.present? ? physical_road.id : nil
+              location_on_road = physical_road_id.present? ? ActiveRoad::StreetNumber.computed_location_on_road(physical_road.geometry, geometry) : nil
+              
+              street_numbers_csv << [ way.id, geometry.as_text, way.addr_housenumber, way.options["addr:street"], way.options["addr:city"], way.options["addr:state"], way.options["addr:country"], location_on_road, physical_road_id, "#{way.options.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
+            elsif way.addr_interpolation.present?  # If ways with address interpolation
+              # Get the first name of the extremities nodes
+              way_name = [nodes.first.tags["addr:street"], nodes.last.tags["addr:street"]].compact.first
+
+              # Find the closest physical road from the middle of the way geometry
+              physical_road = ActiveRoad::PhysicalRoad.joins( "JOIN ( SELECT ST_LineInterpolatePoint('#{ way_geometry}', 0.5 ) geometry ) p ON ST_DWithin( physical_roads.geometry, p.geometry, 0.0011)").where("name = ?", way_name).first if way_name.present?
+              physical_road = ActiveRoad::PhysicalRoad.joins( "JOIN ( SELECT ST_LineInterpolatePoint('#{ way_geometry}', 0.5 ) geometry ) p ON ST_DWithin( physical_roads.geometry, p.geometry, 0.0011)").first if physical_road.blank?
             
-            physical_road = ActiveRoad::StreetNumber.computed_linked_road(geometry, way.options["addr:street"])
-            physical_road_id = physical_road.present? ? physical_road.id : nil
-            location_on_road = physical_road_id.present? ? ActiveRoad::StreetNumber.computed_location_on_road(physical_road.geometry, geometry) : nil
-            
-            street_numbers_csv << [ way.id, geometry.as_text, way.addr_housenumber, way.options["addr:street"], way.options["addr:city"], way.options["addr:state"], way.options["addr:country"], location_on_road, physical_road_id, "#{way.options.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
-          elsif way.addr_interpolation.present?  # If ways with address interpolation
-            # Get the first name of the extremities nodes
-            #way_name = [nodes.first.tags["addr:street"], nodes.last.tags["addr:street"]].compact.first
-            #way_middle_geometry = ActiveRecord::Base.c
-            
-            # Find the closest physical road from the middle of the way geometry
-            #physical_road_id = ActiveRoad::StreetNumber.computed_linked_road(geometry, way_name)
-            
-            # Link extremities node to the physical road previously founded
-          
+              physical_road_id = physical_road.present? ? physical_road.id : nil
+              
+              # Link extremities node to the physical road previously founded
+              [nodes.first, nodes.last] .each do |node|
+                geometry = geos_factory.point( node.lon, node.lat, 4326) if( node.lon && node.lat )
+                location_on_road = physical_road_id.present? ? ActiveRoad::StreetNumber.computed_location_on_road(physical_road.geometry, geometry) : nil
+                
+                street_numbers_csv << [ node.id, geometry.as_text, node.addr_housenumber, node.tags["addr:street"], node.tags["addr:city"], node.tags["addr:state"], node.tags["addr:country"], location_on_road, physical_road_id, "#{node.tags.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
+              end
+            end
           end
         }
       end     
