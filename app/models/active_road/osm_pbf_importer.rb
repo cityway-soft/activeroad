@@ -245,7 +245,7 @@ module ActiveRoad
       street_numbers_counter = 0
       
       # traverse records by iterator
-      street_number_columns = ["objectid", "geometry", "number", "street", "city", "state", "country", "location_on_road", "physical_road_id", "tags", "created_at", "updated_at"]
+      street_number_columns = ["objectid", "geometry", "number", "street", "city", "state", "country", "location_on_road", "physical_road_id", "from_osm_object", "tags", "created_at", "updated_at"]
       
       CSV.open("/tmp/street_numbers.csv", "wb:UTF-8") do |street_numbers_csv|                  
         street_numbers_csv << street_number_columns
@@ -261,7 +261,7 @@ module ActiveRoad
             physical_road_id = physical_road.present? ? physical_road.id : nil
             location_on_road = physical_road_id.present? ? ActiveRoad::StreetNumber.computed_location_on_road(physical_road.geometry, geometry) : nil
             
-            street_numbers_csv << [ node.id, geometry.as_text, node.addr_housenumber, node.tags["addr:street"], node.tags["addr:city"], node.tags["addr:state"], node.tags["addr:country"], location_on_road, physical_road_id, "#{node.tags.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
+            street_numbers_csv << [ node.id, geometry.as_text, node.addr_housenumber, node.tags["addr:street"], node.tags["addr:city"], node.tags["addr:state"], node.tags["addr:country"], location_on_road, physical_road_id, "node", "#{node.tags.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
           end
           
         }
@@ -282,7 +282,7 @@ module ActiveRoad
       street_numbers_counter = 0
 
       # traverse records by iterator
-      street_number_columns = ["objectid", "geometry", "number", "street", "city", "state", "country", "location_on_road", "physical_road_id", "tags", "created_at", "updated_at"]
+      street_number_columns = ["objectid", "geometry", "number", "street", "city", "state", "country", "location_on_road", "physical_road_id", "from_osm_object", "tags", "created_at", "updated_at"]
       
       CSV.open("/tmp/street_numbers2.csv", "wb:UTF-8") do |street_numbers_csv|          
         street_numbers_csv << street_number_columns
@@ -306,8 +306,9 @@ module ActiveRoad
               physical_road_id = physical_road.present? ? physical_road.id : nil
               location_on_road = physical_road_id.present? ? ActiveRoad::StreetNumber.computed_location_on_road(physical_road.geometry, geometry) : nil
               
-              street_numbers_csv << [ way.id, geometry.as_text, way.addr_housenumber, way.options["addr:street"], way.options["addr:city"], way.options["addr:state"], way.options["addr:country"], location_on_road, physical_road_id, "#{way.options.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
+              street_numbers_csv << [ way.id, geometry.as_text, way.addr_housenumber, way.options["addr:street"], way.options["addr:city"], way.options["addr:state"], way.options["addr:country"], location_on_road, physical_road_id, "way_building", "#{way.options.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
             elsif way.addr_interpolation.present?  # If ways with address interpolation
+              
               # Get the first name of the extremities nodes
               way_name = [nodes.first.tags["addr:street"], nodes.last.tags["addr:street"]].compact.first
 
@@ -321,8 +322,11 @@ module ActiveRoad
               [nodes.first, nodes.last] .each do |node|
                 geometry = geos_factory.point( node.lon, node.lat, 4326) if( node.lon && node.lat )
                 location_on_road = physical_road_id.present? ? ActiveRoad::StreetNumber.computed_location_on_road(physical_road.geometry, geometry) : nil
-                
-                street_numbers_csv << [ node.id, geometry.as_text, node.addr_housenumber, node.tags["addr:street"], node.tags["addr:city"], node.tags["addr:state"], node.tags["addr:country"], location_on_road, physical_road_id, "#{node.tags.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
+
+                if node.addr_housenumber.present?
+                  street_numbers_counter += 1
+                  street_numbers_csv << [ node.id, geometry.as_text, node.addr_housenumber, node.tags["addr:street"], node.tags["addr:city"], node.tags["addr:state"], node.tags["addr:country"], location_on_road, physical_road_id, "way_address", "#{node.tags.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
+                end
               end
             end
           end

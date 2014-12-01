@@ -207,9 +207,9 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
   end
   
   describe "#split_way_with_nodes" do
-    let!(:simple_way) { ActiveRoad::OsmPbfImporterLevelDb::Way.new("1", ["1", "2", "3"], false, false, true, true, "SimpleWay" ) }
-    let(:complex_way) { ActiveRoad::OsmPbfImporterLevelDb::Way.new("2", ["4", "5", "6", "7", "8"], false, false, true, true, "ComplexWay" ) }
-    let(:complex_way_boundary) { ActiveRoad::OsmPbfImporterLevelDb::Way.new( "2", ["4", "6", "8"], false, false, true, true, "ComplexWayBoundary" ) }
+    let!(:simple_way) { ActiveRoad::OsmPbfImporterLevelDb::Way.new("1", ["1", "2", "3"], false, false, true, true, "SimpleWay", 0, false, "" , "", "", "", { "highway" => "secondary"} ) }
+    let(:complex_way) { ActiveRoad::OsmPbfImporterLevelDb::Way.new("2", ["4", "5", "6", "7", "8"], false, false, true, true, "ComplexWay", 0, false, "" , "", "", "", { "highway" => "secondary"} ) }
+    let(:complex_way_boundary) { ActiveRoad::OsmPbfImporterLevelDb::Way.new( "2", ["4", "6", "8"], false, false, true, true, "ComplexWayBoundary", 0, false, "" , "", "", "", { "highway" => "secondary"} ) }
 
     before :each do
       # Nodes for simple way
@@ -248,7 +248,7 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
                                                              "pedestrian" => true,
                                                              "name" => "SimpleWay",
                                                              "boundary" => "",
-                                                             "options" => {"first_node_id"=>"1", "last_node_id"=>"2"},
+                                                             "options" => {"highway"=>"secondary", "first_node_id"=>"1", "last_node_id"=>"2"},
                                                              "nodes" => ["1", "2"] )
       expect(ways_splitted.last.instance_values).to include( "id" => "1-1",
                                                              "car"=> false,
@@ -257,7 +257,7 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
                                                              "pedestrian" => true,
                                                              "name" => "SimpleWay",
                                                              "boundary" => "",
-                                                             "options" => {"first_node_id"=>"2", "last_node_id"=>"3"},
+                                                             "options" => {"highway"=>"secondary", "first_node_id"=>"2", "last_node_id"=>"3"},
                                                              "nodes" => ["2", "3"] )
     end
 
@@ -273,7 +273,7 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
                                                              "pedestrian" => true,
                                                              "name" => "SimpleWay",
                                                              "boundary" => "",
-                                                             "options" => { "first_node_id"=>"1", "last_node_id"=>"3" },
+                                                             "options" => { "highway"=>"secondary", "first_node_id"=>"1", "last_node_id"=>"3" },
                                                              "nodes" => ["1", "2", "3"]              )
     end
     

@@ -132,9 +132,9 @@ shared_examples "an OsmPbfImporter module" do
   describe "#save_street_numbers_from_ways" do
     
     before :each do           
-      subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 0, 0.0001, "", ["1"], true, {"addr:street" => "Avenue de l'ile"})) )
+      subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 0, 0.0001, "1", ["1"], true, {"addr:street" => "Avenue de l'ile"})) )
       subject_without_data.nodes_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 0.5, 0.0001, "", ["1"])) )
-      subject_without_data.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 1, 0.0001, "", ["1"], true, {})) )
+      subject_without_data.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 1, 0.0001, "5", ["1"], true, {})) )
       subject_without_data.ways_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("1", ["1", "2", "3"], true, false, false, false, "Test", "100", true, "", "", "", "even", {"cycleway" => "lane"}) ) )
     end
 

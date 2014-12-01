@@ -321,8 +321,8 @@ module ActiveRoad
       end
 
       ways_nodes = []
-      # Split way between each nodes used
-      if ways_split
+      # Split way between each nodes used only if way is highway or railway
+      if ways_split && (way.options["highway"].present? || way.options["railway"].present?)
         nodes_used.each_with_index do |before_node, index|        
           ways_nodes << nodes.values_at(before_node..nodes_used[ index + 1]) if before_node != nodes_used.last
         end
