@@ -35,9 +35,9 @@ shared_examples "an OsmPbfImporter module" do
       subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 0.0, 0.0, "", ["1", "2"])) )
       subject_without_data.nodes_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 2.0, 2.0, "", ["1", "3"])) )
       subject_without_data.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 3.0, 3.0, "", ["1", "3"])) )
-      subject_without_data.ways_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("1-0", ["1", "2", "3"], true, false, false, false, "Test", "100", true, "", "", "", "", {"cycleway" => "lane"}) ) )
-      subject_without_data.ways_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("2-0", ["1", "2"], true, false, false, false, "Test", "100", true, "", "", "", "", {"toll" => "true"}) ) )
-      subject_without_data.ways_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("3-0", ["1", "2"], true, false, false, false, "Test", "100", true, "", "", "", "", {}) ) )
+      subject_without_data.ways_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("1-0", ["1", "2", "3"], true, false, false, false, "Test", "100", true, "", "", "", "", {"highway" =>  "secondary", "cycleway" => "lane"}) ) )
+      subject_without_data.ways_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("2-0", ["1", "2"], true, false, false, false, "Test", "100", true, "", "", "", "", {"highway" =>  "secondary", "toll" => "true"}) ) )
+      subject_without_data.ways_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("3-0", ["1", "2"], true, false, false, false, "Test", "100", true, "", "", "", "", {"highway" =>  "secondary"}) ) )
     end
 
     after :each do

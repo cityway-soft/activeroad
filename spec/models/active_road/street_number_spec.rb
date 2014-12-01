@@ -2,8 +2,8 @@
 require 'spec_helper'
 
 describe ActiveRoad::StreetNumber do
-
-  subject { create :street_number }
+  let!(:pr) { create(:physical_road, :geometry => "LINESTRING(0 0,1 0)", :name => "Rue de l'Armée") }
+  subject { create :street_number, :physical_road => pr }
 
   it "should have a number" do
     expect(subject).to respond_to(:number)

@@ -15,32 +15,32 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
     
     it "should import all datas when split" do  
       subject.import
-      expect(ActiveRoad::Junction.all.size).to eq(6)
+      expect(ActiveRoad::Junction.count).to eq(6)
       expect(ActiveRoad::Junction.all.collect(&:objectid)).to match_array(["1", "2", "5", "8", "9", "10"])
-      expect(ActiveRoad::StreetNumber.all.size).to eq(4)
+      expect(ActiveRoad::StreetNumber.count).to eq(4)
       expect(ActiveRoad::StreetNumber.all.collect(&:objectid)).to match_array(["2646260105", "2646260106", "76809952", "2"])
-      expect(ActiveRoad::PhysicalRoad.all.size).to eq(8)
+      expect(ActiveRoad::PhysicalRoad.count).to eq(8)
       expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["3-0", "3-1", "5-0", "5-1", "5-2", "6-0", "6-1", "6-2"])
-      expect(ActiveRoad::PhysicalRoadConditionnalCost.all.size).to eq(24)
-      expect(ActiveRoad::JunctionsPhysicalRoad.all.size).to eq(16)
-      expect(ActiveRoad::Boundary.all.size).to eq(1)
+      expect(ActiveRoad::PhysicalRoadConditionnalCost.count).to eq(24)
+      expect(ActiveRoad::JunctionsPhysicalRoad.count).to eq(16)
+      expect(ActiveRoad::Boundary.count).to eq(1)
       expect(ActiveRoad::Boundary.all.collect(&:objectid)).to match_array(["73464"])     
-      expect(ActiveRoad::LogicalRoad.all.size).to eq(1)  
+      expect(ActiveRoad::LogicalRoad.count).to eq(1)  
       expect(ActiveRoad::LogicalRoad.all.collect(&:name)).to match_array(["Rue J. Symphorien"])
     end
 
     it "should import only ways, nodes and street number when no split" do  
       subject_without_split.import
-      expect(ActiveRoad::Junction.all.size).to eq(6)
+      expect(ActiveRoad::Junction.count).to eq(6)
       expect(ActiveRoad::Junction.all.collect(&:objectid)).to match_array(["1", "2", "5", "8", "9", "10"])
-      expect(ActiveRoad::StreetNumber.all.size).to eq(4)
+      expect(ActiveRoad::StreetNumber.count).to eq(4)
       expect(ActiveRoad::StreetNumber.all.collect(&:objectid)).to match_array(["2646260105", "2646260106", "76809952", "2"])
-      expect(ActiveRoad::PhysicalRoad.all.size).to eq(3)
+      expect(ActiveRoad::PhysicalRoad.count).to eq(3)
       expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["3-0", "5-0", "6-0"])
-      expect(ActiveRoad::PhysicalRoadConditionnalCost.all.size).to eq(9)
-      expect(ActiveRoad::JunctionsPhysicalRoad.all.size).to eq(11)
-      expect(ActiveRoad::Boundary.all.size).to eq(1)
-      expect(ActiveRoad::LogicalRoad.all.size).to eq(1)
+      expect(ActiveRoad::PhysicalRoadConditionnalCost.count).to eq(9)
+      expect(ActiveRoad::JunctionsPhysicalRoad.count).to eq(11)
+      expect(ActiveRoad::Boundary.count).to eq(1)
+      expect(ActiveRoad::LogicalRoad.count).to eq(1)
       expect(ActiveRoad::LogicalRoad.all.collect(&:name)).to match_array(["Rue J. Symphorien"])
     end
   end

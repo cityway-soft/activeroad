@@ -166,7 +166,7 @@ module ActiveRoad
         ways_database.each { |key, value|          
           way = Marshal.load(value)
           
-          unless way.boundary.present? || way.addr_housenumber.present? || way.addr_interpolation.present? # Use ways not used in relation for boundaries or for addresses
+          if way.options["highway"].present? || way.options["railway"].present? # Use ways with tags highway or railway
             ways_counter += 1
             
             nodes = []

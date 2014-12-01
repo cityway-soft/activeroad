@@ -9,7 +9,7 @@ namespace :active_road do
     Rake::Task["db:create"].invoke
     Rake::Task["db:migrate"].invoke
   end
-
+  
   namespace :import do
 
     # bundle exec rake "app:active_road:import:osm_pbf_data[/home/user/test.osm.pbf, true]"
@@ -71,7 +71,7 @@ namespace :active_road do
         end
       end
 
-      puts "You can see #{street_number_far_from_road_counter} street number without road in /tmp/reports/street_number_far_from_road.csv"
+      puts "You can see #{street_number_far_from_road_counter} street number far from road in /tmp/reports/street_number_far_from_road.csv"
       
     end
 
