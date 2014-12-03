@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140528152525) do
+ActiveRecord::Schema.define(version: 20141201124747) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -49,10 +49,11 @@ ActiveRecord::Schema.define(version: 20140528152525) do
     t.float    "waiting_constraint"
   end
 
+  add_index "junctions", ["geometry"], :name => "index_junctions_on_geometry", :spatial => true
   add_index "junctions", ["objectid"], :name => "index_junctions_on_objectid", :unique => true
   add_index "junctions", ["tags"], :name => "junctions_tags"
 
-  create_table "junctions_physical_roads", force: true do |t|
+  create_table "junctions_physical_roads", id: false, force: true do |t|
     t.integer "physical_road_id"
     t.integer "junction_id"
     t.float   "percentage_location"
@@ -70,6 +71,7 @@ ActiveRecord::Schema.define(version: 20140528152525) do
     t.integer  "boundary_id"
   end
 
+  add_index "logical_roads", ["boundary_id"], :name => "index_logical_roads_on_boundary_id"
   add_index "logical_roads", ["name"], :name => "index_logical_roads_on_name"
   add_index "logical_roads", ["objectid"], :name => "index_logical_roads_on_objectid", :unique => true
 
@@ -109,10 +111,11 @@ ActiveRecord::Schema.define(version: 20140528152525) do
     t.integer  "marker",                                                          default: 0
   end
 
+  add_index "physical_roads", ["boundary_id"], :name => "index_physical_roads_on_boundary_id"
   add_index "physical_roads", ["geometry"], :name => "index_physical_roads_on_geometry", :spatial => true
   add_index "physical_roads", ["logical_road_id"], :name => "index_physical_roads_on_logical_road_id"
+  add_index "physical_roads", ["name"], :name => "index_physical_roads_on_name"
   add_index "physical_roads", ["objectid"], :name => "index_physical_roads_on_objectid", :unique => true
-  add_index "physical_roads", ["physical_road_type"], :name => "index_physical_roads_on_physical_road_type"
   add_index "physical_roads", ["tags"], :name => "physical_roads_tags"
 
   create_table "street_numbers", force: true do |t|
@@ -124,8 +127,14 @@ ActiveRecord::Schema.define(version: 20140528152525) do
     t.spatial  "geometry",         limit: {:srid=>4326, :type=>"point"}
     t.string   "objectid"
     t.hstore   "tags"
+    t.string   "street"
+    t.string   "city"
+    t.string   "state"
+    t.string   "country"
+    t.string   "from_osm_object"
   end
 
+  add_index "street_numbers", ["geometry"], :name => "index_street_numbers_on_geometry", :spatial => true
   add_index "street_numbers", ["number", "physical_road_id"], :name => "index_street_numbers_on_number_and_physical_road_id"
   add_index "street_numbers", ["physical_road_id"], :name => "index_street_numbers_on_physical_road_id"
 
