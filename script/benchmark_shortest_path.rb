@@ -14,7 +14,7 @@ geos_factory = ::RGeo::Geos.factory(:native_interface => :ffi, :srid => 4326,
 
 departure = geos_factory.point(7.699781, 48.587853)
 arrival = geos_factory.point(7.738061, 48.587853)
-sp = ActiveRoad::ShortestPath::Finder.new(departure, arrival, 4)
+sp = ActiveRoad::ShortestPathFinder.new(departure, arrival, 4)
 
 # Profile the code
 RubyProf.start

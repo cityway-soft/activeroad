@@ -9,6 +9,7 @@ module ActiveRoad
 
     @@relation_required_tags_keys = ["boundary", "admin_level"]
     @@relation_selected_tags_keys = ["boundary", "admin_level", "ref:INSEE", "name", "addr:postcode", "type"]
+
     mattr_reader :relation_required_tags_keys, :relation_selected_tags_keys    
 
     @@way_required_tags_keys = ["highway", "railway", "boundary", "admin_level", "addr:housenumber", "addr:interpolation"]
@@ -48,7 +49,7 @@ module ActiveRoad
       # traverse records by iterator
       junction_columns = ["objectid", "geometry", "created_at", "updated_at"]
       
-      CSV.open("/tmp/junctions.csv", "wb:UTF-8") do |junctions_csv|                
+      CSV.open("#{prefix_path}/junctions.csv", "wb:UTF-8") do |junctions_csv|                
         junctions_csv << junction_columns
         
         nodes_database.each { |key, value|            
@@ -57,7 +58,7 @@ module ActiveRoad
           if node.ways.present? && (node.ways.count >= 2 || node.end_of_way == true )  # Take node with at least two ways or at the end of a way
             junctions_counter += 1
             
-            geometry = geos_factory.point( node.lon, node.lat, 4326) if( node.lon && node.lat )
+            geometry = RgeoExt.geos_factory.point( node.lon, node.lat, 4326) if( node.lon && node.lat )
             junctions_csv << [ node.id, geometry.as_text, Time.now, Time.now ]
           end                   
           
@@ -65,7 +66,7 @@ module ActiveRoad
       end
              
       ActiveRoad::Junction.transaction do                                         
-        ActiveRoad::Junction.copy_from "/tmp/junctions.csv"
+        ActiveRoad::Junction.copy_from "#{prefix_path}/junctions.csv"
       end
       
       Rails.logger.info "Finish to backup #{junctions_counter} junctions in PostgreSql in #{display_time(Time.now - start)} seconds"         
@@ -84,7 +85,7 @@ module ActiveRoad
       relations_parser.next until relations_parser.relations.any?
       
       # Once it found at least one relation, iterate to find the remaining relations.
-      CSV.open("/tmp/boundaries.csv", "wb:UTF-8") do |boundary_csv|       
+      CSV.open("#{prefix_path}/boundaries.csv", "wb:UTF-8") do |boundary_csv|       
         boundary_csv << boundary_columns
 
         until relations_parser.relations.empty?
@@ -127,7 +128,7 @@ module ActiveRoad
                   boundary_polygons = extract_relation_polygon(outer_ways.values, inner_ways.values)
                   
                   if boundary_polygons.present?
-                    boundary_geometry = geos_factory.multi_polygon( boundary_polygons ).as_text
+                    boundary_geometry = RgeoExt.geos_factory.multi_polygon( boundary_polygons ).as_text
                     
                     boundary_csv << [ relation[:id], boundary_geometry, tags["name"], tags["admin_level"], tags["addr:postcode"], tags["ref:INSEE"] ]
                   end
@@ -145,7 +146,7 @@ module ActiveRoad
       end
       
       ActiveRoad::Boundary.transaction do                                         
-        ActiveRoad::Boundary.copy_from "/tmp/boundaries.csv"
+        ActiveRoad::Boundary.copy_from "#{prefix_path}/boundaries.csv"
       end
       
       Rails.logger.info  "Finish to backup #{boundaries_counter} boundaries in PostgreSql  in #{display_time(Time.now - start)} seconds"
@@ -158,9 +159,9 @@ module ActiveRoad
       ways_counter = 0
 
       # traverse records by iterator
-      physical_road_columns = ["objectid", "car", "bike", "train", "pedestrian", "name", "geometry", "boundary_id", "tags", "created_at", "updated_at"]
+      physical_road_columns = ["objectid", "car", "bike", "train", "pedestrian", "name", "geometry", "length", "boundary_id", "tags", "created_at", "updated_at"]
       
-      CSV.open("/tmp/physical_roads.csv", "wb:UTF-8") do |physical_roads_csv|
+      CSV.open("#{prefix_path}/physical_roads.csv", "wb:UTF-8") do |physical_roads_csv|
         physical_roads_csv << physical_road_columns
           
         ways_database.each { |key, value|          
@@ -174,20 +175,43 @@ module ActiveRoad
               node = Marshal.load( nodes_database[node_id.to_s] )
               nodes << node                
             end
-            way_geometry = way_geometry(nodes)                                   
+            way_geometry = way_geometry(nodes)
+            way_length = way_length(way_geometry)
             
             way_boundary = way.boundary.present? ? way.boundary.to_i : nil
-            physical_roads_csv << [ way.id, way.car, way.bike, way.train, way.pedestrian, way.name, way_geometry.as_text, way_boundary, "#{way.options.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
+            physical_roads_csv << [ way.id, way.car, way.bike, way.train, way.pedestrian, way.name, way_geometry.as_text, way_length, way_boundary, "#{way.options.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
           end
         }
       end
       
       # Save physical roads
       ActiveRoad::PhysicalRoad.transaction do                                         
-        ActiveRoad::PhysicalRoad.copy_from "/tmp/physical_roads.csv"
+        ActiveRoad::PhysicalRoad.copy_from "#{prefix_path}/physical_roads.csv"
       end
 
       Rails.logger.info "Finish to save #{ways_counter} physical_roads in PostgreSql in #{display_time(Time.now - start)} seconds"
+    end
+
+    def way_geometry(nodes)
+      if nodes.present? &&  1 < nodes.count
+        wkt_geometry = "LINESTRING("
+        last_node = nodes.last
+        nodes.each do |node|
+          wkt_geometry += "#{node.lon} #{node.lat}"
+          wkt_geometry += ", " if node != last_node 
+        end
+        wkt_geometry += ")"
+
+        RgeoExt.geos_factory.parse_wkt(wkt_geometry)
+      end
+    end
+
+    def way_length(way_geometry)
+      if way_geometry
+        RgeoExt.geographical_factory.line_string(way_geometry.points).length
+      else
+        0
+      end
     end
 
     def save_physical_road_conditionnal_costs_and_junctions
@@ -198,8 +222,8 @@ module ActiveRoad
       physical_road_conditionnal_cost_columns = ["tags", "cost", "physical_road_id"]
       junction_physical_road_columns = ["physical_road_id", "junction_id"]
       
-      CSV.open("/tmp/physical_road_conditionnal_costs.csv", "wb:UTF-8") do |physical_road_conditionnal_costs_csv|
-        CSV.open("/tmp/junctions_physical_roads.csv", "wb:UTF-8") do |junctions_physical_roads_csv|
+      CSV.open("#{prefix_path}/physical_road_conditionnal_costs.csv", "wb:UTF-8") do |physical_road_conditionnal_costs_csv|
+        CSV.open("#{prefix_path}/junctions_physical_roads.csv", "wb:UTF-8") do |junctions_physical_roads_csv|
           physical_road_conditionnal_costs_csv << physical_road_conditionnal_cost_columns
           junctions_physical_roads_csv << junction_physical_road_columns
           
@@ -226,12 +250,12 @@ module ActiveRoad
       
       # Save physical road conditionnal costs
       ActiveRoad::PhysicalRoadConditionnalCost.transaction do                                         
-        ActiveRoad::PhysicalRoadConditionnalCost.copy_from "/tmp/physical_road_conditionnal_costs.csv"
+        ActiveRoad::PhysicalRoadConditionnalCost.copy_from "#{prefix_path}/physical_road_conditionnal_costs.csv"
       end
 
       # Save physical road and junctions link
       ActiveRoad::JunctionsPhysicalRoad.transaction do                                         
-        ActiveRoad::JunctionsPhysicalRoad.copy_from "/tmp/junctions_physical_roads.csv"
+        ActiveRoad::JunctionsPhysicalRoad.copy_from "#{prefix_path}/junctions_physical_roads.csv"
       end
 
       Rails.logger.info "Finish to backup #{junctions_physical_roads_counter} junctions_physical_roads and #{physical_road_conditionnal_costs_counter} physical_road_conditionnal_costs in PostgreSql in #{display_time(Time.now - start)} seconds"
@@ -247,7 +271,7 @@ module ActiveRoad
       # traverse records by iterator
       street_number_columns = ["objectid", "geometry", "number", "street", "city", "state", "country", "location_on_road", "physical_road_id", "from_osm_object", "tags", "created_at", "updated_at"]
       
-      CSV.open("/tmp/street_numbers.csv", "wb:UTF-8") do |street_numbers_csv|                  
+      CSV.open("#{prefix_path}/street_numbers.csv", "wb:UTF-8") do |street_numbers_csv|                  
         street_numbers_csv << street_number_columns
         
         nodes_database.each { |key, value|            
@@ -256,7 +280,7 @@ module ActiveRoad
           if node.addr_housenumber.present?
             street_numbers_counter += 1
             
-            geometry = geos_factory.point( node.lon, node.lat, 4326) if( node.lon && node.lat )
+            geometry = RgeoExt.geos_factory.point( node.lon, node.lat, 4326) if( node.lon && node.lat )
             physical_road = ActiveRoad::StreetNumber.computed_linked_road(geometry, node.tags["addr:street"])
             physical_road_id = physical_road.present? ? physical_road.id : nil
             location_on_road = physical_road_id.present? ? ActiveRoad::StreetNumber.computed_location_on_road(physical_road.geometry, geometry) : nil
@@ -268,7 +292,7 @@ module ActiveRoad
       end
       
       ActiveRoad::StreetNumber.transaction do
-        ActiveRoad::StreetNumber.copy_from "/tmp/street_numbers.csv"
+        ActiveRoad::StreetNumber.copy_from "#{prefix_path}/street_numbers.csv"
       end
       
       Rails.logger.info "Finish to save #{street_numbers_counter} street numbers in PostgreSql in #{display_time(Time.now - start)} seconds"         
@@ -284,7 +308,7 @@ module ActiveRoad
       # traverse records by iterator
       street_number_columns = ["objectid", "geometry", "number", "street", "city", "state", "country", "location_on_road", "physical_road_id", "from_osm_object", "tags", "created_at", "updated_at"]
       
-      CSV.open("/tmp/street_numbers2.csv", "wb:UTF-8") do |street_numbers_csv|          
+      CSV.open("#{prefix_path}/street_numbers2.csv", "wb:UTF-8") do |street_numbers_csv|          
         street_numbers_csv << street_number_columns
         
         ways_database.each { |key, value|          
@@ -320,7 +344,7 @@ module ActiveRoad
               
               # Link extremities node to the physical road previously founded
               [nodes.first, nodes.last] .each do |node|
-                geometry = geos_factory.point( node.lon, node.lat, 4326) if( node.lon && node.lat )
+                geometry = RgeoExt.geos_factory.point( node.lon, node.lat, 4326) if( node.lon && node.lat )
                 location_on_road = physical_road_id.present? ? ActiveRoad::StreetNumber.computed_location_on_road(physical_road.geometry, geometry) : nil
 
                 if node.addr_housenumber.present?
@@ -334,7 +358,7 @@ module ActiveRoad
       end     
       
       ActiveRoad::StreetNumber.transaction do                                         
-        ActiveRoad::StreetNumber.copy_from "/tmp/street_numbers2.csv"        
+        ActiveRoad::StreetNumber.copy_from "#{prefix_path}/street_numbers2.csv"        
       end
 
       Rails.logger.info "Finish to save #{street_numbers_counter} street numbers from ways in PostgreSql in #{display_time(Time.now - start)} seconds"
@@ -376,11 +400,11 @@ WHERE p.boundary_id IS NULL AND ST_Crosses( b.geometry, p.geometry)
 AND j1.id = jp.junction_id AND p.id = jp.physical_road_id AND ST_Equals(ST_StartPoint(p.geometry), j1.geometry)
 AND j2.id = jp2.junction_id AND p.id = jp2.physical_road_id AND ST_Equals(ST_EndPoint(p.geometry), j2.geometry)".gsub(/^( |\t)+/, "")      
       ActiveRoad::PhysicalRoad.connection.select_all( sql ).each do |result|
-        intersection_geometry = geos_factory.parse_wkt("#{result['intersection_geometry']}")
+        intersection_geometry = RgeoExt.geos_factory.parse_wkt("#{result['intersection_geometry']}")
 
         # Not take in consideration point intersection!!
         if RGeo::Feature::LineString === intersection_geometry
-          simple_way = SimpleWay.new(result["boundary_id"], result["physical_road_id"], result["physical_road_objectid"], result["physical_road_tags"], geos_factory.parse_wkt("#{result['physical_road_geometry']}"), result["departure_objectid"], geos_factory.parse_wkt("#{result['departure_geometry']}"), result["arrival_objectid"], geos_factory.parse_wkt("#{result['arrival_geometry']}"), intersection_geometry )
+          simple_way = SimpleWay.new(result["boundary_id"], result["physical_road_id"], result["physical_road_objectid"], result["physical_road_tags"], RgeoExt.geos_factory.parse_wkt("#{result['physical_road_geometry']}"), result["departure_objectid"], RgeoExt.geos_factory.parse_wkt("#{result['departure_geometry']}"), result["arrival_objectid"], RgeoExt.geos_factory.parse_wkt("#{result['arrival_geometry']}"), intersection_geometry )
           # Delete boucle line string Ex : 9938647-4
           simple_ways << simple_way if simple_way.departure != simple_way.arrival
         else
@@ -402,9 +426,9 @@ WHERE j1.id = jp.junction_id AND v.id = jp.physical_road_id AND ST_Equals(ST_Sta
 AND j2.id = jp2.junction_id AND v.id = jp2.physical_road_id AND ST_Equals(ST_EndPoint(v.geometry), j2.geometry)
 AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "") 
       ActiveRoad::PhysicalRoad.connection.select_all( sql ).each do |result|
-        difference_geometry = geos_factory.parse_wkt("#{result['difference_geometry']}")
+        difference_geometry = RgeoExt.geos_factory.parse_wkt("#{result['difference_geometry']}")
         if RGeo::Feature::LineString === difference_geometry
-          simple_way = SimpleWay.new(nil, result["physical_road_id"], result["physical_road_objectid"], result["physical_road_tags"], geos_factory.parse_wkt("#{result['physical_road_geometry']}"), result["departure_objectid"], geos_factory.parse_wkt("#{result['departure_geometry']}"), result["arrival_objectid"], geos_factory.parse_wkt("#{result['arrival_geometry']}"), difference_geometry )
+          simple_way = SimpleWay.new(nil, result["physical_road_id"], result["physical_road_objectid"], result["physical_road_tags"], RgeoExt.geos_factory.parse_wkt("#{result['physical_road_geometry']}"), result["departure_objectid"], RgeoExt.geos_factory.parse_wkt("#{result['departure_geometry']}"), result["arrival_objectid"], RgeoExt.geos_factory.parse_wkt("#{result['arrival_geometry']}"), difference_geometry )
           # Delete boucle line string Ex : 9938647-4
           simple_ways << simple_way if simple_way.departure != simple_way.arrival
         else
@@ -568,7 +592,7 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
       # TODO : Fix the case where many outer rings with many inner rings
       polygons = [].tap do |polygons|
         outer_rings.each { |outer_ring|
-          polygons << geos_factory.polygon( outer_ring, inner_rings )
+          polygons << RgeoExt.geos_factory.polygon( outer_ring, inner_rings )
         }
       end
     end
@@ -630,7 +654,7 @@ AND NOT ST_IsEmpty(difference_geometry)".gsub(/^( |\t)+/, "")
         raise StandardError, "Trying to join two ways with no end point in common"
       end
 
-      geos_factory.line_string(new_points)
+      RgeoExt.geos_factory.line_string(new_points)
     end
 
     class EndpointToWayMap

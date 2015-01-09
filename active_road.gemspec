@@ -7,9 +7,12 @@ Gem::Specification.new do |s|
   s.version     = ActiveRoad::VERSION
   s.authors     = ["Alban Peignier", "Luc Donnet", "Marc Florisson"]
   s.email       = ["alban@tryphon.eu", "luc.donnet@free.fr", "mflorisson@gmail.com"]
-  s.homepage    = ""
-  s.summary     = %q{Rails engine to manage roads and rails model}
-  s.description = %q{Find street numbers and road ways}
+  s.homepage    = "https://rubygems.org/gems/active_road"
+  s.summary     = %q{Rails engine to import openstreetmap datas and make an itinerary research}
+  s.description = %q{Import openstreetmap datas and make an itinerary research}
+  s.required_ruby_version = '>= 1.9.3'
+  s.license = 'MIT'
+  #spec.requirements << 'libsnappy-dev, v6.0'
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")

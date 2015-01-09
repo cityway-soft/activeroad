@@ -1,7 +1,7 @@
 shared_examples "an OsmPbfImporter module" do 
 
   describe "#save_junctions" do
-    let!(:point) { geos_factory.point( 0, 0) }
+    let!(:point) { ActiveRoad::RgeoExt.geos_factory.point( 0, 0) }
 
     before :each do      
       subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 2.0, 2.0, "", ["1", "2"], false, {"junction" => "roundabout"})) )
@@ -24,12 +24,12 @@ shared_examples "an OsmPbfImporter module" do
   end  
 
   describe "#save_physical_roads" do
-    let!(:line) { geos_factory.parse_wkt( "LINESTRING(0 0,2 2)" ) }
-    let!(:line2) { geos_factory.parse_wkt( "LINESTRING(2 2,3 3)" ) }
-    let!(:junction1) { create(:junction, :objectid => "1", :geometry => geos_factory.point(0, 0) ) }
-    let!(:junction2) { create(:junction, :objectid => "2", :geometry => geos_factory.point(2, 2) ) }
-    let!(:junction3) { create(:junction, :objectid => "3", :geometry => geos_factory.point(3, 3) ) }
-    let!(:boundary) { create(:boundary, :geometry => geos_factory.parse_wkt( "MULTIPOLYGON(((0 0,2 0,2 2,0 2)))") ) }
+    let!(:line) { ActiveRoad::RgeoExt.geos_factory.parse_wkt( "LINESTRING(0 0,2 2)" ) }
+    let!(:line2) { ActiveRoad::RgeoExt.geos_factory.parse_wkt( "LINESTRING(2 2,3 3)" ) }
+    let!(:junction1) { create(:junction, :objectid => "1", :geometry => ActiveRoad::RgeoExt.geos_factory.point(0, 0) ) }
+    let!(:junction2) { create(:junction, :objectid => "2", :geometry => ActiveRoad::RgeoExt.geos_factory.point(2, 2) ) }
+    let!(:junction3) { create(:junction, :objectid => "3", :geometry => ActiveRoad::RgeoExt.geos_factory.point(3, 3) ) }
+    let!(:boundary) { create(:boundary, :geometry => ActiveRoad::RgeoExt.geos_factory.parse_wkt( "MULTIPOLYGON(((0 0,2 0,2 2,0 2)))") ) }
     
     before :each do
       subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 0.0, 0.0, "", ["1", "2"])) )
@@ -58,6 +58,15 @@ shared_examples "an OsmPbfImporter module" do
       expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["1-0", "2-0", "3-0"]
 )
     end
+  end
+
+  describe "#way_geometry" do
+    let(:nodes) { [double("node1", :id => "1", :lon => 0.0, :lat => 0.0), double("node2", :id => "2", :lon => 1.0, :lat => 1.0), double("node3", :id => "3", :lon => 2.0, :lat => 2.0)] }
+    
+    it "should update physical road geometry" do        
+      expect(subject.way_geometry(nodes)).to eq(ActiveRoad::RgeoExt.geos_factory.parse_wkt( "LINESTRING(0.0 0.0, 1.0 1.0,2.0 2.0)"))
+    end
+
   end
 
   describe "#physical_road_conditionnal_costs" do
@@ -93,7 +102,7 @@ shared_examples "an OsmPbfImporter module" do
       subject.backup_relations_pgsql
       expect(ActiveRoad::Boundary.all.size).to eq(1)
       expect(ActiveRoad::Boundary.first.objectid).to eq("73464")
-      expect(ActiveRoad::Boundary.first.geometry).to eq(geos_factory.parse_wkt( "MULTIPOLYGON(((-54.3 5.3,-54.3 5.4,-54.1 5.4,-54.1 5.3,-54.3 5.3 ) ))" ) )
+      expect(ActiveRoad::Boundary.first.geometry).to eq(ActiveRoad::RgeoExt.geos_factory.parse_wkt( "MULTIPOLYGON(((-54.3 5.3,-54.3 5.4,-54.1 5.4,-54.1 5.3,-54.3 5.3 ) ))" ) )
     end
 
     # it "should order ways geometry" do
@@ -107,7 +116,7 @@ shared_examples "an OsmPbfImporter module" do
   end
 
   describe "#save_street_numbers_from_nodes" do
-    let!(:point) { geos_factory.point( 0, 0) }
+    let!(:point) { ActiveRoad::RgeoExt.geos_factory.point( 0, 0) }
 
     before :each do      
       subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 2.0, 2.0, "", ["1", "2"], false, {"junction" => "roundabout"})) )
@@ -150,7 +159,7 @@ shared_examples "an OsmPbfImporter module" do
     end
 
     it "should save street number from ways" do
-      physical_road = create(:physical_road, :geometry => geos_factory.parse_wkt("SRID=4326;LINESTRING(0 0, 1 0)")) 
+      physical_road = create(:physical_road, :geometry => ActiveRoad::RgeoExt.geos_factory.parse_wkt("SRID=4326;LINESTRING(0 0, 1 0)")) 
       subject_without_data.save_street_numbers_from_ways
 
       expect(ActiveRoad::StreetNumber.count).to eq(2)
@@ -158,7 +167,7 @@ shared_examples "an OsmPbfImporter module" do
     end
 
     it "should save street number from ways" do
-      physical_road = create(:physical_road, :name => "Avenue de l'ile", :geometry => geos_factory.parse_wkt("SRID=4326;LINESTRING(0 0, 1 0)")) 
+      physical_road = create(:physical_road, :name => "Avenue de l'ile", :geometry => ActiveRoad::RgeoExt.geos_factory.parse_wkt("SRID=4326;LINESTRING(0 0, 1 0)")) 
       subject_without_data.save_street_numbers_from_ways
 
       expect(ActiveRoad::StreetNumber.count).to eq(2)
@@ -168,25 +177,25 @@ shared_examples "an OsmPbfImporter module" do
   end
   
   describe "#extract_relation_polygon" do
-    let!(:p1) { geos_factory.point( 0, 0) }
-    let!(:p2) { geos_factory.point( 1, 1) }
-    let!(:p3) { geos_factory.point( 1, 0) }
-    let!(:first_way_geom) {  geos_factory.line_string( [p1, p2] ) }
-    let!(:second_way_geom) { geos_factory.line_string( [p2, p3] ) }
-    let!(:third_way_geom) { geos_factory.line_string(  [p3, p1] ) }
+    let!(:p1) { ActiveRoad::RgeoExt.geos_factory.point( 0, 0) }
+    let!(:p2) { ActiveRoad::RgeoExt.geos_factory.point( 1, 1) }
+    let!(:p3) { ActiveRoad::RgeoExt.geos_factory.point( 1, 0) }
+    let!(:first_way_geom) {  ActiveRoad::RgeoExt.geos_factory.line_string( [p1, p2] ) }
+    let!(:second_way_geom) { ActiveRoad::RgeoExt.geos_factory.line_string( [p2, p3] ) }
+    let!(:third_way_geom) { ActiveRoad::RgeoExt.geos_factory.line_string(  [p3, p1] ) }
 
     it "should return an exception if way geometries are not connected" do
-      second_way_geom_not_connected = geos_factory.line_string( [p2, p2] )
+      second_way_geom_not_connected = ActiveRoad::RgeoExt.geos_factory.line_string( [p2, p2] )
       expect { importer.extract_relation_polygon([first_way_geom, second_way_geom_not_connected, third_way_geom]) }.to raise_error
     end
 
     it "should return polygon if way geometries are connected" do
-      expect(importer.extract_relation_polygon([first_way_geom, second_way_geom, third_way_geom])).to match_array( [ geos_factory.polygon(geos_factory.line_string( [p1, p2, p3, p1] )) ] )
+      expect(importer.extract_relation_polygon([first_way_geom, second_way_geom, third_way_geom])).to match_array( [ ActiveRoad::RgeoExt.geos_factory.polygon(ActiveRoad::RgeoExt.geos_factory.line_string( [p1, p2, p3, p1] )) ] )
     end
 
     it "should return polygon if way geometries are connected and some of them have points in the reverse order" do
-      second_way_geom_reversed = geos_factory.line_string([ p3, p2] )
-      expect(importer.extract_relation_polygon([first_way_geom, second_way_geom_reversed, third_way_geom])).to match_array( [ geos_factory.polygon(geos_factory.line_string( [p1, p2, p3, p1] )) ] )
+      second_way_geom_reversed = ActiveRoad::RgeoExt.geos_factory.line_string([ p3, p2] )
+      expect(importer.extract_relation_polygon([first_way_geom, second_way_geom_reversed, third_way_geom])).to match_array( [ ActiveRoad::RgeoExt.geos_factory.polygon(ActiveRoad::RgeoExt.geos_factory.line_string( [p1, p2, p3, p1] )) ] )
     end
       
   end
@@ -197,8 +206,8 @@ shared_examples "an OsmPbfImporter module" do
     
     it "should split way in three parts" do
       physical_road = create(:physical_road, :geometry => "LINESTRING(-1.0 1.0, 1.0 1.0, 1.0 2.0, 1.0 3.0)", :boundary_id => nil, :tags => {"bridge" => "true", "first_node_id" => "1", "last_node_id" => "2"})
-      departure = create(:junction, :geometry => geos_factory.point(-1.0, 1.0))
-      arrival = create(:junction, :geometry => geos_factory.point(1.0, 3.0))
+      departure = create(:junction, :geometry => ActiveRoad::RgeoExt.geos_factory.point(-1.0, 1.0))
+      arrival = create(:junction, :geometry => ActiveRoad::RgeoExt.geos_factory.point(1.0, 3.0))
       physical_road.junctions << [departure, arrival]
       
       subject_without_data.split_way_with_boundaries
@@ -216,8 +225,8 @@ shared_examples "an OsmPbfImporter module" do
     # Split intersection between segment on perimeter and segment in boundary
     it "should treat geometry differences with multi linestring" do
       physical_road = create(:physical_road, :geometry => "LINESTRING(-1.0 1.0, 1.0 1.0, 1.0 2.0, -1.0 2.0)", :boundary_id => nil)
-      departure = create(:junction, :geometry => geos_factory.point(-1.0, 1.0))
-      arrival = create(:junction, :geometry => geos_factory.point(-1.0, 2.0))
+      departure = create(:junction, :geometry => ActiveRoad::RgeoExt.geos_factory.point(-1.0, 1.0))
+      arrival = create(:junction, :geometry => ActiveRoad::RgeoExt.geos_factory.point(-1.0, 2.0))
       physical_road.junctions << [departure, arrival]
       
       subject_without_data.split_way_with_boundaries
@@ -226,8 +235,8 @@ shared_examples "an OsmPbfImporter module" do
 
     it "should update boundary_id" do
       physical_road = create(:physical_road, :geometry => "LINESTRING(0.0 1.0,1.0 1.0)", :boundary_id => nil)
-      departure = create(:junction, :geometry => geos_factory.point(0.0, 1.0))
-      arrival = create(:junction, :geometry => geos_factory.point(1.0, 1.0))
+      departure = create(:junction, :geometry => ActiveRoad::RgeoExt.geos_factory.point(0.0, 1.0))
+      arrival = create(:junction, :geometry => ActiveRoad::RgeoExt.geos_factory.point(1.0, 1.0))
       physical_road.junctions << [departure, arrival]
       
       subject_without_data.split_way_with_boundaries
@@ -246,15 +255,15 @@ shared_examples "an OsmPbfImporter module" do
   end
 
   describe "#join_ways" do
-    let!(:p1) { geos_factory.point( 0, 0) }
-    let!(:p2) { geos_factory.point( 1, 1) }
-    let!(:p3) { geos_factory.point( 1, 0) }
+    let!(:p1) { ActiveRoad::RgeoExt.geos_factory.point( 0, 0) }
+    let!(:p2) { ActiveRoad::RgeoExt.geos_factory.point( 1, 1) }
+    let!(:p3) { ActiveRoad::RgeoExt.geos_factory.point( 1, 0) }
 
-    let(:way1) { geos_factory.line_string([ p1, p2] ) }
-    let(:way2) { geos_factory.line_string([ p2, p3] ) }
-    let(:way3) { geos_factory.line_string([ p3, p1] ) }
-    let(:way2_inversed) { geos_factory.line_string([ p3, p2] ) }
-    let(:way2_closed) { geos_factory.line_string([ p2, p3, p2] ) }
+    let(:way1) { ActiveRoad::RgeoExt.geos_factory.line_string([ p1, p2] ) }
+    let(:way2) { ActiveRoad::RgeoExt.geos_factory.line_string([ p2, p3] ) }
+    let(:way3) { ActiveRoad::RgeoExt.geos_factory.line_string([ p3, p1] ) }
+    let(:way2_inversed) { ActiveRoad::RgeoExt.geos_factory.line_string([ p3, p2] ) }
+    let(:way2_closed) { ActiveRoad::RgeoExt.geos_factory.line_string([ p2, p3, p2] ) }
     
     it "should return a joined way when join 2 ways" do
       expect( importer.join_ways([way1, way2, way3]).collect(&:as_text) ).to eq(["SRID=4326;LineString (0.0 0.0, 1.0 1.0, 1.0 0.0, 0.0 0.0)"])
@@ -268,14 +277,14 @@ shared_examples "an OsmPbfImporter module" do
   end
 
   describe "#join_way" do
-    let!(:p1) { geos_factory.point( 0, 0) }
-    let!(:p2) { geos_factory.point( 1, 1) }
-    let!(:p3) { geos_factory.point( 2, 2) }
+    let!(:p1) { ActiveRoad::RgeoExt.geos_factory.point( 0, 0) }
+    let!(:p2) { ActiveRoad::RgeoExt.geos_factory.point( 1, 1) }
+    let!(:p3) { ActiveRoad::RgeoExt.geos_factory.point( 2, 2) }
 
-    let(:way1) { geos_factory.line_string([ p1, p2] ) }
-    let(:way2) { geos_factory.line_string([ p2, p3] ) }
-    let(:way2_inversed) { geos_factory.line_string([ p3, p2] ) }
-    let(:way2_closed) { geos_factory.line_string([ p2, p3, p2] ) }
+    let(:way1) { ActiveRoad::RgeoExt.geos_factory.line_string([ p1, p2] ) }
+    let(:way2) { ActiveRoad::RgeoExt.geos_factory.line_string([ p2, p3] ) }
+    let(:way2_inversed) { ActiveRoad::RgeoExt.geos_factory.line_string([ p3, p2] ) }
+    let(:way2_closed) { ActiveRoad::RgeoExt.geos_factory.line_string([ p2, p3, p2] ) }
     
     it "should return a joined way when join 2 ways" do
       expect(importer.join_way(way1, way2).as_text).to eq("SRID=4326;LineString (0.0 0.0, 1.0 1.0, 2.0 2.0)")

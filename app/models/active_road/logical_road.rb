@@ -8,6 +8,7 @@ module ActiveRoad
     belongs_to :boundary, :class_name => "ActiveRoad::Boundary"
 
     #validates_uniqueness_of :objectid
+    #validates :boundary, presence: true
 
     def geometry
       @@geos_factory.multi_line_string physical_roads.map(&:geometry)

@@ -3,7 +3,7 @@ module ActiveRoad
     acts_as_copy_target
     store_accessor :tags
     #attr_accessible :objectid, :tags, :number, :geometry, :physical_road_id, :location_on_road
-    set_rgeo_factory_for_column(:geometry, @@geos_factory)
+    set_rgeo_factory_for_column(:geometry, RgeoExt.geos_factory)
     
     validates_uniqueness_of :objectid
     validates_presence_of :number, :stored_geometry

@@ -1,7 +1,7 @@
 module ActiveRoad
   class Boundary < ActiveRoad::Base
     acts_as_copy_target
-    set_rgeo_factory_for_column(:geometry, @@geos_factory)
+    set_rgeo_factory_for_column(:geometry, RgeoExt.geos_factory)
     #attr_accessible :objectid, :geometry, :name, :admin_level, :postal_code, :insee_code   
     
     # Contains not take object equals on a boundary border!!

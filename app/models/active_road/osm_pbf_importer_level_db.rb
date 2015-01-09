@@ -3,24 +3,22 @@ require 'csv'
 
 module ActiveRoad
   class OsmPbfImporterLevelDb
-    include OsmPbfImporter   
+    include OsmPbfImporter
 
-    attr_reader :ways_database_path, :nodes_database_path, :physical_roads_database_path, :junctions_database_path, :pbf_file, :ways_split, :boundaries_split
+    attr_reader :ways_database_path, :nodes_database_path, :physical_roads_database_path, :junctions_database_path, :pbf_file, :ways_split, :boundaries_split, :prefix_path
 
-    def initialize(pbf_file, ways_split = false, boundaries_split = false, prefix_path = "/tmp/")
+    def initialize(pbf_file, ways_split = false, boundaries_split = false, prefix_path = "/tmp")
       @pbf_file = pbf_file
       @ways_split = ways_split
       @boundaries_split = boundaries_split
+      @prefix_path = prefix_path
+     
       FileUtils.mkdir_p(prefix_path) if !Dir.exists?(prefix_path)
-      @nodes_database_path = prefix_path + "osm_pbf_nodes_leveldb"
-      @ways_database_path = prefix_path + "osm_pbf_ways_leveldb"
-      @junctions_database_path = prefix_path + "osm_pbf_junctions_leveldb"
-      @physical_roads_database_path = prefix_path + "osm_pbf_physical_roads_leveldb"
+      @nodes_database_path = prefix_path + "/osm_pbf_nodes_leveldb"
+      @ways_database_path = prefix_path + "/osm_pbf_ways_leveldb"
+      @junctions_database_path = prefix_path + "/osm_pbf_junctions_leveldb"
+      @physical_roads_database_path = prefix_path + "/osm_pbf_physical_roads_leveldb"
     end
-
-    def geos_factory
-      ActiveRoad::Base.geos_factory
-    end 
     
     def nodes_database
       @nodes_database ||= LevelDBNative::DB.make nodes_database_path, :create_if_missing => true, :block_cache_size => 16 * 1024 * 1024
@@ -362,16 +360,7 @@ module ActiveRoad
       end
 
       Rails.logger.info "Finish to backup physical_roads and junctions in LevelDb in #{display_time(Time.now - start)} seconds"
-    end
-    
-    def way_geometry(nodes)
-      points = []
-      nodes.each do |node|
-        points << geos_factory.point(node.lon, node.lat)
-      end
-
-      geos_factory.line_string(points) if points.present? &&  1 < points.count     
-    end
+    end   
     
     class Node
       attr_accessor :id, :lon, :lat, :ways, :end_of_way, :addr_housenumber, :tags

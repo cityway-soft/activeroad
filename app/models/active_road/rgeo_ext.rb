@@ -1,41 +1,38 @@
 module ActiveRoad::RgeoExt
-  extend ActiveSupport::Concern
-  
-  def self.included(base)
-    base.class_eval do
-      cattr_accessor :geographical_factory, :geos_factory, :cartesian_factory, :ar_connection
-      
-      self.geos_factory = ::RGeo::Geos.factory(:native_interface => :ffi, :srid => 4326,
-                                               :wkt_parser => {:support_ewkt => true, :default_srid => 4326},
-                                               :wkt_generator => {:type_format => :ewkt, :emit_ewkt_srid => true},
-                                               :wkb_parser => {:support_ewkb => true, :default_srid => 4326},
-                                               :wkb_generator => {:type_format => :ewkb, :emit_ewkb_srid => true}
-                                               )
-      
-      self.geographical_factory = ::RGeo::Geographic.spherical_factory(
-                                                                       :wkt_parser => {:support_ewkt => true, :default_srid => 4326},
-                                                                       :wkt_generator => {:type_format => :ewkt, :emit_ewkt_srid => true},
-                                                                       :wkb_parser => {:support_ewkb => true, :default_srid => 4326},
-                                                                       :wkb_generator => {:type_format => :ewkb, :emit_ewkb_srid => true})
-      
-      self.cartesian_factory = ::RGeo::Cartesian.factory( :srid => 4326,
-                                               :wkt_parser => {:support_ewkt => true, :default_srid => 4326},
-                                               :wkt_generator => {:type_format => :ewkt, :emit_ewkt_srid => true},
-                                               :wkb_parser => {:support_ewkb => true, :default_srid => 4326},
-                                               :wkb_generator => {:type_format => :ewkb, :emit_ewkb_srid => true})
 
-      self.ar_connection = ActiveRecord::Base.connection
-    end
+  def self.geos_factory
+    @@geos_factory ||= ::RGeo::Geos.factory(:native_interface => :ffi, :srid => 4326,
+                         :wkt_parser => {:support_ewkt => true, :default_srid => 4326},
+                         :wkt_generator => {:type_format => :ewkt, :emit_ewkt_srid => true},
+                         :wkb_parser => {:support_ewkb => true, :default_srid => 4326},
+                         :wkb_generator => {:type_format => :ewkb, :emit_ewkb_srid => true}
+                         )
   end
 
+  def self.geographical_factory
+    @@geographical_factory ||= ::RGeo::Geographic.spherical_factory(
+                                         :wkt_parser => {:support_ewkt => true, :default_srid => 4326},
+                                         :wkt_generator => {:type_format => :ewkt, :emit_ewkt_srid => true},
+                                         :wkb_parser => {:support_ewkb => true, :default_srid => 4326},
+                                         :wkb_generator => {:type_format => :ewkb, :emit_ewkb_srid => true})
+  end
+
+  def self.cartesian_factory
+    @@cartesian_factory ||= ::RGeo::Cartesian.factory( :srid => 4326,
+                               :wkt_parser => {:support_ewkt => true, :default_srid => 4326},
+                               :wkt_generator => {:type_format => :ewkt, :emit_ewkt_srid => true},
+                               :wkb_parser => {:support_ewkb => true, :default_srid => 4326},
+                               :wkb_generator => {:type_format => :ewkb, :emit_ewkb_srid => true})    
+  end
+  
   def self.rgeo_haversine_distance( rgeo_point1, rgeo_point2 )
     self.haversine_distance( rgeo_point1.y, rgeo_point1.x, rgeo_point2.y, rgeo_point2.x )
   end
   
   def self.haversine_distance( lat1, lon1, lat2, lon2 )
-
+    
     rad_per_deg = Math::PI / 180
-
+    
     # the great circle distance d will be in whatever units R is in
 
     rmiles = 3956           # radius of the great circle in miles
@@ -69,11 +66,15 @@ module ActiveRoad::RgeoExt
     # distances["km"] = dKm
     # distances["ft"] = dFeet
     # distances["m"] = dMeters
-
+    
     return dMeters
   end
   
-  module ClassMethods
+  def included(base)
+    base.extend ClassMethods
+  end     
+  
+  module ClassMethods       
   end     
 
 end

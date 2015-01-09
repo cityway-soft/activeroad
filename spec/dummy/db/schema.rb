@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20141201124747) do
+ActiveRecord::Schema.define(version: 20141205154841) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -90,7 +90,6 @@ ActiveRecord::Schema.define(version: 20141201124747) do
     t.datetime "updated_at"
     t.spatial  "geometry",            limit: {:srid=>4326, :type=>"line_string"}
     t.hstore   "tags"
-    t.float    "length_in_meter",                                                 default: 0.0
     t.string   "minimum_width"
     t.string   "transport_mode"
     t.float    "uphill"
@@ -109,6 +108,7 @@ ActiveRecord::Schema.define(version: 20141201124747) do
     t.string   "name"
     t.integer  "boundary_id"
     t.integer  "marker",                                                          default: 0
+    t.float    "length",                                                          default: 0.0
   end
 
   add_index "physical_roads", ["boundary_id"], :name => "index_physical_roads_on_boundary_id"

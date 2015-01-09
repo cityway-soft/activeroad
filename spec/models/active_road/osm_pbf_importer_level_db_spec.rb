@@ -2,10 +2,10 @@ require 'spec_helper'
 
 describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
   let(:pbf_file) { File.expand_path("../../../fixtures/test.osm.pbf", __FILE__) }
-  let!(:subject_without_data) { ActiveRoad::OsmPbfImporterLevelDb.new( "", true, false, "/tmp/test/without_data/" ) }
-  let!(:subject_without_split) { ActiveRoad::OsmPbfImporterLevelDb.new( pbf_file, false, false, "/tmp/test/without_split/" ) }
+  let!(:subject_without_data) { ActiveRoad::OsmPbfImporterLevelDb.new( "", true, false, "/tmp/test/without_data" ) }
+  let!(:subject_without_split) { ActiveRoad::OsmPbfImporterLevelDb.new( pbf_file, false, false, "/tmp/test/without_split" ) }
   
-  subject { ActiveRoad::OsmPbfImporterLevelDb.new( pbf_file, true, false, "/tmp/test/basic/" ) }  
+  subject { ActiveRoad::OsmPbfImporterLevelDb.new( pbf_file, true, false, "/tmp/test/basic" ) }  
 
   it_behaves_like "an OsmPbfImporter module" do
     let(:importer) { subject }
@@ -196,15 +196,6 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
     end
 
   end
-
-  describe "#way_geometry" do
-    let(:nodes) { [double("node1", :id => "1", :lon => 0.0, :lat => 0.0), double("node2", :id => "2", :lon => 1.0, :lat => 1.0), double("node3", :id => "3", :lon => 2.0, :lat => 2.0)] }
-    
-    it "should update physical road geometry" do        
-      expect(subject.way_geometry(nodes)).to eq(geos_factory.parse_wkt( "LINESTRING(0.0 0.0, 1.0 1.0,2.0 2.0)"))
-    end
-
-  end
   
   describe "#split_way_with_nodes" do
     let!(:simple_way) { ActiveRoad::OsmPbfImporterLevelDb::Way.new("1", ["1", "2", "3"], false, false, true, true, "SimpleWay", 0, false, "" , "", "", "", { "highway" => "secondary"} ) }
@@ -275,8 +266,7 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
                                                              "boundary" => "",
                                                              "options" => { "highway"=>"secondary", "first_node_id"=>"1", "last_node_id"=>"3" },
                                                              "nodes" => ["1", "2", "3"]              )
-    end
-    
+    end    
   end  
 
 end
