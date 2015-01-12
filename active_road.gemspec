@@ -31,9 +31,10 @@ Gem::Specification.new do |s|
   s.add_dependency 'dr-postgis_adapter', '0.8.4'
   s.add_dependency 'pg', '>= 0.15.1'
   s.add_dependency 'georuby-ext', "0.0.5"
+  s.add_dependency "georuby", "2.3.0" # Fix version for georuby-ext because api has changed
   s.add_dependency 'nokogiri'
   s.add_dependency 'saxerator'
-  s.add_dependency 'shortest_path', '0.0.4'
+  s.add_dependency 'shortest_path', '0.0.5'
   s.add_dependency 'enumerize', '0.7.0'
   s.add_dependency "pbf_parser", '~> 0.0.6'
   s.add_dependency "leveldb-native", '~> 0.6'
