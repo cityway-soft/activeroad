@@ -21,7 +21,7 @@ describe ActiveRoad::PhysicalRoad, :type => :model do
     let!(:ad) { create(:physical_road, :geometry => line_string( "-0.001 -0.001,-1 -1" ) )  }
     
     it "should return physical roads in an area ordered from closest to farthest from a departure" do
-      expect(ActiveRoad::PhysicalRoad.nearest_to(departure)).to eq([ab]) #[ab, ac]
+      expect(ActiveRoad::PhysicalRoad.nearest_to(departure)).to eq([ab, ac])
     end
   end
 
