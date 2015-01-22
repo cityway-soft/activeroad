@@ -1,6 +1,6 @@
 language: ruby
 addons:
-  postgresql: "9.2"
+  postgresql: "9.3"
 rvm:
   - 1.9.3
   - 2.0
