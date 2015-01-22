@@ -230,8 +230,7 @@ module ActiveRoad
           ways_database.each { |key, value|
             way = Marshal.load(value)
 
-            # Save physical road conditionnal cost not for boundaries or street numbers
-            unless way.boundary.present? || way.addr_housenumber.present?
+            if way.options["highway"].present? || way.options["railway"].present? # Use ways with tags highway or railway
               way_conditionnal_costs = physical_road_conditionnal_costs(way)
               way_conditionnal_costs.each do |way_conditionnal_cost|
                 physical_road_conditionnal_costs_counter += 1
