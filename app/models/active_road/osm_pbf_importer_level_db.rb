@@ -290,7 +290,7 @@ module ActiveRoad
     
               way = Way.new( way_id, node_ids, car?(opt_tags), bike?(opt_tags), train?(opt_tags), pedestrian?(opt_tags), select_tags["name"], select_tags["maxspeed"], select_tags["oneway"], select_tags["boundary"], select_tags["admin_level"], select_tags["addr:housenumber"], select_tags["addr:interpolation"], opt_tags )
 
-              ways_splitted = (way.boundary.present? || way.addr_housenumber.present?) ? [way] : split_way_with_nodes(way) # Don't split boundary and adress way               
+              ways_splitted = split_way_with_nodes(way)
               
               ways_splitted.each do |way_splitted|
                 ways_counter+= 1
@@ -309,6 +309,8 @@ module ActiveRoad
     end
 
     def split_way_with_nodes(way)
+      return [way] if way.options["highway"].blank? && way.options["railway"].blank? # Don't split way with  a boundary (without highway and railway)  and adress way               
+      
       nodes_used = []
       nodes = []
       # Get nodes really used and all nodes (used and for geometry need) for a way
@@ -320,7 +322,7 @@ module ActiveRoad
 
       ways_nodes = []
       # Split way between each nodes used only if way is highway or railway
-      if ways_split && (way.options["highway"].present? || way.options["railway"].present?)
+      if ways_split
         nodes_used.each_with_index do |before_node, index|        
           ways_nodes << nodes.values_at(before_node..nodes_used[ index + 1]) if before_node != nodes_used.last
         end

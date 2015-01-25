@@ -330,26 +330,29 @@ module ActiveRoad
               location_on_road = physical_road_id.present? ? ActiveRoad::StreetNumber.computed_location_on_road(physical_road.geometry, geometry) : nil
               
               street_numbers_csv << [ way.id, geometry.as_text, way.addr_housenumber, way.options["addr:street"], way.options["addr:city"], way.options["addr:state"], way.options["addr:country"], location_on_road, physical_road_id, "way_building", "#{way.options.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
-            elsif way.addr_interpolation.present?  # If ways with address interpolation
-              
-              # Get the first name of the extremities nodes
-              way_name = [nodes.first.tags["addr:street"], nodes.last.tags["addr:street"]].compact.first
+            elsif way.addr_interpolation.present?   # If ways with address interpolation
+              if way_geometry.present? #and geometry is a linestring              
+                # Get the first name of the extremities nodes
+                way_name = [nodes.first.tags["addr:street"], nodes.last.tags["addr:street"]].compact.first
 
-              # Find the closest physical road from the middle of the way geometry
-              physical_road = ActiveRoad::PhysicalRoad.joins( "JOIN ( SELECT ST_LineInterpolatePoint('#{ way_geometry}', 0.5 ) geometry ) p ON ST_DWithin( physical_roads.geometry, p.geometry, 0.0011)").where("name = ?", way_name).order("ST_Distance(p.geometry, physical_roads.geometry)").first if way_name.present?
-              physical_road = ActiveRoad::PhysicalRoad.joins( "JOIN ( SELECT ST_LineInterpolatePoint('#{ way_geometry}', 0.5 ) geometry ) p ON ST_DWithin( physical_roads.geometry, p.geometry, 0.0011)").order("ST_Distance(p.geometry, physical_roads.geometry)").first if physical_road.blank?
-            
-              physical_road_id = physical_road.present? ? physical_road.id : nil
-              
-              # Link extremities node to the physical road previously founded
-              [nodes.first, nodes.last] .each do |node|
-                geometry = RgeoExt.geos_factory.point( node.lon, node.lat, 4326) if( node.lon && node.lat )
-                location_on_road = physical_road_id.present? ? ActiveRoad::StreetNumber.computed_location_on_road(physical_road.geometry, geometry) : nil
+                # Find the closest physical road from the middle of the way geometry
+                physical_road = ActiveRoad::PhysicalRoad.joins( "JOIN ( SELECT ST_LineInterpolatePoint('#{ way_geometry}', 0.5 ) geometry ) p ON ST_DWithin( physical_roads.geometry, p.geometry, 0.0011)").where("name = ?", way_name).order("ST_Distance(p.geometry, physical_roads.geometry)").first if way_name.present?
+                physical_road = ActiveRoad::PhysicalRoad.joins( "JOIN ( SELECT ST_LineInterpolatePoint('#{ way_geometry}', 0.5 ) geometry ) p ON ST_DWithin( physical_roads.geometry, p.geometry, 0.0011)").order("ST_Distance(p.geometry, physical_roads.geometry)").first if physical_road.blank?
+                
+                physical_road_id = physical_road.present? ? physical_road.id : nil
+                
+                # Link extremities node to the physical road previously founded
+                [nodes.first, nodes.last] .each do |node|
+                  geometry = RgeoExt.geos_factory.point( node.lon, node.lat, 4326) if( node.lon && node.lat )
+                  location_on_road = physical_road_id.present? ? ActiveRoad::StreetNumber.computed_location_on_road(physical_road.geometry, geometry) : nil
 
-                if node.addr_housenumber.present?
-                  street_numbers_counter += 1
-                  street_numbers_csv << [ node.id, geometry.as_text, node.addr_housenumber, node.tags["addr:street"], node.tags["addr:city"], node.tags["addr:state"], node.tags["addr:country"], location_on_road, physical_road_id, "way_address", "#{node.tags.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
+                  if node.addr_housenumber.present?
+                    street_numbers_counter += 1
+                    street_numbers_csv << [ node.id, geometry.as_text, node.addr_housenumber, node.tags["addr:street"], node.tags["addr:city"], node.tags["addr:state"], node.tags["addr:country"], location_on_road, physical_road_id, "way_address", "#{node.tags.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
+                  end
                 end
+              else
+                Rails.logger.error("Way for street number is rejected because it hasn't got a linestring geometry #{way.inspect}")
               end
             end
           end
