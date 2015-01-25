@@ -14,12 +14,14 @@ namespace :active_road do
 
     # bundle exec rake "app:active_road:import:osm_pbf_data[/home/user/test.osm.pbf, true]"
     desc "Import osm data from a pbf file"
-    task :osm_pbf_data, [:file, :split_ways] => [:environment] do |task, args|      
+    task :osm_pbf_data, [:file, :split_ways, :split_boundaries, :prefix_path] => [:environment] do |task, args|      
       begin
-        puts "Import data from osm pbf file #{args.file} and with split_ways #{args.split_ways} with LevelDB"
+        puts "Import data from osm pbf file #{args.file} and with split_ways #{args.split_ways} and with split ways with boundaries #{args.split_boundaries} and with prefix path #{args.prefix_path}"
         raise "You should provide a valid osm file" if args.file.blank?
         split_ways = args.split_ways == "true" ? true : false
-        ActiveRoad::OsmPbfImporterLevelDb.new(args.file, split_ways).import
+        split_boundaries = args.split_boundaries == "true" ? true : false
+        prefix_path = args.prefix_path.present? ? args.prefix_path : "/tmp"
+        ActiveRoad::OsmPbfImporterLevelDb.new(args.file, split_ways, split_boundaries, prefix_path).import
         puts "Completed import successfully."    
       rescue => e
         puts("Failed to import osm data : " + e.message)
