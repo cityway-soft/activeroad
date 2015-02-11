@@ -1,161 +1,209 @@
-# require "kyotocabinet"
+require 'leveldb-native'
+require 'csv'
 
-# module ActiveRoad
-#   class TerraImporter
-#     #include KyotoCabinet
+module ActiveRoad
+  class TerraImporter
     
-#     attr_reader :parser, :database_path, :xml_file 
+    attr_reader :parser, :xml_file, :prefix_path, :physical_roads_database_path, :junctions_database_path 
 
-#     def initialize(xml_file, database_path = "/tmp/terra.kch")
-#       @xml_file = xml_file
-#       @database_path = database_path
-#     end
+    def initialize(xml_file, prefix_path = "/tmp")
+      @xml_file = xml_file
+      @prefix_path = prefix_path
 
-#     def parser
-#       @parser ||= ::Saxerator.parser(File.new(xml_file))
-#     end   
+      FileUtils.mkdir_p(prefix_path) if !Dir.exists?(prefix_path)
+      @junctions_database_path = prefix_path + "/osm_pbf_junctions_leveldb"
+      @physical_roads_database_path = prefix_path + "/osm_pbf_physical_roads_leveldb"
+    end
 
-#     def database
-#       @database ||= DB::new
-#     end
+    def junctions_database
+      @junctions_database ||= LevelDBNative::DB.make junctions_database_path, :create_if_missing => true, :block_cache_size => 16 * 1024 * 1024
+    end
+
+    def close_junctions_database
+      junctions_database.close!
+    end
+
+    def delete_junctions_database
+      FileUtils.remove_entry junctions_database_path if File.exists?(junctions_database_path)
+    end
+
+    def physical_roads_database
+      @physical_roads_database ||= LevelDBNative::DB.make physical_roads_database_path, :create_if_missing => true, :block_cache_size => 16 * 1024 * 1024
+    end
     
-#     def open_database(path)
-#       database.open(path, DB::OWRITER | DB::OCREATE)
-#       database.clear
-#     end
+    def close_physical_roads_database
+      physical_roads_database.close!
+    end
+
+    def delete_physical_roads_database
+      FileUtils.remove_entry physical_roads_database_path if File.exists?(physical_roads_database_path)
+    end
+
+    def parser
+      @parser ||= ::Saxerator.parser(File.new(xml_file))
+    end
+
+    def display_time(time_difference)
+      Time.at(time_difference.to_i).utc.strftime "%H:%M:%S"
+    end
     
-#     def close_database
-#       database.close   
-#     end
-
-#     def physical_road_conditionnal_costs(tags)
-#       [].tap do |prcc|
-#         tags.each do |tag_key, tag_value|
-#           if ["highway", "railway"].include?(tag_key)
-#             prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "car", :cost => Float::MAX) if !ActiveRoad::OsmXmlImporter.tag_for_car_values.include?(tag_value)  
-#             prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "pedestrian", :cost => Float::MAX) if !ActiveRoad::OsmXmlImporter.tag_for_pedestrian_values.include?(tag_value)
-#             prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "bike", :cost => Float::MAX) if !ActiveRoad::OsmXmlImporter.tag_for_bike_values.include?(tag_value) 
-#             prcc << ActiveRoad::PhysicalRoadConditionnalCost.new(:tags => "train", :cost => Float::MAX) if !ActiveRoad::OsmXmlImporter.tag_for_train_values.include?(tag_value)
-#           end
-#         end
-#       end
-#     end
-
-#     def backup_nodes(database)
-#       # Save nodes in kyotocabinet database
-#       parser.for_tag(:TrajectoryNode).each do |node|
-#         ways = node["TrajectoryArcRef"].is_a?(Array) ? node["TrajectoryArcRef"] : [ node["TrajectoryArcRef"] ]
-#         database[ node["ObjectId"] ] = Marshal.dump(Node.new(node["ObjectId"], node["Geometry"], ways))
-#       end 
-#     end
-    
-#     def iterate_nodes(database)
-#       junctions_values = []    
-#       junctions_ways = {}
-#       # traverse records by iterator
-#       database.each { |key, value|
-        
-#         node = Marshal.load(value)
-#         geometry = GeoRuby::SimpleFeatures::Geometry.from_ewkt( node.geometry) if( node.geometry )    
-#         if node.ways.present? # && node.ways.count >= 2  # Take node with at least two ways
-#           junctions_values << [ node.id, geometry ]
-#           junctions_ways[node.id] = node.ways
-#         end
-        
-#         if junctions_values.count == 1000
-#           save_junctions(junctions_values, junction_ways) 
-#           #Reset
-#           junctions_values = []    
-#           junctions_ways = {}
-#         end
-#       }    
-#       save_junctions(junctions_values, junctions_ways) if junctions_values.present?
-#     end
-
-#     def save_junctions(junctions_values, junctions_ways)
-#       junction_columns = [:objectid, :geometry]
-#       # Save junctions in the stack
-#       ActiveRoad::Junction.import(junction_columns, junctions_values, :validate => false) if junctions_values.present?
-
-#       # Link the junction with physical roads
-#       junctions_ways.each do |junction_objectid, way_objectids|
-#         junction = ActiveRoad::Junction.find_by_objectid(junction_objectid)
-        
-#         physical_roads = ActiveRoad::PhysicalRoad.find_all_by_objectid(way_objectids)
-#         junction.physical_roads << physical_roads if physical_roads      
-#       end
-#     end
-
-#     def import
-#       # process the database by iterator
-#       DB::process(database_path) { |database|           
-#         database.clear
-#         backup_nodes(database)
-
-#         physical_roads = []
-#         attributes_by_objectid = {}
-#         parser.for_tag(:TrajectoryArc).each do |way|          
-#           geometry = GeoRuby::SimpleFeatures::Geometry.from_ewkt(way["Geometry"]) if way["Geometry"]
-#           physical_road = ActiveRoad::PhysicalRoad.new :objectid =>  way["ObjectId"], :geometry => geometry, :length_in_meter =>  way["Length"]
-          
-#           physical_roads << physical_road
-#           attributes_by_objectid[physical_road.objectid] = [physical_road_conditionnal_costs(way["Tags"])]
-
-#           if (physical_roads.count == 1000)
-#             save_physical_roads_and_children(physical_roads, attributes_by_objectid)
-            
-#             # Reset  
-#             physical_roads = []
-#             attributes_by_objectid = {}
-#           end
-#         end
-        
-#         save_physical_roads_and_children(physical_roads, attributes_by_objectid) if physical_roads.present?
-#         iterate_nodes(database)
-#       }
-#     end
-
-#    def save_physical_roads_and_children(physical_roads, attributes_by_objectid = {})
-#       # Save physical roads
-#       ActiveRoad::PhysicalRoad.import(physical_roads)
-
-#       # Save physical road conditionnal costs
-#       prcc = []
-#       attributes_by_objectid.each do |objectid, attributes|
-#         pr = ActiveRoad::PhysicalRoad.where(:objectid => objectid).first
-
-#         physical_road_conditionnal_costs = attributes.first
-#         physical_road_conditionnal_costs.each do |physical_road_conditionnal_cost|
-#           physical_road_conditionnal_cost.update_attribute :physical_road_id, pr.id
-#           prcc << physical_road_conditionnal_cost
-#         end
-#       end        
-#       ActiveRoad::PhysicalRoadConditionnalCost.import(prcc)               
-#     end
-
-
-#     class Node
-#       attr_accessor :id, :geometry, :ways, :end_of_way
-
-#       def initialize(id, geometry, ways = [], end_of_way = false)
-#         @id = id
-#         @geometry = geometry
-#         @ways = ways
-#         @end_of_way = end_of_way
-#       end
-
-#       def add_way(id)
-#         @ways << id
-#       end
-
-#       def marshal_dump
-#         [@id, @geometry, @ways, @end_of_way]
-#       end
+    def import
+      delete_junctions_database
+      delete_physical_roads_database
       
-#       def marshal_load array
-#         @id, @geometry, @ways, @end_of_way = array
-#       end
-#     end
+      street_numbers = parser.for_tag(:StreetNumber)
+      trajectory_nodes = parser.for_tag(:TrajectoryNode)
+      trajectory_arcs = parser.for_tag(:TrajectoryArc)
+      
+      import_street_numbers(street_numbers)
+      import_junctions(trajectory_nodes)
+      import_physical_roads(trajectory_arcs)
 
-#   end
-# end
+      save_junctions_and_physical_roads_temporary
+      import_physical_road_conditionnal_costs_and_junctions_physical_roads(trajectory_arcs)      
+    end
+
+    def import_street_numbers(street_numbers)
+      Rails.logger.debug "Begin to save street_numbers in PostgreSql"
+      
+      start = Time.now
+      street_numbers_counter = 0
+      
+      # traverse records by iterator
+      street_number_columns = ["objectid", "geometry", "number", "location_on_road", "created_at", "updated_at"]
+      
+      CSV.open("#{prefix_path}/street_numbers.csv", "wb:UTF-8") do |street_numbers_csv|                  
+        street_numbers_csv << street_number_columns
+        
+        street_numbers.each do |street_number|
+          geometry = RgeoExt.geos_factory.parse_wkt(street_number["Geometry"])
+          
+          street_numbers_csv << [ street_number["ObjectId"], geometry.as_text, street_number["Number"], street_number["LocationOnArc"], Time.now, Time.now ]
+        end
+          
+      end
+      
+      ActiveRoad::StreetNumber.transaction do
+        ActiveRoad::StreetNumber.copy_from "#{prefix_path}/street_numbers.csv"
+      end
+      
+      Rails.logger.info "Finish to save #{street_numbers_counter} street numbers in PostgreSql in #{display_time(Time.now - start)} seconds"         
+             
+    end
+
+    def import_junctions(trajectory_nodes)
+      Rails.logger.debug "Begin to save junctions in PostgreSql"
+      
+      start = Time.now
+      junctions_counter = 0
+      
+      # traverse records by iterator
+      junction_columns = ["objectid", "geometry", "height", "created_at", "updated_at"]
+      
+      CSV.open("#{prefix_path}/junctions.csv", "wb:UTF-8") do |junctions_csv|                
+        junctions_csv << junction_columns
+        
+        trajectory_nodes.each do |trajectory_node|
+          junctions_counter += 1
+          
+          geometry = RgeoExt.geos_factory.parse_wkt(trajectory_node["Geometry"])
+          junctions_csv << [ trajectory_node["ObjectId"], geometry.as_text, trajectory_node["Height"], Time.now, Time.now ]          
+        end
+      end
+      
+      ActiveRoad::Junction.transaction do                                         
+        ActiveRoad::Junction.copy_from "#{prefix_path}/junctions.csv"
+      end
+      
+      Rails.logger.info "Finish to backup #{junctions_counter} junctions in PostgreSql in #{display_time(Time.now - start)} seconds"         
+      
+    end
+
+    def import_physical_roads(trajectory_arcs)
+      Rails.logger.info "Begin to save physical_roads in PostgreSql"
+      start = Time.now
+   
+      ways_counter = 0
+
+      # traverse records by iterator
+      physical_road_columns = ["objectid", "geometry", "length", "created_at", "updated_at"]
+      
+      CSV.open("#{prefix_path}/physical_roads.csv", "wb:UTF-8") do |physical_roads_csv|
+        physical_roads_csv << physical_road_columns
+          
+        trajectory_arcs.each do |trajectory_arc|        
+          ways_counter += 1
+          
+          geometry = RgeoExt.geos_factory.parse_wkt(trajectory_arc["Geometry"])
+          length = geometry.length
+            
+          physical_roads_csv << [ trajectory_arc["ObjectId"], geometry.as_text, length, Time.now, Time.now ]
+        end
+      end
+      
+      # Save physical roads
+      ActiveRoad::PhysicalRoad.transaction do                                         
+        ActiveRoad::PhysicalRoad.copy_from "#{prefix_path}/physical_roads.csv"
+      end
+
+      Rails.logger.info "Finish to save #{ways_counter} physical_roads in PostgreSql in #{display_time(Time.now - start)} seconds"
+    end
+
+    def save_junctions_and_physical_roads_temporary
+      Rails.logger.info "Begin to backup physical_roads and junctions in LevelDb"
+      
+      start = Time.now      
+      junctions_database.batch do |batch|
+        ActiveRoad::Junction.pluck("id,objectid").each do |junction|
+          junctions_database[junction.last] = junction.first.to_s
+        end
+      end
+
+      physical_roads_database.batch do |batch|
+        ActiveRoad::PhysicalRoad.pluck("id,objectid").each do |physical_road|
+          physical_roads_database[physical_road.last] = physical_road.first.to_s
+        end
+      end
+
+      Rails.logger.info "Finish to backup physical_roads and junctions in LevelDb in #{display_time(Time.now - start)} seconds"
+    end   
+
+    def import_physical_road_conditionnal_costs_and_junctions_physical_roads(trajectory_arcs)
+      Rails.logger.info "Begin to backup physical_road_conditionnal_costs and junctions_physical_roads in PostgreSql"
+      
+      start = Time.now
+      physical_road_conditionnal_costs_counter = junctions_physical_roads_counter = 0
+      physical_road_conditionnal_cost_columns = ["tags", "cost", "physical_road_id"]
+      junction_physical_road_columns = ["physical_road_id", "junction_id"]
+      
+      CSV.open("#{prefix_path}/physical_road_conditionnal_costs.csv", "wb:UTF-8") do |physical_road_conditionnal_costs_csv|
+        CSV.open("#{prefix_path}/junctions_physical_roads.csv", "wb:UTF-8") do |junctions_physical_roads_csv|
+          physical_road_conditionnal_costs_csv << physical_road_conditionnal_cost_columns
+          junctions_physical_roads_csv << junction_physical_road_columns
+          
+          trajectory_arcs.each do |trajectory_arc|
+            trajectory_arc["TrajectoryNodeRef"].each do |junction_objectid|
+              junction_id = junctions_database[junction_objectid]
+              junctions_physical_roads_counter += 1
+              junctions_physical_roads_csv << [ physical_roads_database[trajectory_arc["ObjectId"]], junction_id ] if junction_id.present?
+            end if trajectory_arc["TrajectoryNodeRef"].present?
+            
+          end
+        end
+      end
+      
+      # Save physical road conditionnal costs
+      ActiveRoad::PhysicalRoadConditionnalCost.transaction do                                         
+        ActiveRoad::PhysicalRoadConditionnalCost.copy_from "#{prefix_path}/physical_road_conditionnal_costs.csv"
+      end
+
+      # Save physical road and junctions link
+      ActiveRoad::JunctionsPhysicalRoad.transaction do                                         
+        ActiveRoad::JunctionsPhysicalRoad.copy_from "#{prefix_path}/junctions_physical_roads.csv"
+      end
+
+      Rails.logger.info "Finish to backup #{junctions_physical_roads_counter} junctions_physical_roads and #{physical_road_conditionnal_costs_counter} physical_road_conditionnal_costs in PostgreSql in #{display_time(Time.now - start)} seconds"
+    end
+
+  end
+end
