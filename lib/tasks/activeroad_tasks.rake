@@ -12,6 +12,15 @@ namespace :active_road do
   
   namespace :import do
 
+    # bundle exec rake "app:active_road:import:filter_osm_pbf_data[/home/user/test.osm.pbf, /home/luc/Dropbox/cityway/navtec/architecture/emprise_toronto.poly]"
+    desc "Filter osm pbf data with a polygon"    
+    task :filter_osm_pbf_data, [:file, :poly_file] => [:environment] do |task, args|
+      puts "Filter data from osm pbf file #{args.file}"
+      raise "You should provide a valid osm file" if args.file.blank?
+      raise "You should provide a valid poly file" if args.poly_file.blank?
+      sh %Q{osmosis --read-pbf file="#{args.file}" --bounding-polygon file="#{args.poly_file}" completeWays=yes completeRelations=yes  --sort type="TypeThenId" --write-pbf file="ontario_mtx.osm.pbf"}
+    end
+
     # bundle exec rake "app:active_road:import:osm_pbf_data[/home/user/test.osm.pbf, true]"
     desc "Import osm data from a pbf file"
     task :osm_pbf_data, [:file, :split_ways, :split_boundaries, :prefix_path] => [:environment] do |task, args|      
