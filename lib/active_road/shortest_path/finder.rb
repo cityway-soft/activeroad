@@ -82,11 +82,12 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
   end
   
   def geometry
-    @geometry ||= GeoRuby::SimpleFeatures::LineString.from_points( geometries.collect(&:points).flatten) if path.present?
+    puts geometries.inspect
+    @geometry ||= GeoRuby::SimpleFeatures::LineString.merge geometries.select{ |g| GeoRuby::SimpleFeatures::LineString === g }
   end
 
   def geometries
-      # Delete departure and arrival
+    # Delete departure and arrival
     path.pop
     path.shift
     
