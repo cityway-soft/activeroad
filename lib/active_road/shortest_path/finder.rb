@@ -82,7 +82,6 @@ class ActiveRoad::ShortestPath::Finder < ShortestPath::Finder
   end
   
   def geometry
-    puts geometries.inspect
     @geometry ||= GeoRuby::SimpleFeatures::LineString.merge geometries.select{ |g| GeoRuby::SimpleFeatures::LineString === g }
   end
 
