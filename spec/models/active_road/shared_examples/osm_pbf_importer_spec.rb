@@ -4,9 +4,9 @@ shared_examples "an OsmPbfImporter module" do
     let!(:point) { ActiveRoad::RgeoExt.geos_factory.point( 0, 0) }
 
     before :each do      
-      subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 2.0, 2.0, "", ["1", "2"], false, {"junction" => "roundabout"})) )
+      subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 2.0, 2.0, "", ["1", "2"], false, "", {"junction" => "roundabout"})) )
       subject_without_data.nodes_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 2.0, 2.0, "", ["1", "3"])) )
-      subject_without_data.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 2.0, 2.0, "7,8", [], false, {"addr:street" => "Rue de Noaille"})) )
+      subject_without_data.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 2.0, 2.0, "7,8", [], false, "", {"addr:street" => "Rue de Noaille"})) )
     end
 
     after :each do
@@ -119,31 +119,34 @@ shared_examples "an OsmPbfImporter module" do
     let!(:point) { ActiveRoad::RgeoExt.geos_factory.point( 0, 0) }
 
     before :each do      
-      subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 2.0, 2.0, "", ["1", "2"], false, {"junction" => "roundabout"})) )
+      subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 2.0, 2.0, "", ["1", "2"], false, "node", {"junction" => "roundabout"})) )
       subject_without_data.nodes_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 2.0, 2.0, "", ["1", "3"])) )
-      subject_without_data.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 2.0, 2.0, "7,8", [], false, {"addr:street" => "Rue de Noaille"})) )
+      subject_without_data.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 2.0, 2.0, "7,8", [], false, "node", {"addr:street" => "Rue de Noaille"})) )
+      subject_without_data.nodes_database.put("4", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("4", 2.0, 2.0, "7,8", [], false, "way_address", {"addr:street" => "Rue de Noaille"})) )
     end
 
     after :each do
       subject_without_data.nodes_database.delete("1")
       subject_without_data.nodes_database.delete("2")
       subject_without_data.nodes_database.delete("3")
+      subject_without_data.nodes_database.delete("4")
 
       subject_without_data.close_nodes_database
     end
     
     it "should iterate nodes to save it" do
       subject_without_data.save_street_numbers_from_nodes
-      expect(ActiveRoad::StreetNumber.all.collect(&:objectid)).to match_array(["3"])
+      expect(ActiveRoad::StreetNumber.all.collect(&:objectid)).to match_array(["3", "4"])
+      expect(ActiveRoad::StreetNumber.all.collect(&:from_osm_object)).to match_array(["node", "way_address"])
     end
   end
 
   describe "#save_street_numbers_from_ways" do
     
     before :each do           
-      subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 0, 0.0001, "1", ["1"], true, {"addr:street" => "Avenue de l'ile"})) )
+      subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 0, 0.0001, "1", ["1"], true, "", {"addr:street" => "Avenue de l'ile"})) )
       subject_without_data.nodes_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 0.5, 0.0001, "", ["1"])) )
-      subject_without_data.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 1, 0.0001, "5", ["1"], true, {})) )
+      subject_without_data.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 1, 0.0001, "5", ["1"], true, "", {})) )
       subject_without_data.ways_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("1", ["1", "2", "3"], true, false, false, false, "Test", "100", true, "", "", "", "even", {"cycleway" => "lane"}) ) )
     end
 

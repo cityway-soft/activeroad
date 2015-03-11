@@ -3,7 +3,7 @@ require 'erb'
 require 'saxerator'
 require "activerecord-postgis-adapter"
 require "enumerize"
-require "pbf_parser"
+require "pbf_parser/pbf_parser"
 require 'postgres-copy'
 require 'snappy'
 

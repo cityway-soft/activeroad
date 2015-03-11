@@ -250,6 +250,14 @@ module ActiveRoad
                   end
                   node.add_way(way_id)
                   node.end_of_way = true if [node_ids.first, node_ids.last].include?(node_id)
+                  if node.from_osm_object.blank? # Make this operation once
+                    node.from_osm_object = if select_tags["addr:housenumber"]
+                                             "way_address"
+                                           else
+                                             "node"
+                                           end
+                  end
+                  
                   nodes_readed[node_id] = node
                 end
               end        
@@ -365,15 +373,16 @@ module ActiveRoad
     end   
     
     class Node
-      attr_accessor :id, :lon, :lat, :ways, :end_of_way, :addr_housenumber, :tags
+      attr_accessor :id, :lon, :lat, :ways, :end_of_way, :addr_housenumber, :from_osm_object, :tags
 
-      def initialize(id, lon, lat, addr_housenumber = "", ways = [], end_of_way = false, tags = {} )
+      def initialize(id, lon, lat, addr_housenumber = "", ways = [], end_of_way = false, from_osm_object = "", tags = {} )
         @id = id
         @lon = lon
         @lat = lat
         @addr_housenumber = addr_housenumber
         @ways = ways
         @end_of_way = end_of_way
+        @from_osm_object = from_osm_object
         @tags = tags
       end
 
@@ -382,11 +391,11 @@ module ActiveRoad
       end
 
       def marshal_dump
-        [@id, @lon, @lat, @addr_housenumber, @ways, @end_of_way, @tags]
+        [@id, @lon, @lat, @addr_housenumber, @ways, @end_of_way, @from_osm_object, @tags]
       end
 
       def marshal_load array
-        @id, @lon, @lat, @addr_housenumber, @ways, @end_of_way, @tags = array
+        @id, @lon, @lat, @addr_housenumber, @ways, @end_of_way, @from_osm_object, @tags = array
       end
 
       def used?

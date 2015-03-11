@@ -18,7 +18,7 @@ module ActiveRoad
     @@way_for_street_number_required_tags_keys = ["addr:housenumber"]
     @@way_selected_tags_keys = [ "name", "maxspeed", "oneway", "boundary", "admin_level", "addr:housenumber", "addr:interpolation" ]
     # Add first_node_id and last_node_id
-    @@way_optionnal_tags_keys = ["highway", "maxspeed", "bridge", "tunnel", "toll", "cycleway", "cycleway-right", "cycleway-left", "cycleway-both", "oneway:bicycle", "oneway", "bicycle", "segregated", "foot", "lanes", "lanes:forward", "lanes:forward:bus", "busway:right", "busway:left", "oneway_bus", "boundary", "admin_level", "access", "construction", "junction", "motor_vehicle", "psv", "bus", "addr:city", "addr:country", "addr:state", "addr:street", "addr:interpolation"]
+    @@way_optionnal_tags_keys = ["highway", "railway", "maxspeed", "bridge", "tunnel", "toll", "cycleway", "cycleway-right", "cycleway-left", "cycleway-both", "oneway:bicycle", "oneway", "bicycle", "segregated", "foot", "lanes", "lanes:forward", "lanes:forward:bus", "busway:right", "busway:left", "oneway_bus", "boundary", "admin_level", "access", "construction", "junction", "motor_vehicle", "psv", "bus", "addr:city", "addr:country", "addr:state", "addr:street", "addr:interpolation"]
     mattr_reader :way_required_tags_keys, :way_for_physical_road_required_tags_keys, :way_for_boundary_required_tags_keys, :way_for_street_number_required_tags_keys, :way_selected_tags_keys, :way_optionnal_tags_keys
 
     @@nodes_selected_tags_keys = [ "addr:housenumber", "addr:city", "addr:postcode", "addr:street" ]
@@ -284,7 +284,7 @@ module ActiveRoad
             physical_road_id = physical_road.present? ? physical_road.id : nil
             location_on_road = physical_road_id.present? ? ActiveRoad::StreetNumber.computed_location_on_road(physical_road.geometry, geometry) : nil
             
-            street_numbers_csv << [ node.id, geometry.as_text, node.addr_housenumber, node.tags["addr:street"], node.tags["addr:city"], node.tags["addr:state"], node.tags["addr:country"], location_on_road, physical_road_id, "node", "#{node.tags.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
+            street_numbers_csv << [ node.id, geometry.as_text, node.addr_housenumber, node.tags["addr:street"], node.tags["addr:city"], node.tags["addr:state"], node.tags["addr:country"], location_on_road, physical_road_id, node.from_osm_object, "#{node.tags.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
           end
           
         }

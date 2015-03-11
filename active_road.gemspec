@@ -28,13 +28,13 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'activerecord', '>= 4.0.0', "< 4.2.0"
   s.add_dependency 'activerecord-postgis-adapter', '>= 2.2.0' 
-  s.add_dependency 'pg', '~> 0.17.1'
-  s.add_dependency 'ffi-geos', '~> 1.0.0'
+  s.add_dependency 'pg', '>= 0.17.1'
+  s.add_dependency 'ffi-geos', '>= 1.0.0'
   s.add_dependency 'nokogiri'
   s.add_dependency 'saxerator'
   s.add_dependency 'shortest_path', '0.0.4'
   s.add_dependency 'enumerize', '0.7.0'
-  s.add_dependency "pbf_parser", '~> 0.0.6'
+  s.add_dependency "pbf_parser", '~> 0.1.0'
   s.add_dependency "leveldb-native", '~> 0.6'
   s.add_dependency 'postgres-copy', '~> 0.9.O'
   s.add_dependency "snappy"
