@@ -136,8 +136,8 @@ shared_examples "an OsmPbfImporter module" do
     
     it "should iterate nodes to save it" do
       subject_without_data.save_street_numbers_from_nodes
-      expect(ActiveRoad::StreetNumber.all.collect(&:objectid)).to match_array(["3", "4"])
-      expect(ActiveRoad::StreetNumber.all.collect(&:from_osm_object)).to match_array(["node", "way_address"])
+      expect(ActiveRoad::StreetNumber.all.collect(&:objectid)).to match_array(["3"])
+      expect(ActiveRoad::StreetNumber.all.collect(&:from_osm_object)).to match_array(["node"])
     end
   end
 
@@ -147,7 +147,6 @@ shared_examples "an OsmPbfImporter module" do
       subject_without_data.nodes_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("1", 0, 0.0001, "1", ["1"], true, "", {"addr:street" => "Avenue de l'ile"})) )
       subject_without_data.nodes_database.put("2", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("2", 0.5, 0.0001, "", ["1"])) )
       subject_without_data.nodes_database.put("3", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Node.new("3", 1, 0.0001, "5", ["1"], true, "", {})) )
-      subject_without_data.ways_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("1", ["1", "2", "3"], true, false, false, false, "Test", "100", true, "", "", "", "even", {"cycleway" => "lane"}) ) )
     end
 
     after :each do
@@ -161,16 +160,18 @@ shared_examples "an OsmPbfImporter module" do
       subject_without_data.close_ways_database
     end
 
-    it "should save street number from ways" do
-      physical_road = create(:physical_road, :geometry => ActiveRoad::RgeoExt.geos_factory.parse_wkt("SRID=4326;LINESTRING(0 0, 1 0)")) 
+    it "should save street number from way building" do
+      physical_road = create(:physical_road, :geometry => ActiveRoad::RgeoExt.geos_factory.parse_wkt("SRID=4326;LINESTRING(0 0, 1 0)"))
+      subject_without_data.ways_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("1", ["1", "2", "3"], true, false, false, false, "Test", "100", true, "", "", "100", "", {"cycleway" => "lane"}) ) )
       subject_without_data.save_street_numbers_from_ways
 
-      expect(ActiveRoad::StreetNumber.count).to eq(2)
-      expect(ActiveRoad::StreetNumber.first).to have_attributes( :objectid => "1", :physical_road_id => physical_road.id, :location_on_road => 0.0 )
+      expect(ActiveRoad::StreetNumber.count).to eq(1)
+      expect(ActiveRoad::StreetNumber.first).to have_attributes( :objectid => "1", :physical_road_id => physical_road.id, :location_on_road => 0.5 )
     end
 
-    it "should save street number from ways" do
-      physical_road = create(:physical_road, :name => "Avenue de l'ile", :geometry => ActiveRoad::RgeoExt.geos_factory.parse_wkt("SRID=4326;LINESTRING(0 0, 1 0)")) 
+    it "should save street number from address interpolation way" do
+      physical_road = create(:physical_road, :name => "Avenue de l'ile", :geometry => ActiveRoad::RgeoExt.geos_factory.parse_wkt("SRID=4326;LINESTRING(0 0, 1 0)"))
+      subject_without_data.ways_database.put("1", Marshal.dump(ActiveRoad::OsmPbfImporterLevelDb::Way.new("1", ["1", "2", "3"], true, false, false, false, "Test", "100", true, "", "", "", "even", {"cycleway" => "lane"}) ) )
       subject_without_data.save_street_numbers_from_ways
 
       expect(ActiveRoad::StreetNumber.count).to eq(2)

@@ -275,8 +275,8 @@ module ActiveRoad
         
         nodes_database.each { |key, value|            
           node = Marshal.load(value)          
-          
-          if node.addr_housenumber.present?
+
+          if node.addr_housenumber.present? && node.from_osm_object == "node" # Import only street numbers contain in node and not in address interpolation 
             street_numbers_counter += 1
             
             geometry = RgeoExt.geos_factory.point( node.lon, node.lat, 4326) if( node.lon && node.lat )
@@ -348,7 +348,7 @@ module ActiveRoad
 
                   if node.addr_housenumber.present?
                     street_numbers_counter += 1
-                    street_numbers_csv << [ node.id, geometry.as_text, node.addr_housenumber, node.tags["addr:street"], node.tags["addr:city"], node.tags["addr:state"], node.tags["addr:country"], location_on_road, physical_road_id, "way_address", "#{node.tags.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
+                    street_numbers_csv << [ node.id, geometry.as_text, node.addr_housenumber, node.tags["addr:street"], node.tags["addr:city"], node.tags["addr:state"], node.tags["addr:country"], location_on_road, physical_road_id, node.from_osm_object, "#{node.tags.to_s.gsub(/[{}]/, '')}", Time.now, Time.now ]
                   end
                 end
               else

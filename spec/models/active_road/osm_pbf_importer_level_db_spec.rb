@@ -138,7 +138,6 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
     end
 
     it "should have call update_node_with_way n times" #do
-      #expect(subject).to receive(:update_node_with_way).exactly(3).times   
       #subject.update_nodes_with_way
     #end
                                     

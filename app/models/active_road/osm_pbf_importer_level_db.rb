@@ -209,7 +209,7 @@ module ActiveRoad
             nodes_counter+= 1
 
             select_tags = selected_tags(node[:tags], @@nodes_selected_tags_keys)         
-            batch[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat], select_tags["addr:housenumber"], [], false, select_tags))      
+            batch[ node[:id].to_s ] = Marshal.dump(Node.new(node[:id].to_s, node[:lon], node[:lat], select_tags["addr:housenumber"], [], false, "node", select_tags))      
           end
         end
         # When there's no more fileblocks to parse, #next returns false
@@ -250,14 +250,7 @@ module ActiveRoad
                   end
                   node.add_way(way_id)
                   node.end_of_way = true if [node_ids.first, node_ids.last].include?(node_id)
-                  if node.from_osm_object.blank? # Make this operation once
-                    node.from_osm_object = if select_tags["addr:housenumber"]
-                                             "way_address"
-                                           else
-                                             "node"
-                                           end
-                  end
-                  
+                  node.from_osm_object = select_tags["addr:interpolation"] ? "way_address" : "node" # Want to make this operation once but some nodes are not linked to a way                  
                   nodes_readed[node_id] = node
                 end
               end        
