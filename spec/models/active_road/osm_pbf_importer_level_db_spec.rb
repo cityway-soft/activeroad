@@ -15,9 +15,11 @@ describe ActiveRoad::OsmPbfImporterLevelDb, :type => :model do
     
     it "should import all datas when split" do  
       subject.import
+      puts ActiveRoad::Junction.all.collect(&:objectid).inspect
       expect(ActiveRoad::Junction.count).to eq(6)
       expect(ActiveRoad::Junction.all.collect(&:objectid)).to match_array(["1", "2", "5", "8", "9", "10"])
-      expect(ActiveRoad::StreetNumber.count).to eq(4)
+      puts ActiveRoad::StreetNumber.all.inspect
+      expect(ActiveRoad::StreetNumber.count).to eq(4)      
       expect(ActiveRoad::StreetNumber.all.collect(&:objectid)).to match_array(["2646260105", "2646260106", "76809952", "2"])
       expect(ActiveRoad::PhysicalRoad.count).to eq(8)
       expect(ActiveRoad::PhysicalRoad.all.collect(&:objectid)).to match_array(["3-0", "3-1", "5-0", "5-1", "5-2", "6-0", "6-1", "6-2"])

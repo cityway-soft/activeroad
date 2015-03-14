@@ -235,7 +235,7 @@ module ActiveRoad
           ways_parser.ways.each do |way|            
             way_id = way[:id].to_s
             
-            if way.key?(:tags) && required_way?(@@way_for_physical_road_required_tags_keys, way[:tags])
+            if way.key?(:tags)
               # Don't add way to nodes if a way is a boundary
               select_tags = selected_tags(way[:tags], @@way_selected_tags_keys)
               node_ids = way.key?(:refs) ? way[:refs].collect(&:to_s) : []
@@ -248,9 +248,14 @@ module ActiveRoad
                   else
                     node = Marshal.load(nodes_database[node_id])
                   end
-                  node.add_way(way_id)
-                  node.end_of_way = true if [node_ids.first, node_ids.last].include?(node_id)
-                  node.from_osm_object = select_tags["addr:interpolation"] ? "way_address" : "node" # Want to make this operation once but some nodes are not linked to a way                  
+
+                  # TODO : Delete this horrible hack
+                  if required_way?(@@way_for_physical_road_required_tags_keys, way[:tags])
+                    node.add_way(way_id)
+                    node.end_of_way = true if [node_ids.first, node_ids.last].include?(node_id)
+                  end
+                  node.from_osm_object = select_tags["addr:interpolation"] ? "way_address" : "node"
+                                    
                   nodes_readed[node_id] = node
                 end
               end        
