@@ -18,18 +18,18 @@ namespace :active_road do
       puts "Filter data from osm pbf file #{args.file}"
       raise "You should provide a valid osm file" if args.file.blank?
       raise "You should provide a valid poly file" if args.poly_file.blank?
-      sh %Q{osmosis --read-pbf file="#{args.file}" --bounding-polygon file="#{args.poly_file}" completeWays=yes completeRelations=yes  --sort type="TypeThenId" --write-pbf file="ontario_mtx.osm.pbf"}
+      sh %Q{osmosis --read-pbf file="#{args.file}" --bounding-polygon file="#{args.poly_file}" --tf accept-ways highway=* --tf accept-ways addr:interpolation=* --tf accept-ways addr:housenumber=* --tf reject-ways construction=yes,1,true completeWays=yes completeRelations=yes  --sort type="TypeThenId" --write-pbf file="ontario_mtx.osm.pbf"}
     end
 
     # bundle exec rake "app:active_road:import:osm_pbf_data[/home/user/test.osm.pbf, true]"
     desc "Import osm data from a pbf file"
     task :osm_pbf_data, [:file, :split_ways, :split_boundaries, :prefix_path] => [:environment] do |task, args|      
-      begin
-        puts "Import data from osm pbf file #{args.file} and with split_ways #{args.split_ways} and with split ways with boundaries #{args.split_boundaries} and with prefix path #{args.prefix_path}"
+      begin        
         raise "You should provide a valid osm file" if args.file.blank?
         split_ways = args.split_ways == "true" ? true : false
         split_boundaries = args.split_boundaries == "true" ? true : false
         prefix_path = args.prefix_path.present? ? args.prefix_path : "/tmp"
+        puts "Import data from osm pbf file #{args.file} and with split_ways #{split_ways} and with split ways with boundaries #{split_boundaries} and with prefix path #{prefix_path}"
         ActiveRoad::OsmPbfImporterLevelDb.new(args.file, split_ways, split_boundaries, prefix_path).import
         puts "Completed import successfully."    
       rescue => e
