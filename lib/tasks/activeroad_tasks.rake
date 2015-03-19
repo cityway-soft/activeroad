@@ -18,7 +18,7 @@ namespace :active_road do
       puts "Filter data from osm pbf file #{args.file}"
       raise "You should provide a valid osm file" if args.file.blank?
       raise "You should provide a valid poly file" if args.poly_file.blank?
-      sh %Q{osmosis --read-pbf file="#{args.file}" --bounding-polygon file="#{args.poly_file}" --tf accept-ways highway=* --tf accept-ways addr:interpolation=* --tf accept-ways addr:housenumber=* --tf reject-ways construction=yes,1,true completeWays=yes completeRelations=yes  --sort type="TypeThenId" --write-pbf file="ontario_mtx.osm.pbf"}
+      sh %Q{osmosis --read-pbf file="#{args.file}" --bounding-polygon file="#{args.poly_file}" completeWays=yes completeRelations=yes --tf accept-ways highway=* --tf accept-ways addr:interpolation=* --tf accept-ways addr:housenumber=* --tf reject-ways construction=yes,1,true --sort type="TypeThenId" --write-pbf file="ontario_mtx.osm.pbf"}
     end
 
     # bundle exec rake "app:active_road:import:osm_pbf_data[/home/user/test.osm.pbf, true]"
