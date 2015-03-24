@@ -163,12 +163,7 @@ module ActiveRoad
     end
 
     def required_way?(required_tags, tags)
-      required_tags.each do |require_tag_key|
-        if tags.keys.include?(require_tag_key)
-          return true
-        end
-      end
-      return false
+      (required_tags & tags.keys).present? ? true : false
     end
 
     def required_relation?(tags)
@@ -223,7 +218,7 @@ module ActiveRoad
       Rails.logger.info "Update way in nodes in LevelDB"
       start = Time.now
       ways_parser = ::PbfParser.new(pbf_file)
-      ways_counter = 0 
+      ways_counter = 0
       
       # Process the file until it finds any way.
       ways_parser.next until ways_parser.ways.any?
@@ -234,12 +229,12 @@ module ActiveRoad
         nodes_database.batch do |batch|
           ways_parser.ways.each do |way|            
             way_id = way[:id].to_s
-            
+
             if way.key?(:tags)
               # Don't add way to nodes if a way is a boundary
               select_tags = selected_tags(way[:tags], @@way_selected_tags_keys)
-              node_ids = way.key?(:refs) ? way[:refs].collect(&:to_s) : []
-              
+              node_ids = way.key?(:refs) ? way[:refs].collect(&:to_s) : []              
+
               if node_ids.present? && node_ids.size > 1
                 ways_counter+= 1
                 node_ids.each do |node_id|
@@ -253,14 +248,16 @@ module ActiveRoad
                   if required_way?(@@way_for_physical_road_required_tags_keys, way[:tags])
                     node.add_way(way_id)
                     node.end_of_way = true if [node_ids.first, node_ids.last].include?(node_id)
+                  elsif select_tags["addr:interpolation"]
+                    node.from_osm_object = "way_address"
                   end
-                  node.from_osm_object = select_tags["addr:interpolation"] ? "way_address" : "node"
                                     
                   nodes_readed[node_id] = node
                 end
               end        
             end
           end
+
           nodes_readed.each_pair do |node_readed_id, node_readed|
             batch[node_readed_id] = Marshal.dump(node_readed)
           end

@@ -18,7 +18,7 @@ module ActiveRoad
     @@way_for_street_number_required_tags_keys = ["addr:housenumber"]
     @@way_selected_tags_keys = [ "name", "maxspeed", "oneway", "boundary", "admin_level", "addr:housenumber", "addr:interpolation" ]
     # Add first_node_id and last_node_id
-    @@way_optionnal_tags_keys = ["highway", "railway", "maxspeed", "bridge", "tunnel", "toll", "cycleway", "cycleway-right", "cycleway-left", "cycleway-both", "oneway:bicycle", "oneway", "bicycle", "segregated", "foot", "lanes", "lanes:forward", "lanes:forward:bus", "busway:right", "busway:left", "oneway_bus", "boundary", "admin_level", "access", "construction", "junction", "motor_vehicle", "psv", "bus", "addr:city", "addr:country", "addr:state", "addr:street", "addr:interpolation"]
+    @@way_optionnal_tags_keys = ["highway", "railway", "maxspeed", "bridge", "tunnel", "toll", "cycleway", "cycleway-right", "cycleway-left", "cycleway-both", "oneway:bicycle", "oneway", "bicycle", "segregated", "foot", "lanes", "lanes:forward", "lanes:forward:bus", "busway:right", "busway:left", "oneway_bus", "boundary", "admin_level", "access", "construction", "junction", "motor_vehicle", "psv", "bus", "addr:city", "addr:country", "addr:state", "addr:street", "addr:interpolation", "footway"]
     mattr_reader :way_required_tags_keys, :way_for_physical_road_required_tags_keys, :way_for_boundary_required_tags_keys, :way_for_street_number_required_tags_keys, :way_selected_tags_keys, :way_optionnal_tags_keys
 
     @@nodes_selected_tags_keys = [ "addr:housenumber", "addr:city", "addr:postcode", "addr:street" ]
@@ -276,7 +276,7 @@ module ActiveRoad
         nodes_database.each { |key, value|            
           node = Marshal.load(value)          
 
-          if node.addr_housenumber.present? && node.from_osm_object == "node" # Import only street numbers contain in node and not in address interpolation 
+          if node.addr_housenumber.present? && node.from_osm_object != "way_address" # Import only street numbers contain in node and not in address interpolation 
             street_numbers_counter += 1
             
             geometry = RgeoExt.geos_factory.point( node.lon, node.lat, 4326) if( node.lon && node.lat )
