@@ -26,9 +26,10 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rspec-rails', '~> 3.1.0'
   s.add_development_dependency 'rails', '>= 4.0.0', "< 4.2.0"
 
+  s.add_dependency 'rgeo-geojson'
   s.add_dependency 'activerecord', '>= 4.0.0', "< 4.2.0"
   s.add_dependency 'activerecord-postgis-adapter', '>= 2.2.0' 
-  s.add_dependency 'pg', '>= 0.17.1'
+  s.add_dependency 'pg', '>= 0.18.2'
   s.add_dependency 'ffi-geos', '>= 1.0.0'
   s.add_dependency 'nokogiri'
   s.add_dependency 'saxerator'

@@ -1,45 +1,50 @@
 # -*- coding: utf-8 -*-
 module ActiveRoad
   class PhysicalRoad < ActiveRoad::Base
+    include RgeoExt::Support
     extend ::Enumerize
     extend ActiveModel::Naming
     acts_as_copy_target
-    set_rgeo_factory_for_column(:geometry, RgeoExt.geos_factory)
+    set_rgeo_factory_for_column(:geometry, RgeoExt.cartesian_factory)
     
 
     #attr_accessible :objectid, :tags, :geometry, :logical_road_id, :boundary_id, :minimum_width, :covering, :transport_mode, :slope, :cant, :physical_road_type 
     store_accessor :tags
-
-    # TODO : Pass covering in array mode???
-    enumerize :covering, :in => [:slippery_gravel, :gravel, :asphalt_road, :asphalt_road_damaged, :pavement, :irregular_pavement, :slippery_pavement]
-
-    enumerize :minimum_width, :in => [:wide, :enlarged, :narrow, :cramped], :default => :wide
-    enumerize :slope, :in => [:flat, :medium, :significant, :steep], :default => :flat
-    enumerize :cant, :in => [:flat, :medium, :significant, :steep], :default => :flat
-    enumerize :physical_road_type, :in => [:path_link, :stairs, :crossing], :default => :path_link    
+    enumerize :transport_mode, :in => %w["pedestrian", "car", "bike", "train"]
+    enumerize :covering, :in => %w[category0, category1, category2, category3, category4, category5, category6, category7, category8, category9 ]
+    enumerize :minimum_width, :in => %w[category0, category1, category2, category3, category4, category5, category6, category7, category8, category9 ]
+    enumerize :slope, :in => %w[category0, category1, category2, category3, category4, category5, category6, category7, category8, category9 ]
+    enumerize :cant, :in => %w[category0, category1, category2, category3, category4, category5, category6, category7, category8, category9 ]
+    enumerize :physical_road_type, :in => %w[category0, category1, category2, category3, category4, category5, category6, category7, category8, category9 ]
 
     validates_uniqueness_of :objectid
-
-    has_many :numbers, :class_name => "ActiveRoad::StreetNumber", :inverse_of => :physical_road
+    
     belongs_to :logical_road, :class_name => "ActiveRoad::LogicalRoad"
     belongs_to :boundary, :class_name => "ActiveRoad::Boundary"
-    has_many :junctions, :through => :junctions_physical_roads, :class_name => "ActiveRoad::Junction"
-    has_many :junctions_physical_roads
-    
+    has_and_belongs_to_many :junctions, :class_name => "ActiveRoad::Junction"   
     has_many :physical_road_conditionnal_costs
+    has_many :numbers, :class_name => "ActiveRoad::StreetNumber", :inverse_of => :physical_road
+
+    delegate :locate_point, :interpolate_point, :to => :geometry    
     
     def street_name
       logical_road.try(:name) or objectid
     end
 
-    def locate_point(point)
-      value =  ActiveRecord::Base.connection.select_value("SELECT ST_Line_Locate_Point('#{self.geometry}', '#{point}')")
-      value.blank? ? nil : value.to_f
-    end
-
-    def interpolate_point(fraction)
-      value =  ActiveRecord::Base.connection.select_value("SELECT ST_Line_Interpolate_Point('#{self.geometry}', #{fraction} )")		
-      value.blank? ? nil : RgeoExt.geos_factory.parse_wkb(value)
+    def line_substring(percentage_departure, percentage_arrival, is_reversed)
+      if percentage_departure == 0 && percentage_arrival == 1
+        if is_reversed
+          RgeoExt.cartesian_factory.line_string(geometry.points.reverse)
+        else
+          return geometry
+        end
+      else
+        sql = "ST_Line_Substring(ST_GeomFromEWKT('#{geometry}'), #{percentage_departure}, #{percentage_arrival})"
+        sql = is_reversed ? "SELECT ST_Reverse(#{sql})" : "SELECT #{sql}"
+        value = ActiveRoad::PhysicalRoad.connection.select_value(sql)
+        geometry = value.blank? ? nil : RgeoExt.cartesian_factory.parse_wkb(value)
+        return geometry
+      end
     end
     
     def intersection(other)
@@ -53,13 +58,7 @@ module ActiveRoad
     # distance in srid format 0.001 ~= 111.3 m à l'équateur
     # TODO : Must convert distance in meters => distance in srid
     def self.nearest_to(location, distance = 0.001)
-      # FIX Limit to 1 physical roads for perf, must be extended
-      pr = st_dwithin(location, distance)
-      pr == [] ? [] : [pr.first]
-    end
-
-    def self.st_dwithin(other, margin=1)
-      where "ST_DWithin(geometry, '#{other.as_text}', #{margin})"
+      where("ST_DWithin(geometry, '#{location.as_text}', #{distance})").order("ST_Distance(geometry, '#{location.as_text}')").limit(3)
     end
 
   end

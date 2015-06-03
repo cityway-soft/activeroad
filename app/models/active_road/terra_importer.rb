@@ -40,7 +40,9 @@ module ActiveRoad
     end
 
     def parser
-      @parser ||= ::Saxerator.parser(File.new(xml_file))
+      @parser ||= ::Saxerator.parser(File.new(xml_file))do |config|
+        config.output_type = :hash
+      end
     end
 
     def display_time(time_difference)
@@ -76,7 +78,7 @@ module ActiveRoad
         street_numbers_csv << street_number_columns
         
         street_numbers.each do |street_number|
-          geometry = RgeoExt.geos_factory.parse_wkt(street_number["Geometry"])
+          geometry = RgeoExt.cartesian_factory.parse_wkt(street_number["Geometry"])
           
           street_numbers_csv << [ street_number["ObjectId"], geometry.as_text, street_number["Number"], street_number["LocationOnArc"], Time.now, Time.now ]
         end
@@ -106,7 +108,7 @@ module ActiveRoad
         trajectory_nodes.each do |trajectory_node|
           junctions_counter += 1
           
-          geometry = RgeoExt.geos_factory.parse_wkt(trajectory_node["Geometry"])
+          geometry = RgeoExt.cartesian_factory.parse_wkt(trajectory_node["Geometry"])
           junctions_csv << [ trajectory_node["ObjectId"], geometry.as_text, trajectory_node["Height"], Time.now, Time.now ]          
         end
       end
@@ -126,18 +128,36 @@ module ActiveRoad
       ways_counter = 0
 
       # traverse records by iterator
-      physical_road_columns = ["objectid", "geometry", "length", "created_at", "updated_at"]
+      physical_road_columns = ["objectid", "geometry", "length", "covering", "minimum_width", "slope", "cant", "physical_road_type", "transport_mode", "uphill", "downhill", "created_at", "updated_at"]
       
       CSV.open("#{prefix_path}/physical_roads.csv", "wb:UTF-8") do |physical_roads_csv|
         physical_roads_csv << physical_road_columns
           
-        trajectory_arcs.each do |trajectory_arc|        
-          ways_counter += 1
+        trajectory_arcs.each do |trajectory_arc|
+          trajectory_nodes = trajectory_arc["TrajectoryNodeRef"]
+          if !trajectory_nodes.is_a?(String) && trajectory_nodes.size == 2
+            ways_counter += 1
           
-          geometry = RgeoExt.geos_factory.parse_wkt(trajectory_arc["Geometry"])
-          length = geometry.length
+            geometry = RgeoExt.cartesian_factory.parse_wkt(trajectory_arc["Geometry"])
+            length = trajectory_arc["Length"]
             
-          physical_roads_csv << [ trajectory_arc["ObjectId"], geometry.as_text, length, Time.now, Time.now ]
+            pathlink = trajectory_arc["PathLink"]
+            if pathlink
+              uphill = pathlink["Uphill"]
+              downhill = pathlink["Downhill"]
+              covering = pathlink["Covering"]
+              minimum_width = pathlink["MinimumWidth"]
+              slope = pathlink["Slope"]
+              cant = pathlink["Cant"]
+              physical_road_type = pathlink["PhysicalRoadType"]
+              transport_mode = extract_transport_mode( pathlink["TransportMode"] )
+            end
+            
+            physical_roads_csv << [ trajectory_arc["ObjectId"], geometry.as_text, length, covering, minimum_width, slope, cant, physical_road_type, transport_mode, uphill, downhill, Time.now, Time.now ]
+          else
+            puts "Impossible to create trajectory arc #{trajectory_arc["ObjectId"]} with bad trajectory nodes count"
+            Rails.logger.error("Impossible to create trajectory arc #{trajectory_arc["ObjectId"]} with bad trajectory nodes count") 
+          end
         end
       end
       
@@ -147,6 +167,20 @@ module ActiveRoad
       end
 
       Rails.logger.info "Finish to save #{ways_counter} physical_roads in PostgreSql in #{display_time(Time.now - start)} seconds"
+    end
+    
+    def extract_transport_mode( transport_mode_info )
+      transport_mode_info_match = transport_mode_info.match( /\A\(([a-z]+)\s*\,\s*([a-z]+)\)\z/ )
+      transport_mode = if transport_mode_info_match[1] == "walk"
+                         "pedestrian"
+                       elsif transport_mode_info_match[1] == "bike"
+                         "bike"
+                       end           
+    end
+
+    def extract_transport_direction_for_mode( transport_mode_info )
+      transport_mode_info_match = transport_mode_info.match( /\A\(([a-z]+)\s*\,\s*([a-z]+)\)\z/ )
+      transport_direction_for_mode = transport_mode_info_match[2]
     end
 
     def save_junctions_and_physical_roads_temporary
@@ -182,18 +216,31 @@ module ActiveRoad
           junctions_physical_roads_csv << junction_physical_road_columns
           
           trajectory_arcs.each do |trajectory_arc|
-            trajectory_arc["TrajectoryNodeRef"].each do |junction_objectid|
-              junction_id = junctions_database[junction_objectid]
-              junctions_physical_roads_counter += 1
-              junctions_physical_roads_csv << [ physical_roads_database[trajectory_arc["ObjectId"]], junction_id ] if junction_id.present?
-            end if trajectory_arc["TrajectoryNodeRef"].present?
+            physical_road_id = physical_roads_database[trajectory_arc["ObjectId"]]
+
+            pathlink = trajectory_arc["PathLink"]
+            current_transport_mode = extract_transport_mode( pathlink["TransportMode"] )
+            ActiveRoad::PhysicalRoad.transport_mode.values.each do |transport_mode|
+              if current_transport_mode != transport_mode
+                physical_road_conditionnal_costs_csv << [transport_mode, Float::INFINITY, physical_road_id]
+              end
+            end
             
+            # Add elements to junctions_physical_roads_csv
+            trajectory_nodes = trajectory_arc["TrajectoryNodeRef"]
+            if !trajectory_nodes.is_a?(String) && trajectory_nodes.size == 2
+              trajectory_arc["TrajectoryNodeRef"].each do |junction_objectid|
+                junction_id = junctions_database[junction_objectid]
+                junctions_physical_roads_counter += 1
+                junctions_physical_roads_csv << [ physical_road_id, junction_id ] if junction_id.present?
+              end
+            end            
           end
         end
       end
       
       # Save physical road conditionnal costs
-      ActiveRoad::PhysicalRoadConditionnalCost.transaction do                                         
+      ActiveRoad::PhysicalRoadConditionnalCost.transaction do    
         ActiveRoad::PhysicalRoadConditionnalCost.copy_from "#{prefix_path}/physical_road_conditionnal_costs.csv"
       end
 

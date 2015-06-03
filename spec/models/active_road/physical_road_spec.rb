@@ -15,10 +15,10 @@ describe ActiveRoad::PhysicalRoad, :type => :model do
   end
 
   describe ".locate_point" do
-    let!(:p1) { ActiveRoad::RgeoExt.geos_factory.point(0, 0) }    
-    let!(:p2) { ActiveRoad::RgeoExt.geos_factory.point(0.5, 2) }
-    let!(:p3) { ActiveRoad::RgeoExt.geos_factory.point(1, 0) }    
-    let!(:ab) { create(:physical_road, :geometry => ActiveRoad::RgeoExt.geos_factory.line_string( [p1, p3] ) ) }    
+    let!(:p1) { ActiveRoad::RgeoExt.cartesian_factory.point(0, 0) }    
+    let!(:p2) { ActiveRoad::RgeoExt.cartesian_factory.point(0.5, 2) }
+    let!(:p3) { ActiveRoad::RgeoExt.cartesian_factory.point(1, 0) }    
+    let!(:ab) { create(:physical_road, :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string( [p1, p3] ) ) }    
     
     it "should locate point in fraction with a projection on a linestring" do
       expect(ab.locate_point(p2)).to eq(0.5)
@@ -26,10 +26,10 @@ describe ActiveRoad::PhysicalRoad, :type => :model do
   end
 
   describe ".interpolate_point" do
-    let!(:p1) { ActiveRoad::RgeoExt.geos_factory.point(0, 0) }    
-    let!(:p2) { ActiveRoad::RgeoExt.geos_factory.point(0.5, 0) }
-    let!(:p3) { ActiveRoad::RgeoExt.geos_factory.point(1, 0) }
-    let!(:ab) { create(:physical_road, :geometry => ActiveRoad::RgeoExt.geos_factory.line_string( [p1, p3] ) ) }    
+    let!(:p1) { ActiveRoad::RgeoExt.cartesian_factory.point(0, 0) }    
+    let!(:p2) { ActiveRoad::RgeoExt.cartesian_factory.point(0.5, 0) }
+    let!(:p3) { ActiveRoad::RgeoExt.cartesian_factory.point(1, 0) }
+    let!(:ab) { create(:physical_road, :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string( [p1, p3] ) ) }    
     
     it "should return point from a fraction on a linestring" do
       expect(ab.interpolate_point(0.5)).to eq(p2)
@@ -37,13 +37,13 @@ describe ActiveRoad::PhysicalRoad, :type => :model do
   end
   
   describe ".nearest_to" do
-    let(:departure) { ActiveRoad::RgeoExt.geos_factory.point(0, 0) }
+    let(:departure) { ActiveRoad::RgeoExt.cartesian_factory.point(0, 0) }
     let!(:ab) { create(:physical_road, :geometry => "LINESTRING(0.0001 0.0001,1 1)" ) }
     let!(:ac) { create(:physical_road, :geometry => "LINESTRING(-0.0001 -0.0001,-1 -1)" ) }
     let!(:ad) { create(:physical_road, :geometry => "LINESTRING(-0.001 -0.001,-1 -1)" ) }
     
     it "should return physical roads in an area ordered from closest to farthest from a departure" do
-      expect(ActiveRoad::PhysicalRoad.nearest_to(departure)).to eq([ab]) #[ab, ac]
+      expect(ActiveRoad::PhysicalRoad.nearest_to(departure)).to eq([ab, ac])
     end
   end
 

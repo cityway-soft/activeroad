@@ -1,6 +1,6 @@
 module ActiveRoad
   class AccessLink
-    
+    include RgeoExt::Support
     attr_accessor :departure, :arrival
 
     def initialize(attributes = {})
@@ -34,7 +34,7 @@ module ActiveRoad
     end
 
     def geometry
-      @geometry ||= RgeoExt.geos_factory.line_string( [departure_geometry, arrival_geometry] )
+      @geometry ||= RgeoExt.cartesian_factory.line_string( [departure_geometry, arrival_geometry] )
     end
 
     delegate :access_to_road?, :to => :arrival

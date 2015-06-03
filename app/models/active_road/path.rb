@@ -3,7 +3,7 @@
 #  - Arrival
 module ActiveRoad
   class Path
-    
+    include RgeoExt::Support
     attr_accessor :departure, :arrival, :physical_road
     alias_method :road, :physical_road
 
@@ -34,76 +34,79 @@ module ActiveRoad
     # end
     
     # Return an array of points ordered from departure to arrival
-    def ordered_points
-      road_start_point = road.geometry.start_point
-      road_end_point = road.geometry.end_point
-      road_points = road.geometry.points
-      ordered_points = []
+    # def ordered_points
+    #   road_start_point = road.geometry.start_point
+    #   road_end_point = road.geometry.end_point
+    #   road_points = road.geometry.points
+    #   ordered_points = []
       
-      # Get points from interpolated departure or arrival to interpolated departure or arrival in physical roads if one endpoint is an access point    
+    #   # Get points from interpolated departure or arrival to interpolated departure or arrival in physical roads if one endpoint is an access point    
 
-      if ActiveRoad::AccessPoint === departure || ActiveRoad::AccessPoint === arrival
-        sorted_locations_on_road = locations_on_road.sort    
-        reverse = (sorted_locations_on_road != locations_on_road)
+    #   if ActiveRoad::AccessPoint === departure || ActiveRoad::AccessPoint === arrival
+    #     sorted_locations_on_road = locations_on_road.sort    
+    #     reverse = (sorted_locations_on_road != locations_on_road)
         
-        if sorted_locations_on_road == [0, 1]
-          if reverse
-            return road_points.reverse
-          else
-            return road_points
-          end
-        end
+    #     if sorted_locations_on_road == [0, 1]
+    #       if reverse
+    #         return road_points.reverse
+    #       else
+    #         return road_points
+    #       end
+    #     end
         
-        sql = "ST_Line_Substring(ST_GeomFromEWKT('#{physical_road.geometry}'), #{sorted_locations_on_road.first}, #{sorted_locations_on_road.last})"
-        sql = reverse ? "SELECT ST_Reverse(#{sql})" : "SELECT #{sql}"
-        value = ActiveRecord::Base.connection.select_value(sql)
-        if !value.blank?
-          geometry = RgeoExt.geos_factory.parse_wkb(value)
-          if RGeo::Feature::LineString === geometry
-            ordered_points = geometry.points
-          else # Delete point when path departure == arrival
-            ordered_points = []
-          end
-        else
-          ordered_points = []
-        end
+    #     sql = "ST_Line_Substring(ST_GeomFromEWKT('#{physical_road.geometry}'), #{sorted_locations_on_road.first}, #{sorted_locations_on_road.last})"
+    #     sql = reverse ? "SELECT ST_Reverse(#{sql})" : "SELECT #{sql}"
+    #     value = ActiveRoad::PhysicalRoad.connection.select_value(sql)
+    #     if !value.blank?
+    #       geometry = RgeoExt.cartesian_factory.parse_wkb(value)
+    #       if RGeo::Feature::LineString === geometry
+    #         ordered_points = geometry.points
+    #       else # Delete point when path departure == arrival
+    #         ordered_points = []
+    #       end
+    #     else
+    #       ordered_points = []
+    #     end
         
-        return ordered_points
-      end
+    #     return ordered_points
+    #   end
       
-      # Get points from departure to arrival in physical roads if endpoints are junctions
-      departure_index = road_points.index(departure.geometry)
-      arrival_index = road_points.index(arrival.geometry)
+    #   # Get points from departure to arrival in physical roads if endpoints are junctions
+    #   departure_index = road_points.index(departure.geometry)
+    #   arrival_index = road_points.index(arrival.geometry)
       
-      if departure_index < arrival_index
-        ordered_points = road_points[departure_index..arrival_index]
-      elsif arrival_index < departure_index
-        ordered_points = road_points[arrival_index..departure_index].reverse
-      else
-        raise StandardError, "Junction is not on the physical road"
-      end
+    #   if departure_index < arrival_index
+    #     ordered_points = road_points[departure_index..arrival_index]
+    #   elsif arrival_index < departure_index
+    #     ordered_points = road_points[arrival_index..departure_index].reverse
+    #   else
+    #     raise StandardError, "Junction is not on the physical road"
+    #   end
       
-      ordered_points
-    end
+    #   ordered_points
+    # end
 
     # Build a geometry form ordered points
     def geometry_without_cache
-      RgeoExt.geos_factory.line_string(ordered_points)
+      #RgeoExt.cartesian_factory.line_string(ordered_points)
+      sorted_locations_on_road = locations_on_road.sort    
+      is_reversed = (sorted_locations_on_road != locations_on_road)
+      geometry = road.line_substring(sorted_locations_on_road.first, sorted_locations_on_road.last, is_reversed)
     end
     
     def locations_on_road
       @locations_on_road ||= [departure, arrival].collect do |endpoint|
         location =
-          if ActiveRoad::AccessPoint === endpoint
+          if ActiveRoad::AccessPoint === endpoint           
             road.locate_point endpoint.geometry
-          else
+          else            
             endpoint.location_on_road road
           end
         
         location = [0, [location, 1].min].max
       end
     end
-
+    
     # def length
     #   @length ||= if RGeo::Feature::LineString === geometry                  
     #                 RgeoExt.geographical_factory.line_string(geometry.points).length
@@ -133,6 +136,12 @@ module ActiveRoad
 
     delegate :access_to_road?, :to => :arrival
 
+    # Delete reverse path but not other paths found on the same physical_road
+    #
+    #  <-                My path               ->
+    #  X-------------------X--------------------[X]------------------X
+    #                       <-     Path used   -> <-   Path used   ->
+    #  <-           Path deleted               ->
     def paths
       arrival.paths - [reverse]
     end

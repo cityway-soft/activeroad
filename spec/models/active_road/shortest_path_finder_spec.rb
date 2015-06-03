@@ -13,21 +13,21 @@ describe ActiveRoad::ShortestPathFinder do
     #    |                 |
     #    A-----------------B 
     #
-    let!(:a) { create(:junction, :objectid => "a", :geometry => ActiveRoad::RgeoExt.geos_factory.point(0.0, 0.0) ) }
-    let!(:b) { create(:junction, :objectid => "b", :geometry => ActiveRoad::RgeoExt.geos_factory.point(1.0, 0.0) ) }
-    let!(:c) { create(:junction, :objectid => "c", :geometry => ActiveRoad::RgeoExt.geos_factory.point(0.0, 1.0) ) }
-    let!(:d) { create(:junction, :objectid => "d", :geometry => ActiveRoad::RgeoExt.geos_factory.point(1.0, 1.0) ) }
-    let!(:e) { create(:junction, :objectid => "e", :geometry => ActiveRoad::RgeoExt.geos_factory.point(0.0, 2.0) ) }
-    let!(:f) { create(:junction, :objectid => "f", :geometry => ActiveRoad::RgeoExt.geos_factory.point(1.0, 2.0) ) }
+    let!(:a) { create(:junction, :objectid => "a", :geometry => ActiveRoad::RgeoExt.cartesian_factory.point(0.0, 0.0) ) }
+    let!(:b) { create(:junction, :objectid => "b", :geometry => ActiveRoad::RgeoExt.cartesian_factory.point(1.0, 0.0) ) }
+    let!(:c) { create(:junction, :objectid => "c", :geometry => ActiveRoad::RgeoExt.cartesian_factory.point(0.0, 1.0) ) }
+    let!(:d) { create(:junction, :objectid => "d", :geometry => ActiveRoad::RgeoExt.cartesian_factory.point(1.0, 1.0) ) }
+    let!(:e) { create(:junction, :objectid => "e", :geometry => ActiveRoad::RgeoExt.cartesian_factory.point(0.0, 2.0) ) }
+    let!(:f) { create(:junction, :objectid => "f", :geometry => ActiveRoad::RgeoExt.cartesian_factory.point(1.0, 2.0) ) }    
     
-    let!(:ab) { create(:physical_road, :objectid => "ab", :geometry => ActiveRoad::RgeoExt.geos_factory.line_string([a.geometry, b.geometry]) ) }
-    let!(:cd) { create(:physical_road, :objectid => "cd", :geometry => ActiveRoad::RgeoExt.geos_factory.line_string([c.geometry, d.geometry]) ) }
-    let!(:ef) { create(:physical_road, :objectid => "ef", :geometry => ActiveRoad::RgeoExt.geos_factory.line_string([e.geometry, f.geometry]) ) }
-    let!(:ac) { create(:physical_road, :objectid => "ac", :geometry => ActiveRoad::RgeoExt.geos_factory.line_string([a.geometry, c.geometry]) ) }
-    let!(:bd) { create(:physical_road, :objectid => "bd", :geometry => ActiveRoad::RgeoExt.geos_factory.line_string([b.geometry, d.geometry]) ) }
-    let!(:ce) { create(:physical_road, :objectid => "ce", :geometry => ActiveRoad::RgeoExt.geos_factory.line_string([c.geometry, e.geometry]) ) }
-    let!(:df) { create(:physical_road, :objectid => "df", :geometry => ActiveRoad::RgeoExt.geos_factory.line_string([d.geometry, f.geometry]) ) }
-    let!(:cf) { create(:physical_road, :objectid => "cf", :geometry => ActiveRoad::RgeoExt.geos_factory.line_string([c.geometry, f.geometry]) ) }
+    let!(:ab) { create(:physical_road, :objectid => "ab", :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string([a.geometry, b.geometry]) ) }
+    let!(:cd) { create(:physical_road, :objectid => "cd", :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string([c.geometry, d.geometry]) ) }
+    let!(:ef) { create(:physical_road, :objectid => "ef", :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string([e.geometry, f.geometry]) ) }
+    let!(:ac) { create(:physical_road, :objectid => "ac", :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string([a.geometry, c.geometry]) ) }
+    let!(:bd) { create(:physical_road, :objectid => "bd", :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string([b.geometry, d.geometry]) ) }
+    let!(:ce) { create(:physical_road, :objectid => "ce", :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string([c.geometry, e.geometry]) ) }
+    let!(:df) { create(:physical_road, :objectid => "df", :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string([d.geometry, f.geometry]) ) }
+    let!(:cf) { create(:physical_road, :objectid => "cf", :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string([c.geometry, f.geometry]) ) }
 
     before :each do 
       a.physical_roads << [ ab, ac ]
@@ -40,8 +40,8 @@ describe ActiveRoad::ShortestPathFinder do
     
   end
   
-  let(:departure) { ActiveRoad::RgeoExt.geos_factory.point(-0.0005, 0.0005) }
-  let(:arrival) { ActiveRoad::RgeoExt.geos_factory.point(1.0005, 1.98) }
+  let(:departure) { ActiveRoad::RgeoExt.cartesian_factory.point(-0.0005, 0.0005) }
+  let(:arrival) { ActiveRoad::RgeoExt.cartesian_factory.point(1.0005, 1.98) }
   let(:speed) { 4 }
   let(:constraints) { ["bike"] }
 
@@ -87,13 +87,13 @@ describe ActiveRoad::ShortestPathFinder do
     end
 
     it "should return something when no solution" do
-      departure = ActiveRoad::RgeoExt.geos_factory.point(-0.01, 0.01)
+      departure = ActiveRoad::RgeoExt.cartesian_factory.point(-0.01, 0.01)
       path = ActiveRoad::ShortestPathFinder.new(departure, arrival, 4).path
       expect(path).to eq([])      
     end
 
     it "should return something when departure or arrival are 'outside the graph'" do
-      departure = ActiveRoad::RgeoExt.geos_factory.point(-0.0005, -0.0005)
+      departure = ActiveRoad::RgeoExt.cartesian_factory.point(-0.0005, -0.0005)
       path = ActiveRoad::ShortestPathFinder.new(departure, arrival, 4).path
 
       expect(path.size).to eq(7)
@@ -173,7 +173,7 @@ describe ActiveRoad::ShortestPathFinder do
     end
 
     it "should return {} if node is not a ActiveRoad::Path" do 
-      node = ActiveRoad::RgeoExt.geos_factory.point(0, 0)
+      node = ActiveRoad::RgeoExt.cartesian_factory.point(0, 0)
       context = {}
       expect(subject.refresh_context(node, context)).to eq({:uphill=>0, :downhill=>0, :height=>0})
     end
@@ -213,7 +213,7 @@ describe ActiveRoad::ShortestPathFinder do
     let(:shortest_path) { ActiveRoad::ShortestPathFinder.new(departure, arrival, 4) }
 
     it "should return geometry" do
-      expect(shortest_path.geometry).to eq( ActiveRoad::RgeoExt.geos_factory.parse_wkt("SRID=4326;LINESTRING(-0.0005 0.0005, 0.0 0.0, 0.0 1.0, 1.0 2.0, 1.0 1.98, 1.0005 1.98)") )
+      expect(shortest_path.geometry.as_text).to eq( "SRID=4326;LineString (-0.0005 0.0005, 0.0 0.0005, 0.0 0.0005, 0.0 1.0, 0.0 1.0, 1.0 2.0, 1.0 2.0, 1.0 1.98, 1.0 1.98, 1.0005 1.98)" )
     end
   end
   

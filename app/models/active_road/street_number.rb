@@ -1,5 +1,6 @@
 module ActiveRoad
   class StreetNumber < ActiveRoad::Base
+    include RgeoExt::Support
     acts_as_copy_target
     store_accessor :tags
     #attr_accessible :objectid, :tags, :number, :geometry, :physical_road_id, :location_on_road

@@ -5,9 +5,10 @@ source "http://rubygems.org"
 gemspec
 
 gem 'coveralls', require: false
+gem "rgeo-kml", :git => "https://github.com/ldonnet/rgeo-kml.git"
 
 group :development do
-  gem "rails-erd" # Tool to make schema class
+  gem "rails-erd" # Tool to make schema class  
   group :linux do
     gem 'rb-inotify', :require => RUBY_PLATFORM.include?('linux') && 'rb-inotify'
     gem 'rb-fsevent', :require => RUBY_PLATFORM.include?('darwin') && 'rb-fsevent'

@@ -104,8 +104,12 @@ module ActiveRoad
       path.collect(&:geometry)
     end
     
-    def geometry
-      @geometry ||= RgeoExt.geos_factory.line_string(geometries.collect(&:points).flatten) if path.present?
+    def geometry      
+      @geometry ||= if path.present?
+                      # Must use compact to delete nil from RGeo::Feature::Point in geometries
+                      g = geometries.collect{ |g| g.points if RGeo::Feature::LineString === g }.compact.flatten
+                      RgeoExt.cartesian_factory.line_string( g )
+                    end
     end
 
     #-----------------------------------------

@@ -1,7 +1,16 @@
 module ActiveRoad::RgeoExt
-
+  
   def self.geos_factory
     @@geos_factory ||= ::RGeo::Geos.factory(:native_interface => :ffi, :srid => 4326,
+                         :wkt_parser => {:support_ewkt => true, :default_srid => 4326},
+                         :wkt_generator => {:type_format => :ewkt, :emit_ewkt_srid => true},
+                         :wkb_parser => {:support_ewkb => true, :default_srid => 4326},
+                         :wkb_generator => {:type_format => :ewkb, :emit_ewkb_srid => true}
+                         )
+  end
+
+  def self.capi_factory
+    @@capi_factory ||= ::RGeo::Geos.factory(:native_interface => :capi, :srid => 4326,
                          :wkt_parser => {:support_ewkt => true, :default_srid => 4326},
                          :wkt_generator => {:type_format => :ewkt, :emit_ewkt_srid => true},
                          :wkb_parser => {:support_ewkb => true, :default_srid => 4326},
@@ -18,7 +27,7 @@ module ActiveRoad::RgeoExt
   end
 
   def self.cartesian_factory
-    @@cartesian_factory ||= ::RGeo::Cartesian.factory( :srid => 4326,
+    @@cartesian_factory ||= ::RGeo::Cartesian::Factory.new( :srid => 4326,
                                :wkt_parser => {:support_ewkt => true, :default_srid => 4326},
                                :wkt_generator => {:type_format => :ewkt, :emit_ewkt_srid => true},
                                :wkb_parser => {:support_ewkb => true, :default_srid => 4326},
@@ -69,12 +78,31 @@ module ActiveRoad::RgeoExt
     
     return dMeters
   end
-  
-  def included(base)
-    base.extend ClassMethods
-  end     
-  
-  module ClassMethods       
-  end     
+
+  require 'rgeo/kml'
+  require 'rgeo/geo_json'
+  module Support
+
+    def cartesian_factory
+      ActiveRoad::RgeoExt.cartesian_factory
+    end
+    
+    def geos_factory
+      ActiveRoad::RgeoExt.geos_factory
+    end
+
+    def geographical_factory
+      ActiveRoad::RgeoExt.geographical_factory
+    end
+
+    def kml_representation
+      RGeo::Kml.encode(self.geometry)
+    end    
+
+    def geojson_representation
+      RGeo::GeoJSON.encode(self.geometry).to_json
+    end
+    
+  end
 
 end
