@@ -1,4 +1,4 @@
-# A path is a link between differents objects : 
+# A path is a link between differents objects :
 #  - Departure
 #  - Arrival
 module ActiveRoad
@@ -21,31 +21,31 @@ module ActiveRoad
     #   if points.include?(projected_point)
     #     return points.index(projected_point)
     #   end
-    
-    #   last_point = points.last 
+
+    #   last_point = points.last
     #   points.each_with_index do |point, index|
     #     if point == last_point
     #       raise StandardError, "Point #{projected_point} not found on the road #{road.id}"
     #     end
-    
+
     #     next_point = points[index + 1]
-    #     if ( points  projected_point 
+    #     if ( points  projected_point
     #   end
     # end
-    
+
     # Return an array of points ordered from departure to arrival
     # def ordered_points
     #   road_start_point = road.geometry.start_point
     #   road_end_point = road.geometry.end_point
     #   road_points = road.geometry.points
     #   ordered_points = []
-      
-    #   # Get points from interpolated departure or arrival to interpolated departure or arrival in physical roads if one endpoint is an access point    
+
+    #   # Get points from interpolated departure or arrival to interpolated departure or arrival in physical roads if one endpoint is an access point
 
     #   if ActiveRoad::AccessPoint === departure || ActiveRoad::AccessPoint === arrival
-    #     sorted_locations_on_road = locations_on_road.sort    
+    #     sorted_locations_on_road = locations_on_road.sort
     #     reverse = (sorted_locations_on_road != locations_on_road)
-        
+
     #     if sorted_locations_on_road == [0, 1]
     #       if reverse
     #         return road_points.reverse
@@ -53,7 +53,7 @@ module ActiveRoad
     #         return road_points
     #       end
     #     end
-        
+
     #     sql = "ST_Line_Substring(ST_GeomFromEWKT('#{physical_road.geometry}'), #{sorted_locations_on_road.first}, #{sorted_locations_on_road.last})"
     #     sql = reverse ? "SELECT ST_Reverse(#{sql})" : "SELECT #{sql}"
     #     value = ActiveRoad::PhysicalRoad.connection.select_value(sql)
@@ -67,14 +67,14 @@ module ActiveRoad
     #     else
     #       ordered_points = []
     #     end
-        
+
     #     return ordered_points
     #   end
-      
+
     #   # Get points from departure to arrival in physical roads if endpoints are junctions
     #   departure_index = road_points.index(departure.geometry)
     #   arrival_index = road_points.index(arrival.geometry)
-      
+
     #   if departure_index < arrival_index
     #     ordered_points = road_points[departure_index..arrival_index]
     #   elsif arrival_index < departure_index
@@ -82,49 +82,44 @@ module ActiveRoad
     #   else
     #     raise StandardError, "Junction is not on the physical road"
     #   end
-      
+
     #   ordered_points
     # end
 
     # Build a geometry form ordered points
     def geometry_without_cache
-      #RgeoExt.cartesian_factory.line_string(ordered_points)
-      sorted_locations_on_road = locations_on_road.sort    
+      sorted_locations_on_road = locations_on_road.sort
       is_reversed = (sorted_locations_on_road != locations_on_road)
       geometry = road.line_substring(sorted_locations_on_road.first, sorted_locations_on_road.last, is_reversed)
     end
-    
+
     def locations_on_road
       @locations_on_road ||= [departure, arrival].collect do |endpoint|
         location =
-          if ActiveRoad::AccessPoint === endpoint           
+          if ActiveRoad::AccessPoint === endpoint
             road.locate_point endpoint.geometry
-          else            
+          else
             endpoint.location_on_road road
           end
-        
+
         location = [0, [location, 1].min].max
       end
     end
-    
+
     # def length
-    #   @length ||= if RGeo::Feature::LineString === geometry                  
+    #   @length ||= if RGeo::Feature::LineString === geometry
     #                 RgeoExt.geographical_factory.line_string(geometry.points).length
-    #               else                  
+    #               else
     #                 0
     #               end
     # end
 
     def length
-      @length ||= if RGeo::Feature::LineString === geometry
-                    length_on_road * road.length
-                  else                  
-                    0
-                  end      
+      @length ||= length_on_road * road.length
     end
-    
+
     def length_on_road
-      begin_on_road, end_on_road = locations_on_road.sort      
+      begin_on_road, end_on_road = locations_on_road.sort
       end_on_road - begin_on_road
     end
 
@@ -163,12 +158,12 @@ module ActiveRoad
       [:departure, :arrival, :physical_road].all? do |attribute|
         other.respond_to?(attribute) and send(attribute) == other.send(attribute)
       end
-    end    
+    end
     alias_method :eql?, :==
 
     def hash
       [departure, arrival, physical_road].hash
     end
-      
+
   end
 end
