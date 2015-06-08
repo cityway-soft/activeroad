@@ -17,13 +17,13 @@ require 'shortest_path/finder'
 module ActiveRoad
   class ShortestPathFinder < ShortestPath::Finder
 
-    attr_accessor :speed, :physical_road_filter, :follow_way_filter, :user_weights, :request_conditionnal_costs_linker, :constraints, :steps
+    attr_accessor :speed, :user_weights, :request_conditionnal_costs_linker, :constraints, :thresholds, :steps
 
-    def initialize(departure, arrival, speed = 4, constraints = [], follow_way_filter = {})    
+    def initialize(departure, arrival, speed = 4, constraints = {}, thresholds = {})    
       super departure, arrival
       @speed = speed * 1000 / 3600 # Convert speed in meter/second
       @constraints = constraints
-      @follow_way_filter = follow_way_filter
+      @thresholds = thresholds
       @steps = 0
     end
 
@@ -82,11 +82,9 @@ module ActiveRoad
 
       # Add physical road weight if it's a physical road
       physical_road = path.physical_road if ActiveRoad::Path === path
-      physical_road_conditionnal_costs = physical_road.physical_road_conditionnal_costs if physical_road
 
-      if physical_road && physical_road_conditionnal_costs
-        cc_percentage = request_conditionnal_costs_linker.conditionnal_costs_sum(physical_road_conditionnal_costs)
-        path_weights += path_weight(path.length, cc_percentage) if path.respond_to?(:length)
+      if physical_road && request_conditionnal_costs_linker.unauthorized_constraints_intersection_with?(physical_road)
+        path_weights = Float::INFINITY
       end
       
       path_weights
@@ -104,7 +102,7 @@ module ActiveRoad
       path.collect(&:geometry)
     end
     
-    def geometry      
+    def geometry
       @geometry ||= if path.present?
                       # Must use compact to delete nil from RGeo::Feature::Point in geometries
                       g = geometries.collect{ |g| g.points if RGeo::Feature::LineString === g }.compact.flatten
@@ -153,9 +151,9 @@ module ActiveRoad
     def follow_way?(node, destination, weight, context={})
       # Check that arguments in the context is less  than the object parameters    
       request = true
-      request = request && context[:uphill] <= follow_way_filter[:uphill] if follow_way_filter[:uphill] && context[:uphill].present?
-      request = request && context[:downhill] <= follow_way_filter[:downhill] if follow_way_filter[:downhill] && context[:downhill].present?
-      request = request && context[:height] <= follow_way_filter[:height] if follow_way_filter[:height] && context[:height].present?    
+      request = request && context[:uphill] <= thresholds[:uphill] if thresholds[:uphill] && context[:uphill].present?
+      request = request && context[:downhill] <= thresholds[:downhill] if thresholds[:downhill] && context[:downhill].present?
+      request = request && context[:height] <= thresholds[:height] if thresholds[:height] && context[:height].present?    
       request = request && ( search_heuristic(node) + weight ) < ( time_heuristic_from_source * 4 )
     end
     
@@ -176,11 +174,13 @@ module ActiveRoad
           end
         end
       end
-      
-      #  puts "_______________"
-      #  puts "     STEP #{@steps}      "
-      #  puts "_______________"
-      # puts paths.inspect
+
+      # puts "_______________"
+      # puts "     STEP #{@steps} from node #{node.name if node.respond_to?(:name) }      "
+      # puts "_______________"
+      # paths.each do |path|
+      #   puts "#{path.name if path.respond_to?(:name) } with weight #{path_weights(path)}"
+      # end
 
       array = paths.collect do |path|
         [ path, path_weights(path)]

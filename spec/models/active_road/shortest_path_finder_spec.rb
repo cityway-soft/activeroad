@@ -24,10 +24,10 @@ describe ActiveRoad::ShortestPathFinder do
     let!(:cd) { create(:physical_road, :objectid => "cd", :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string([c.geometry, d.geometry]) ) }
     let!(:ef) { create(:physical_road, :objectid => "ef", :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string([e.geometry, f.geometry]) ) }
     let!(:ac) { create(:physical_road, :objectid => "ac", :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string([a.geometry, c.geometry]) ) }
-    let!(:bd) { create(:physical_road, :objectid => "bd", :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string([b.geometry, d.geometry]) ) }
+    let!(:bd) { create(:physical_road, :objectid => "bd", :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string([b.geometry, d.geometry]), :transport_mode => "bike" ) }
     let!(:ce) { create(:physical_road, :objectid => "ce", :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string([c.geometry, e.geometry]) ) }
-    let!(:df) { create(:physical_road, :objectid => "df", :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string([d.geometry, f.geometry]) ) }
-    let!(:cf) { create(:physical_road, :objectid => "cf", :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string([c.geometry, f.geometry]) ) }
+    let!(:df) { create(:physical_road, :objectid => "df", :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string([d.geometry, f.geometry]), :transport_mode => "bike" ) }
+    let!(:cf) { create(:physical_road, :objectid => "cf", :geometry => ActiveRoad::RgeoExt.cartesian_factory.line_string([c.geometry, f.geometry]), :transport_mode => "bike" ) }
 
     before :each do 
       a.physical_roads << [ ab, ac ]
@@ -41,7 +41,7 @@ describe ActiveRoad::ShortestPathFinder do
   end
   
   let(:departure) { ActiveRoad::RgeoExt.cartesian_factory.point(-0.0005, 0.0005) }
-  let(:arrival) { ActiveRoad::RgeoExt.cartesian_factory.point(1.0005, 1.98) }
+  let(:arrival) { ActiveRoad::RgeoExt.cartesian_factory.point(1.0005, 2.0005) }
   let(:speed) { 4 }
   let(:constraints) { ["bike"] }
 
@@ -50,38 +50,34 @@ describe ActiveRoad::ShortestPathFinder do
     
     it "should find a solution between first and last road with with no constraints" do
       path = ActiveRoad::ShortestPathFinder.new(departure, arrival, 4).path
-      expect(path.size).to eq(7)
+      expect(path.size).to eq(6)
       expect(path[0]).to eq(departure)
       expect(path[1].class).to eq(ActiveRoad::AccessLink)
       expect(path[2].physical_road.objectid).to eq("ac")
       expect(path[3].physical_road.objectid).to eq("cf")
-      expect(path[4].physical_road.objectid).to eq("df")
-      expect(path[5].class).to eq(ActiveRoad::AccessLink)
-      expect(path[6]).to eq(arrival)
+      expect(path[4].class).to eq(ActiveRoad::AccessLink)
+      expect(path[5]).to eq(arrival)
     end  
 
     it "should find a solution between first and last road with constraints" do
-      cf_conditionnal_costs = create(:physical_road_conditionnal_cost, :physical_road => cf, :tags => "bike", :cost => 0.7)
-      path = ActiveRoad::ShortestPathFinder.new(departure, arrival, 4, ["bike"]).path
-      expect(path.size).to eq(7)
+      path = ActiveRoad::ShortestPathFinder.new(departure, arrival, 4, {"transport_mode" => "bike"}).path
+      expect(path.size).to eq(6)
       expect(path[0]).to eq(departure)
       expect(path[1].class).to eq(ActiveRoad::AccessLink)
       expect(path[2].physical_road.objectid).to eq("ac")
       expect(path[3].physical_road.objectid).to eq("cf")
-      expect(path[4].physical_road.objectid).to eq("df")
-      expect(path[5].class).to eq(ActiveRoad::AccessLink)
-      expect(path[6]).to eq(arrival)
+      expect(path[4].class).to eq(ActiveRoad::AccessLink)
+      expect(path[5]).to eq(arrival)
     end
     
     it "should find a solution between first and last road with constraints which block the itinerary" do
-      cf.physical_road_conditionnal_costs << create(:physical_road_conditionnal_cost, :tags => "bike", :cost => 0)      
-      path = ActiveRoad::ShortestPathFinder.new(departure, arrival, 4, ["~bike"]).path
+      path = ActiveRoad::ShortestPathFinder.new(departure, arrival, 4, { "transport_mode" => "~bike"}).path
       expect(path.size).to eq(7)
       expect(path[0]).to eq(departure)
       expect(path[1].class).to eq(ActiveRoad::AccessLink)
       expect(path[2].physical_road.objectid).to eq("ac")
-      expect(path[3].physical_road.objectid).to eq("cf")
-      expect(path[4].physical_road.objectid).to eq("df")
+      expect(path[3].physical_road.objectid).to eq("ce")
+      expect(path[4].physical_road.objectid).to eq("ef")
       expect(path[5].class).to eq(ActiveRoad::AccessLink)
       expect(path[6]).to eq(arrival)
     end
@@ -96,21 +92,20 @@ describe ActiveRoad::ShortestPathFinder do
       departure = ActiveRoad::RgeoExt.cartesian_factory.point(-0.0005, -0.0005)
       path = ActiveRoad::ShortestPathFinder.new(departure, arrival, 4).path
 
-      expect(path.size).to eq(7)
+      expect(path.size).to eq(6)
       expect(path[0]).to eq(departure)
       expect(path[1].class).to eq(ActiveRoad::AccessLink)
       expect(path[2].physical_road.objectid).to eq("ac")
       expect(path[3].physical_road.objectid).to eq("cf")
-      expect(path[4].physical_road.objectid).to eq("df")
-      expect(path[5].class).to eq(ActiveRoad::AccessLink)
-      expect(path[6]).to eq(arrival)
+      expect(path[4].class).to eq(ActiveRoad::AccessLink)
+      expect(path[5]).to eq(arrival)
     end
     
   end
 
   describe "#path_weights" do       
     
-    let(:subject) { ActiveRoad::ShortestPathFinder.new departure, arrival, 4, ["test"] }
+    let(:subject) { ActiveRoad::ShortestPathFinder.new departure, arrival, 4, { :transport_mode => "~bike" } }
     
     it "should return 0 if no physical road" do
       path = departure 
@@ -131,18 +126,8 @@ describe ActiveRoad::ShortestPathFinder do
       expect(subject.path_weights(path)).to eq(2 / (4 * 1000/3600) + 2.5)
     end
 
-    it "should return path weights and physical roads weight if physical roads have weight" do
-      physical_road = create(:physical_road)
-      physical_road_conditionnal_cost = create(:physical_road_conditionnal_cost, :physical_road => physical_road, :tags => "test", :cost => 0.2)
-      path = ActiveRoad::Path.new(:departure => create(:junction), :physical_road => physical_road )
-
-      allow(path).to receive_messages :length => 2
-      expect(subject.path_weights(path)).to eq(2 / (4 * 1000/3600) + (2 / (4 * 1000/3600)) * 0.2)
-    end
-
     it "should return path weights == Infinity and physical roads weight if physical roads have weight" do
-      physical_road = create(:physical_road)
-      physical_road_conditionnal_cost = create(:physical_road_conditionnal_cost, :physical_road => physical_road, :tags => "test", :cost => Float::MAX)
+      physical_road = create(:physical_road, :transport_mode => "bike")
       path = ActiveRoad::Path.new(:departure => create(:junction), :physical_road => physical_road )
       
       allow(path).to receive_messages :length => 2
@@ -196,12 +181,12 @@ describe ActiveRoad::ShortestPathFinder do
     end
 
     it "should not follow way if uphill > uphill max" do     
-      subject.follow_way_filter = {:uphill => 1}
+      subject.thresholds = {:uphill => 1}
       expect(subject.follow_way?(node, destination, 2, context)).to be_falsey
     end
 
     it "should follow way if uphill < uphill max" do
-      subject.follow_way_filter = {:uphill => 3}
+      subject.thresholds = {:uphill => 3}
       expect(subject.follow_way?(node, destination, 2, context)).to be_truthy
     end
 

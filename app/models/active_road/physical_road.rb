@@ -10,12 +10,12 @@ module ActiveRoad
 
     #attr_accessible :objectid, :tags, :geometry, :logical_road_id, :boundary_id, :minimum_width, :covering, :transport_mode, :slope, :cant, :physical_road_type 
     store_accessor :tags
-    enumerize :transport_mode, :in => %w["pedestrian", "car", "bike", "train"]
-    enumerize :covering, :in => %w[category0, category1, category2, category3, category4, category5, category6, category7, category8, category9 ]
-    enumerize :minimum_width, :in => %w[category0, category1, category2, category3, category4, category5, category6, category7, category8, category9 ]
-    enumerize :slope, :in => %w[category0, category1, category2, category3, category4, category5, category6, category7, category8, category9 ]
-    enumerize :cant, :in => %w[category0, category1, category2, category3, category4, category5, category6, category7, category8, category9 ]
-    enumerize :physical_road_type, :in => %w[category0, category1, category2, category3, category4, category5, category6, category7, category8, category9 ]
+    enumerize :transport_mode, :in => %w[pedestrian car bike train]
+    enumerize :covering, :in => %w[category0 category1 category2 category3 category4 category5 category6 category7 category8 category9 ]
+    enumerize :minimum_width, :in => %w[category0 category1 category2 category3 category4 category5 category6 category7 category8 category9 ]
+    enumerize :slope, :in => %w[category0 category1 category2 category3 category4 category5 category6 category7 category8 category9 ]
+    enumerize :cant, :in => %w[category0 category1 category2 category3 category4 category5 category6 category7 category8 category9 ]
+    enumerize :physical_road_type, :in => %w[category0 category1 category2 category3 category4 category5 category6 category7 category8 category9 ]
 
     validates_uniqueness_of :objectid
     

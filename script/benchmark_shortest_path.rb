@@ -5,15 +5,8 @@ require 'ruby-prof'
 # cd spec/dummy
 # bundle exec rails runner ../../script/benchmark_shortest_path.rb
 
-geos_factory = ::RGeo::Geos.factory(:native_interface => :ffi, :srid => 4326,
-                                               :wkt_parser => {:support_ewkt => true, :default_srid => 4326},
-                                               :wkt_generator => {:type_format => :ewkt, :emit_ewkt_srid => true},
-                                               :wkb_parser => {:support_ewkb => true, :default_srid => 4326},
-                                               :wkb_generator => {:type_format => :ewkb, :emit_ewkb_srid => true}
-                                               )
-
-departure = geos_factory.point(7.699781, 48.587853)
-arrival = geos_factory.point(7.738061, 48.587853)
+departure = ActiveRoad::RgeoExt.cartesian_factory.point(2.3285425111107307, 48.850989640001636)
+arrival = ActiveRoad::RgeoExt.cartesian_factory.point(2.3370497617265267, 48.85068570078048)
 sp = ActiveRoad::ShortestPathFinder.new(departure, arrival, 4)
 
 # Profile the code

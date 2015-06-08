@@ -11,7 +11,7 @@ describe ActiveRoad::TerraImporter do
       expect(ActiveRoad::Junction.count).to eq(461)
       expect(ActiveRoad::StreetNumber.count).to eq(761)
       expect(ActiveRoad::PhysicalRoad.count).to eq(495)
-      expect(ActiveRoad::PhysicalRoadConditionnalCost.count).to eq(1980)
+      expect(ActiveRoad::PhysicalRoadConditionnalCost.count).to eq(1485)
       expect(ActiveRoad::JunctionsPhysicalRoad.count).to eq(975)     
     end    
   end
