@@ -95,11 +95,7 @@ module ActiveRoad
     end
 
     def geometries
-      # Delete departure and arrival
-      path.pop
-      path.shift
-      
-      path.collect(&:geometry)
+      (path - [path.first, path.last]).collect(&:geometry) if path.present?
     end
     
     def geometry
