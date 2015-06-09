@@ -56,7 +56,8 @@ module ActiveRoad
         geometry_index = geometry.points.index(junction_geometry)
         RgeoExt.cartesian_factory.line_string(geometry.points[0..geometry_index]).length
       else
-        nil
+        Rails.logger.error "Error : Why physical_road #{self.objectid} is connected with junction #{junction_geometry}"
+        locate_point(junction_geometry)
       end      
     end
     
