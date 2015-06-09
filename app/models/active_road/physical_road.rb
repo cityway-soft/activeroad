@@ -46,6 +46,19 @@ module ActiveRoad
         return geometry
       end
     end
+
+    def locate_junction(junction_geometry)
+      if geometry.start_point == junction_geometry
+        0
+      elsif geometry.end_point == junction_geometry
+        1
+      elsif geometry.points.include?(junction_geometry)
+        geometry_index = geometry.points.index(junction_geometry)
+        RgeoExt.cartesian_factory.line_string(geometry.points[0..geometry_index]).length
+      else
+        nil
+      end      
+    end
     
     def intersection(other)
       st_intersection other

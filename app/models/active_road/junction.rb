@@ -13,7 +13,7 @@ module ActiveRoad
     has_many :junction_conditionnal_costs, :class_name => "ActiveRoad::JunctionConditionnalCost"
 
     def location_on_road(road)
-      (@location_on_road ||= {})[road.id] ||= road.locate_point(geometry)
+      (@location_on_road ||= {})[road.id] ||= road.locate_junction(geometry)
     end
 
     def paths_without_cache
