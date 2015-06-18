@@ -163,9 +163,9 @@ module ActiveRoad
       
       # Search for each node if they have physical roads in common with arrival
       # If true finish the trip and link to arrival
-      unless RGeo::Feature::Point === node 
-        destination_accesses.select do |destination_access|        
-          if node.access_to_road?(destination_access.physical_road)
+      unless RGeo::Feature::Point === node || ActiveRoad::AccessLink === node  
+        destination_accesses.select do |destination_access|
+          if node.access_to_road?(destination_access.physical_road) && ( destination_access.physical_road.junctions.pluck(:id) & [ node.departure.id, node.arrival.id ].compact ).present?          
             paths << ActiveRoad::Path.new(:departure => node.arrival, :arrival => destination_access, :physical_road => destination_access.physical_road)
           end
         end

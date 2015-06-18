@@ -13,6 +13,11 @@ module ActiveRoad
       end
     end
 
+    # Hack to use with junctions
+    def id
+      nil
+    end
+
     # Find access points from a location
     def self.from(location)
       ActiveRoad::PhysicalRoad.nearest_to(location).collect do |physical_road|
